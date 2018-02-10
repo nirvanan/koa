@@ -5,4 +5,4 @@ A toy script language based on design ideas in Python, LPC and lua.
 - Fast data types.
 - Simple and clean builtin functions.
 - SP-based stack.
-- Maybe builtin socket operations.
+- Simple object system and gc.
