@@ -1,5 +1,5 @@
 /*
- * str.h
+ * pool.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,18 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STR_H
-#define STR_H
+#ifndef POOL_H
+#define POOL_H
 
-typedef struct str_s {
-	int len;
-	char s[];
-} str_t;
-
-str_t *
-str_new (const char *s);
+void *
+pool_alloc (size_t size);
 
 void
-str_free (str_t *str);
+pool_free (void *bl);
 
-#endif /* STR_H */
+#endif /* POOL_H */

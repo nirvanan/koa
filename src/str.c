@@ -17,3 +17,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <string.h>
+
+#include "str.h"
+#include "pool.h"
+
+str_t *
+str_new (const char *s)
+{
+	return NULL;
+}
+
+void
+str_free (str_t *str)
+{
+}

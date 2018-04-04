@@ -1,5 +1,5 @@
 /*
- * str.h
+ * object.c
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,18 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STR_H
-#define STR_H
+#include "object.h"
 
-typedef struct str_s {
-	int len;
-	char s[];
-} str_t;
 
-str_t *
-str_new (const char *s);
-
-void
-str_free (str_t *str);
-
-#endif /* STR_H */

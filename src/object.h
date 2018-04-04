@@ -1,5 +1,5 @@
 /*
- * str.h
+ * object.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,18 +18,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STR_H
-#define STR_H
+#ifndef OBJECT_H
+#define OBJECT_H
 
-typedef struct str_s {
-	int len;
-	char s[];
-} str_t;
+typedef enum object_type_e {
+	OBJECT_TYPE_BYTE = 0x01,
+	OBJECT_TYPE_INT = 0x02,
+	OBJECT_TYPE_FLOAT = 0x04,
+	OBJECT_TYPE_DOUBLE = 0x08,
+	OBJECT_TYPE_STR = 0x10,
+	OBJECT_TYPE_VEC = 0x20,
+	OBJECT_TYPE_DICT = 0x40,
+	OBJECT_TYPE_RAW = 0x80,
+} object_type_t;
 
-str_t *
-str_new (const char *s);
+typedef struct object_head_s {
+	int ref;
+	object_type_t type;
+} object_head_t;
 
-void
-str_free (str_t *str);
+typedef struct object_s {
+	object_head_t head;
+	union {
+		char b;
+		int i;
+		float f;
+		double d;
+		str_t *str;
+	} value;
+	void *udata;
+} object_t;
 
-#endif /* STR_H */
+object_t *
+object_int_new (const int i);
+
+object_t *
+object_str_new (const char *s);
+
+#endif /* OBJECT_H */
