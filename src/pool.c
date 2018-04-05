@@ -57,17 +57,16 @@ typedef struct pool_s {
 	pool_s *next;
 	void *po;
 	void *extra;
-	page_t *full;
 	page_t *free;
-	page_t **used;
 	int cycle; /* To release polls that is empty for a long time. */
 } pool_t;
 
 /* All pools. */
 static pool_t *g_poll_list;
 
-/* Page hash table for quick access. */
+/* Page hash table for quick access, this is used for used pages. */
 static pool_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
+static pool_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
 
 static void
 pool_page_init (page_t *page, cell_type_t t)
@@ -144,4 +143,5 @@ pool_init ()
 		pool_new ();
 	}
 	memset (g_page_table, 0, sizeof (g_page_table));
+	memset (g_full_table, 0, sizeof (g_page_table));
 }
