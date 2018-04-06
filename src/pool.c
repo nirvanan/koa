@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "pool.h"
 #include "error.h"
@@ -39,7 +40,7 @@
 
 #define BLOCK_START(x, s) ((void *)(((intptr_t)(x))&(~((intptr_t)(s-1)))))
 
-#define BLOCK_ALIGNED(x, s) (BLOCK_START((x),(s))==(intptr_t)(x))
+#define BLOCK_ALIGNED(x, s) ((intptr_t)BLOCK_START((x),(s))==(intptr_t)(x))
 
 #define CELL_SIZE(x) ((size_t)(x)*8)
 
@@ -47,7 +48,7 @@
 
 #define PAGE_HASH_BUCKET 196613
 
-typedef uchar cell_type_t;
+typedef unsigned char cell_type_t;
 
 typedef struct page_s
 {
@@ -71,21 +72,21 @@ typedef struct pool_s
 	int cycle; /* To release pools that is empty for a long time. */
 } pool_t;
 
-typedef struct pool_node_s
+typedef struct page_hash_s
 {
-	struct pool_node_s *prev;
-	struct pool_node_s *next;
+	struct page_hash_s *prev;
+	struct page_hash_s *next;
 	void *p;
-} pool_node_t;
+} page_hash_t;
 
 /* All pools. */
 static pool_t *g_pool_list;
 
 /* Page table for quick access. */
-static pool_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
-static pool_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
+static page_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
+static page_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
 
-static page_node_t *g_page_hash[PAGE_HASH_BUCKET];
+static page_hash_t *g_page_hash[PAGE_HASH_BUCKET];
 
 static void
 pool_page_init (page_t *page, cell_type_t t)
@@ -112,7 +113,7 @@ static void
 pool_page_hash (page_t *page)
 {
 	int b;
-	page_hash_t ph;
+	page_hash_t *ph;
 
 	b = (intptr_t) page % PAGE_HASH_BUCKET;
 	ph = (page_hash_t *) malloc (sizeof (page_hash_t));
@@ -162,7 +163,7 @@ pool_new (void *extra)
 		new_pool->free = page;
 		page->pool = new_pool;
 
-		poll_page_hash (page);
+		pool_page_hash (page);
 	}
 
 	new_pool->used = 0;
@@ -296,7 +297,7 @@ pool_alloc (size_t size)
 		void *ret;
 
 		ret = malloc (size);
-		if (new_pool == NULL) {
+		if (ret == NULL) {
 			/* TODO: Need throw. */
 			fatal_error ("no enough memory.");
 		}
@@ -317,7 +318,7 @@ static int
 pool_is_pool_cell (void *bl)
 {
 	page_t *page;
-	page_node_t *n;
+	page_hash_t *n;
 
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 	n = g_page_hash[(intptr_t) page % PAGE_HASH_BUCKET];
@@ -356,13 +357,15 @@ pool_free (void *bl)
 {
 	page_t *page;
 
-	if (!poll_is_pool_cell (bl)) {
+	if (!pool_is_pool_cell (bl)) {
 		/* Use system free to release this block. */
 		free (bl);
 
 		return;
 	}
 	
+	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
+
 	/* Page from full to used? */
 	if (page->free == NULL) {
 		pool_page_full_2_used (page);
@@ -375,7 +378,7 @@ pool_free (void *bl)
 
 	/* Page from used to free? */
 	if (!page->allocated) {
-		pool_empty_page_in ((page_t *) page->pool, page);
+		pool_empty_page_in ((pool_t *) page->pool, page);
 	}
 }
 
@@ -383,7 +386,7 @@ void
 pool_init ()
 {
 	/* Init pool(s) when startup. */
-	for (int i - 0; i < INIT_POOL_NUM; i++) {
+	for (int i = 0; i < INIT_POOL_NUM; i++) {
 		pool_new (NULL);
 	}
 	memset (g_page_table, 0, sizeof (g_page_table));

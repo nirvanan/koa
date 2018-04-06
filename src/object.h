@@ -21,6 +21,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include "str.h"
+
 typedef enum object_type_e {
 	OBJECT_TYPE_BYTE = 0x01,
 	OBJECT_TYPE_INT = 0x02,

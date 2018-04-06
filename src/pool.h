@@ -21,10 +21,15 @@
 #ifndef POOL_H
 #define POOL_H
 
+#include <stddef.h>
+
 void *
 pool_alloc (size_t size);
 
 void
 pool_free (void *bl);
+
+void
+pool_init ();
 
 #endif /* POOL_H */

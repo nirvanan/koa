@@ -18,9 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "pool.h"
+
 int main(int argc, char *argv[])
 {
-	printf ("done\n");
+	/* Init pool utility. */
+	pool_init ();
 
 	return 0;
 }
