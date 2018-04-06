@@ -44,7 +44,7 @@
 
 #define CELL_SIZE(x) ((size_t)(x)*8)
 
-#define REQ_2_CELL_SIZE(x) ((int)(x-1)/8+1)
+#define REQ_2_CELL_TYPE(x) ((int)(x-1)/8+1)
 
 #define PAGE_HASH_BUCKET 196613
 
@@ -222,11 +222,11 @@ pool_empty_page_in (pool_t *pool, page_t *page)
 static page_t *
 pool_get_page (size_t size)
 {
-	int cell_idx;
+	cell_type_t cell_idx;
 	pool_t *pool;
 	page_t *page;
 
-	cell_idx = REQ_2_CELL_SIZE (size);
+	cell_idx = REQ_2_CELL_TYPE (size);
 
 	/* First we lookup used page table. */
 	if (g_page_table[cell_idx]) {

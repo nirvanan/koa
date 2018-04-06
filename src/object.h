@@ -23,6 +23,8 @@
 
 #include "str.h"
 
+typedef unsigned char byte_t;
+
 typedef enum object_type_e {
 	OBJECT_TYPE_BYTE = 0x01,
 	OBJECT_TYPE_INT = 0x02,
@@ -34,15 +36,18 @@ typedef enum object_type_e {
 	OBJECT_TYPE_RAW = 0x80,
 } object_type_t;
 
-typedef struct object_head_s {
+typedef struct object_head_s
+{
 	int ref;
 	object_type_t type;
 } object_head_t;
 
-typedef struct object_s {
+typedef struct object_s
+{
 	object_head_t head;
-	union {
-		char b;
+	union
+	{
+		byte_t b;
 		int i;
 		float f;
 		double d;
@@ -52,9 +57,18 @@ typedef struct object_s {
 } object_t;
 
 object_t *
-object_int_new (const int i);
+object_byte_new (byte_t b, void *udata);
 
 object_t *
-object_str_new (const char *s);
+object_int_new (const int i, void *udata);
+
+object_t *
+object_float_new (const float f, void *udata);
+
+object_t *
+object_double_new (const double d, void *udata);
+
+object_t *
+object_str_new (const char *s, void *udata);
 
 #endif /* OBJECT_H */
