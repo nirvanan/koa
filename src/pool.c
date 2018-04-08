@@ -55,6 +55,7 @@ typedef struct page_s
 	struct page_s *prev;
 	struct page_s *next;
 	void *pool;
+	void *hash;
 	cell_type_t t;
 	int allocated;
 	size_t cell_size; /* Pages can be reused for another size. */
@@ -118,7 +119,8 @@ pool_page_hash (page_t *page)
 	page_hash_t *ph;
 
 	b = (intptr_t) page % PAGE_HASH_BUCKET;
-	ph = (page_hash_t *) malloc (sizeof (page_hash_t));
+	/* Hash data can be allocated from pool! */
+	ph = (page_hash_t *) pool_alloc (sizeof (page_hash_t));
 	if (ph == NULL) {
 		/* TODO: Need throw. */
 		fatal_error ("no enough memory.");
@@ -127,6 +129,7 @@ pool_page_hash (page_t *page)
 	ph->next = g_page_hash[b];
 	ph->prev = NULL;
 	g_page_hash[b] = ph;
+	page->hash = ph;
 }
 
 static void
