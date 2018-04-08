@@ -19,11 +19,18 @@
  */
 
 #include "pool.h"
+#include "object.h"
 
 int main(int argc, char *argv[])
 {
 	/* Init pool utility. */
 	pool_init ();
+	/* Init object caches. */
+	object_init ();
+
+	while (1) {
+
+	}
 
 	return 0;
 }

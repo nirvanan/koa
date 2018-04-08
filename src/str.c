@@ -26,10 +26,31 @@
 str_t *
 str_new (const char *s)
 {
-	return NULL;
+	size_t len;
+	size_t str_size;
+	str_t *str;
+
+	if (s == NULL) {
+		len = 0;
+	}
+	else {
+		len = strlen (s);
+	}
+
+	str_size = len + sizeof (str_t) + 1;
+
+	str = (str_t *) pool_alloc (str_size);
+	str->len = len;
+	if (len > 0) {
+		memcpy (str->s, s, len);
+	}
+	str->s[len] = '\0';
+
+	return str;
 }
 
 void
 str_free (str_t *str)
 {
+	pool_free (str);
 }

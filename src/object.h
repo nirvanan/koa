@@ -51,7 +51,7 @@ typedef struct object_s
 		int i;
 		float f;
 		double d;
-		str_t *str;
+		str_t *s;
 	} value;
 	void *udata;
 } object_t;
@@ -68,7 +68,19 @@ object_float_new (const float f, void *udata);
 object_t *
 object_double_new (const double d, void *udata);
 
+void
+object_ref (object_t *ob);
+
+void
+object_unref (object_t *ob);
+
 object_t *
 object_str_new (const char *s, void *udata);
+
+void
+object_free (object_t *ob);
+
+void
+object_init ();
 
 #endif /* OBJECT_H */

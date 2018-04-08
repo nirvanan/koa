@@ -91,6 +91,7 @@ static page_hash_t *g_page_hash[PAGE_HASH_BUCKET];
 static void
 pool_page_init (page_t *page, cell_type_t t)
 {
+	void *page_end;
 	void *page_t_end;
 
 	page->t = t;
@@ -102,8 +103,9 @@ pool_page_init (page_t *page, cell_type_t t)
 		page->free += CELL_SIZE (t);
 	}
 	/* Chain all cells. */
-	for (void *c = page->free; c < (void *) (page + 1); c += CELL_SIZE (t)) {
-		if (c + CELL_SIZE (t) < (void *) (page + 1)) {
+	page_end = (void *) page + PAGE_SIZE;
+	for (void *c = page->free; c < page_end; c += CELL_SIZE (t)) {
+		if (c + CELL_SIZE (t) < page_end) {
 			*((void **) c) = c + CELL_SIZE (t);
 		}
 	}
@@ -185,6 +187,7 @@ pool_empty_page_out (pool_t *pool, cell_type_t t)
 
 	page = pool->free;
 	pool->free = page->next;
+	pool->used++;
 	if (pool->free) {
 		pool->free->prev = NULL;
 	}
@@ -205,6 +208,7 @@ pool_empty_page_in (pool_t *pool, page_t *page)
 	if (page->prev) {
 		page->prev->next = page->next;
 	}
+	g_page_table[page->t] = page->next;
 	page->next = pool->free;
 	page->prev = NULL;
 	if (pool->free) {
@@ -277,6 +281,7 @@ pool_get_cell (page_t *page)
 		if (page->prev) {
 			page->prev->next = page->next;
 		}
+		g_page_table[page->t] = page->next;
 		page->next = g_full_table[page->t];
 		page->prev = NULL;
 		if (g_full_table[page->t]) {
