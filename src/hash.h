@@ -1,5 +1,5 @@
 /*
- * main.c
+ * hash.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,18 +18,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "pool.h"
-#include "object.h"
+#ifndef HASH_H
+#define HASH_H
 
-int main(int argc, char *argv[])
+#include <stddef.h>
+
+typedef int (*hash_f) (void *data);
+typedef int (*hash_test_f) (void *value, void *hd);
+
+typedef struct hash_node_s
 {
-	/* Init pool utility. */
-	pool_init ();
-	/* Init object caches. */
-	object_init ();
+	struct hash_node_s *prev;
+	struct hash_node_s *next;
+	void *value;
+} hash_node_t;
 
-	while (1) {
-	}
+typedef struct hash_s
+{
+	hash_node_t **h;
+	hash_f hf;
+	hash_test_f tf;
+	size_t bu;
+} hash_t;
 
-	return 0;
-}
+hash_t *
+hash_new (size_t bu, hash_f hf, hash_test_f tf);
+
+void
+hash_add (hash_t *ha, void *data);
+
+void
+hash_remove (hash_t *ha, void *data);
+
+int
+hash_test (hash_t *ha, void *hd, int hash);
+
+int
+hash_find (hash_t *ha, void *data);
+
+#endif /* HASH_H */

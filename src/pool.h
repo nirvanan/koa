@@ -32,4 +32,7 @@ pool_free (void *bl);
 void
 pool_init ();
 
+void
+pool_recycle ();
+
 #endif /* POOL_H */
