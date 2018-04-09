@@ -30,7 +30,7 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 	size_t bucket_size;
 
 	ha = pool_alloc (sizeof (hash_t));
-	bucket_size = bu * sizeof (hash_node_t);
+	bucket_size = bu * sizeof (hash_node_t *);
 	/* We can still use pool allocation when bu is small. */
 	ha->h = (hash_node_t **) pool_alloc (bucket_size);
 	memset (ha->h, 0, bucket_size);

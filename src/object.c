@@ -188,4 +188,5 @@ object_init ()
 		/* Never recycle it. */
 		g_int_cache[INT_2_CACHE_IDX (i)]->head.ref = 1;
 	}
+	snprintf (g_dump_buffer, DUMP_BUFF_SIZE, "null");
 }
