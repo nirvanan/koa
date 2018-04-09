@@ -24,6 +24,7 @@
 #include <stddef.h>
 
 typedef int (*hash_f) (void *data);
+typedef int (*hash_eq_f) (void *value, void *data);
 typedef int (*hash_test_f) (void *value, void *hd);
 
 typedef struct hash_node_s
@@ -37,12 +38,13 @@ typedef struct hash_s
 {
 	hash_node_t **h;
 	hash_f hf;
+	hash_eq_f ef;
 	hash_test_f tf;
 	size_t bu;
 } hash_t;
 
 hash_t *
-hash_new (size_t bu, hash_f hf, hash_test_f tf);
+hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf);
 
 void
 hash_add (hash_t *ha, void *data);

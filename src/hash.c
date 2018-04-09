@@ -24,7 +24,7 @@
 #include "pool.h"
 
 hash_t *
-hash_new (size_t bu, hash_f hf, hash_test_f tf)
+hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf)
 {
 	hash_t *ha;
 	size_t bucket_size;
@@ -35,15 +35,13 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 	ha->h = (hash_node_t **) pool_alloc (bucket_size);
 	memset (ha->h, 0, bucket_size);
 	ha->hf = hf;
+	ha->ef = ef;
 	ha->tf = tf;
 	ha->bu = bu;
 
 	return ha;
 }
 
-/* We do not check whether there is already a node
- * presenting the same value, user code should take
- * this responsibility. */
 void
 hash_add (hash_t *ha, void *data)
 {
@@ -51,6 +49,12 @@ hash_add (hash_t *ha, void *data)
 	hash_node_t *node;
 
 	idx = ha->hf (data) % ha->bu;
+	/* Check whether there is already a node presenting the same value. */
+	for (node = ha->h[idx]; node; node = node->next) {
+		if (ha->ef (node, data)) {
+			return;
+		}
+	}
 	node = pool_alloc (sizeof (hash_node_t));
 	node->next = ha->h[idx];
 	node->prev = NULL;
@@ -69,7 +73,7 @@ hash_remove (hash_t *ha, void *data)
 	idx = ha->hf (data) % ha->bu;
 	node = ha->h[idx];
 	while (node != NULL) {
-		if (node->value == data) {
+		if (ha->ef (node, data)) {
 			if (node->next != NULL) {
 				node->next->prev = node->prev;
 			}
@@ -115,7 +119,7 @@ hash_find (hash_t *ha, void *data)
 	idx = ha->hf (data) % ha->bu;
 	node = ha->h[idx];
 	while (node != NULL) {
-		if (node->value == data) {
+		if (ha->ef (node, data)) {
 			return 1;
 		}
 
