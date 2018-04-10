@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "pool.h"
+#include "list.h"
 #include "error.h"
 
 /* The general structure of koa memory allocation is pool=>Page=>Cell.
@@ -53,8 +54,7 @@ typedef unsigned char cell_type_t;
 
 typedef struct page_s
 {
-	struct page_s *prev;
-	struct page_s *next;
+	list_t link;
 	void *pool;
 	void *hash;
 	cell_type_t t;
@@ -65,32 +65,30 @@ typedef struct page_s
 	
 typedef struct pool_s
 {
-	struct pool_s *prev;
-	struct pool_s *next;
+	list_t link;
 	void *po;
 	void *extra;
 	int used;
-	page_t *free;
+	list_t *free;
 	int cycle; /* To release pools that is empty for a long time. */
 } pool_t;
 
 typedef struct page_hash_s
 {
-	struct page_hash_s *prev;
-	struct page_hash_s *next;
+	list_t link;
 	void *p;
 } page_hash_t;
 
 /* All pools. */
-static pool_t *g_pool_list;
+static list_t *g_pool_list;
 
 /* Page table for quick access. */
-static page_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
-static page_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
+static list_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
+static list_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
 
 /* Altough we have hash utility using pool, but at this moment
  * we can not use it, so we just make another one. */
-static page_hash_t *g_page_hash[PAGE_HASH_BUCKET];
+static list_t *g_page_hash[PAGE_HASH_BUCKET];
 
 static void
 pool_page_init (page_t *page, cell_type_t t)
@@ -129,9 +127,7 @@ pool_page_hash_add (page_t *page)
 		fatal_error ("no enough memory.");
 	}
 	ph->p = page;
-	ph->next = g_page_hash[b];
-	ph->prev = NULL;
-	g_page_hash[b] = ph;
+	g_page_hash[b] = list_append (g_page_hash[b], (list_t *) ph);
 	page->hash = ph;
 }
 
@@ -144,15 +140,7 @@ pool_page_hash_remove (page_t *page)
 
 	b = (intptr_t) page % PAGE_HASH_BUCKET;
 	ph = (page_hash_t *) page->hash;
-	if (ph->next != NULL) {
-		ph->next->prev = ph->prev;
-	}
-	if (ph->prev != NULL) {
-		ph->prev->next = ph->next;
-	}
-	else {
-		g_page_hash[b] = ph->next;
-	}
+	g_page_hash[b] = list_remove (g_page_hash[b], (list_t *) ph);
 
 	pool_free (ph);
 }
@@ -185,12 +173,7 @@ pool_new (void *extra)
 		page_t *page;
 		
 		page = (page_t *) p;
-		page->next = new_pool->free;
-		page->prev = NULL;
-		if (new_pool->free != NULL) {
-			new_pool->free->prev = page;
-		}
-		new_pool->free = page;
+		new_pool->free = list_append (new_pool->free, (list_t *) page);
 		page->pool = new_pool;
 	}
 
@@ -198,12 +181,7 @@ pool_new (void *extra)
 	new_pool->extra = extra;
 
 	/* Insert current pool to list. */
-	new_pool->next = g_pool_list;
-	new_pool->prev = NULL;
-	if (g_pool_list != NULL) {
-		g_pool_list->prev = new_pool;
-	}
-	g_pool_list = new_pool;
+	g_pool_list = list_append (g_pool_list, (list_t *) new_pool);
 }
 
 static void
@@ -211,18 +189,10 @@ pool_empty_page_out (pool_t *pool, cell_type_t t)
 {
 	page_t *page;
 
-	page = pool->free;
-	pool->free = page->next;
+	page = (page_t *) pool->free;
+	pool->free = list_remove (pool->free, (list_t *) page);
 	pool->used++;
-	if (pool->free != NULL) {
-		pool->free->prev = NULL;
-	}
-	page->next = g_page_table[t];
-	page->prev = NULL;
-	if (g_page_table[t] != NULL) {
-		g_page_table[t]->prev = page;
-	}
-	g_page_table[t] = page;
+	g_page_table[t] = list_append (g_page_table[t], (list_t *) page);
 
 	pool_page_hash_add (page);
 }
@@ -230,21 +200,11 @@ pool_empty_page_out (pool_t *pool, cell_type_t t)
 static void
 pool_empty_page_in (pool_t *pool, page_t *page)
 {
-	if (page->next != NULL) {
-		page->next->prev = page->prev;
-	}
-	if (page->prev != NULL) {
-		page->prev->next = page->next;
-	}
-	else {
-		g_page_table[page->t] = page->next;
-	}
-	page->next = pool->free;
-	page->prev = NULL;
-	if (pool->free != NULL) {
-		pool->free->prev = page;
-	}
-	pool->free = page;
+	cell_type_t t;
+	
+	t = page->t;
+	g_page_table[t] = list_remove (g_page_table[t], (list_t *) page);
+	pool->free = list_append (pool->free, (list_t *) page);
 	pool->used--;
 
 	pool_page_hash_remove (page);
@@ -259,20 +219,23 @@ static page_t *
 pool_get_page (size_t size)
 {
 	cell_type_t cell_idx;
-	pool_t *pool;
+	list_t *l;
 	page_t *page;
 
 	cell_idx = REQ_2_CELL_TYPE (size);
 
 	/* First we lookup used page table. */
 	if (g_page_table[cell_idx] != NULL) {
-		return g_page_table[cell_idx];
+		return (page_t *) g_page_table[cell_idx];
 	}
 
 	/* Then, we pick up an empty page in an avaliable pool. */
-	for (pool = g_pool_list; pool; pool = pool->next) {
+	for (l = g_pool_list; l; l = list_next (l)) {
+		pool_t *pool;
+
+		pool = (pool_t *) l;
 		if (pool->free != NULL) {
-			page = pool->free;
+			page = (page_t *) pool->free;
 			pool_page_init (page, (cell_type_t) cell_idx);
 			pool_empty_page_out (pool, (cell_type_t) cell_idx);
 			pool->used++;
@@ -283,10 +246,10 @@ pool_get_page (size_t size)
 
 	/* No empty page? Allocte a new pool! */
 	pool_new (NULL);
-	page = g_pool_list->free;
+	page = (page_t *) ((pool_t *) g_pool_list)->free;
 	pool_page_init (page, (cell_type_t) cell_idx);
-	pool_empty_page_out (g_pool_list, (cell_type_t) cell_idx);
-	g_pool_list->used++;
+	pool_empty_page_out ((pool_t *) g_pool_list, (cell_type_t) cell_idx);
+	((pool_t *) g_pool_list)->used++;
 
 	return page;
 }
@@ -295,6 +258,7 @@ static void *
 pool_get_cell (page_t *page)
 {
 	void *cell;
+	cell_type_t t;
 
 	/* It should have a valid cell. */
 	if (page->free == NULL) {
@@ -307,18 +271,9 @@ pool_get_cell (page_t *page)
 	page->free = *((void **) cell);
 	/* Full? */
 	if (page->free == NULL) {
-		if (page->next != NULL) {
-			page->next->prev = page->prev;
-		}
-		if (page->prev != NULL) {
-			page->prev->next = page->next;
-		}
-		g_page_table[page->t] = page->next;
-		page->next = g_full_table[page->t];
-		page->prev = NULL;
-		if (g_full_table[page->t] != NULL) {
-			g_full_table[page->t]->prev = page;
-		}
+		t = page->t;
+		g_page_table[t] = list_remove (g_page_table[t], (list_t *) page);
+		g_full_table[t] = list_append (g_full_table[t], (list_t *) page);
 	}
 
 	return cell;
@@ -355,18 +310,12 @@ static int
 pool_is_pool_cell (void *bl)
 {
 	page_t *page;
-	page_hash_t *n;
+	int h;
 
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
-	n = g_page_hash[(intptr_t) page % PAGE_HASH_BUCKET];
-	while (n) {
-		if (n->p == page) {
-			return 1;
-		}
-		n = n->next;
-	}
+	h = (intptr_t) page % PAGE_HASH_BUCKET;
 
-	return 0;
+	return list_find (g_page_hash[h], (list_t *) page);
 }
 
 static void
@@ -375,18 +324,8 @@ pool_page_full_2_used (page_t *page)
 	cell_type_t t;
 
 	t = page->t;
-	if (page->next != NULL) {
-		page->next->prev = page->prev;
-	}
-	if (page->prev != NULL) {
-		page->prev->next = page->next;
-	}
-	page->next = g_page_table[t];
-	page->prev = NULL;
-	if (g_page_table[t] != NULL) {
-		g_page_table[t]->prev = page;
-	}
-	g_page_table[t] = page;
+	g_full_table[t] = list_remove (g_full_table[t], (list_t *) page);
+	g_page_table[t] = list_append (g_page_table[t], (list_t *) page);
 }
 
 void
@@ -419,38 +358,36 @@ pool_free (void *bl)
 	}
 }
 
+static void
+pool_add_cycle (void *data, void *udata)
+{
+	pool_t *p;
+
+	UNUSED (udata);
+	p = (pool_t *) data;
+	
+	p->cycle++;
+}
+
+static int
+pool_need_recycle (void *data, void *udata)
+{
+	pool_t *p;
+
+	UNUSED (udata);
+	p = (pool_t *) data;
+	
+	return p->cycle > RECYCLE_CYCLE;
+}
+
 void
 pool_recycle ()
 {
 	/* This is called by interperter, when a pool is being empty for
 	 * more than RECYCLE_CYCLE cycles, we recycle it. */
-	pool_t *p;
+	list_foreach (g_pool_list, pool_add_cycle, NULL);
 
-	p = g_pool_list;
-	while (p != NULL) {
-		p->cycle++;
-		if (p->cycle > RECYCLE_CYCLE) {
-			pool_t *t;
-
-			t = p->next;
-			if (p->next != NULL) {
-				p->next->prev = p->prev;
-			}
-			if (p->prev != NULL) {
-				p->prev->next = p->next;
-			}
-			else {
-				g_pool_list = p->next;
-			}
-			p = t;
-
-			free (p);
-
-			continue;
-		}
-
-		p = p->next;
-	}
+	g_pool_list = list_cleanup (g_pool_list, pool_need_recycle, NULL);
 }
 
 void

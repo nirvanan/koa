@@ -21,6 +21,8 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+#include "koa.h"
+
 void
 fatal_error (const char *error);
 

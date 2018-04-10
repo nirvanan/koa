@@ -99,8 +99,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_koa_OBJECTS = error.$(OBJEXT) hash.$(OBJEXT) main.$(OBJEXT) \
-	object.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT)
+am_koa_OBJECTS = error.$(OBJEXT) hash.$(OBJEXT) list.$(OBJEXT) \
+	main.$(OBJEXT) object.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -258,6 +258,8 @@ koa_SOURCES = error.h \
 error.c \
 hash.h \
 hash.c \
+list.h \
+list.c \
 main.c \
 object.h \
 object.c \
@@ -354,6 +356,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool.Po@am__quote@

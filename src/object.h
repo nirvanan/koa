@@ -21,6 +21,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include "koa.h"
 #include "str.h"
 
 typedef unsigned char byte_t;

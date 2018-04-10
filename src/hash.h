@@ -23,6 +23,8 @@
 
 #include <stddef.h>
 
+#include "koa.h"
+
 typedef int (*hash_f) (void *data);
 typedef int (*hash_eq_f) (void *value, void *data);
 typedef int (*hash_test_f) (void *value, void *hd);

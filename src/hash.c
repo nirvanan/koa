@@ -51,7 +51,7 @@ hash_add (hash_t *ha, void *data)
 	idx = ha->hf (data) % ha->bu;
 	/* Check whether there is already a node presenting the same value. */
 	for (node = ha->h[idx]; node; node = node->next) {
-		if (ha->ef (node, data)) {
+		if (ha->ef (node->value, data)) {
 			return;
 		}
 	}
@@ -73,7 +73,7 @@ hash_remove (hash_t *ha, void *data)
 	idx = ha->hf (data) % ha->bu;
 	node = ha->h[idx];
 	while (node != NULL) {
-		if (ha->ef (node, data)) {
+		if (ha->ef (node->value, data)) {
 			if (node->next != NULL) {
 				node->next->prev = node->prev;
 			}
@@ -119,7 +119,7 @@ hash_find (hash_t *ha, void *data)
 	idx = ha->hf (data) % ha->bu;
 	node = ha->h[idx];
 	while (node != NULL) {
-		if (ha->ef (node, data)) {
+		if (ha->ef (node->value, data)) {
 			return 1;
 		}
 

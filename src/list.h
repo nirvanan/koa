@@ -1,5 +1,5 @@
 /*
- * pool.h
+ * list.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,23 +18,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef POOL_H
-#define POOL_H
-
-#include <stddef.h>
+#ifndef LIST_H
+#define LIST_H
 
 #include "koa.h"
 
-void *
-pool_alloc (size_t size);
+typedef int (*list_del_f) (void *data, void *udata);
+
+typedef void (*list_for_f) (void *data, void *udata);
+
+typedef struct list_s
+{
+	struct list_s *prev;
+	struct list_s *next;
+} list_t;
+
+list_t *
+list_append (list_t *list, list_t *n);
+
+list_t *
+list_remove (list_t *list, list_t *n);
+
+int
+list_find (list_t *list, void *data);
+
+list_t *
+list_cleanup (list_t *list, list_del_f df, void *udata);
 
 void
-pool_free (void *bl);
+list_foreach (list_t *list, list_for_f ff, void *udata);
 
-void
-pool_init ();
+list_t *
+list_next (list_t *list);
 
-void
-pool_recycle ();
+list_t *
+list_prev (list_t *list);
 
-#endif /* POOL_H */
+#endif /* LIST_H */
