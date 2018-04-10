@@ -6,6 +6,7 @@ koa_SOURCES = error.h \
 error.c \
 hash.h \
 hash.c \
+koa.h \
 list.h \
 list.c \
 main.c \
