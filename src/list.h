@@ -23,6 +23,10 @@
 
 #include "koa.h"
 
+#define LIST_NEXT(x) (((list_t *)x)->next)
+
+#define LIDT_PREV(x) (((list_t *)x)->prev)
+
 typedef int (*list_del_f) (void *data, void *udata);
 
 typedef void (*list_for_f) (void *data, void *udata);
@@ -47,11 +51,5 @@ list_cleanup (list_t *list, list_del_f df, void *udata);
 
 void
 list_foreach (list_t *list, list_for_f ff, void *udata);
-
-list_t *
-list_next (list_t *list);
-
-list_t *
-list_prev (list_t *list);
 
 #endif /* LIST_H */

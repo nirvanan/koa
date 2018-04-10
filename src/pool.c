@@ -230,7 +230,7 @@ pool_get_page (size_t size)
 	}
 
 	/* Then, we pick up an empty page in an avaliable pool. */
-	for (l = g_pool_list; l; l = list_next (l)) {
+	for (l = g_pool_list; l; l = LIST_NEXT (l)) {
 		pool_t *pool;
 
 		pool = (pool_t *) l;

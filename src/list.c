@@ -56,7 +56,7 @@ list_find (list_t *list, void *data)
 	list_t *l;
    
 	l = list;
-	while (l) {
+	while (l != NULL) {
 		if ((void *) l == data) {
 			return 1;
 		}
@@ -96,14 +96,3 @@ list_foreach (list_t *list, list_for_f ff, void *udata)
 	}
 }
 
-list_t *
-list_next (list_t *list)
-{
-	return list->next;
-}
-
-list_t *
-list_prev (list_t *list)
-{
-	return list->prev;
-}
