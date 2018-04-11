@@ -8,6 +8,8 @@ error.c \
 error.h \
 hash.c \
 hash.h \
+intobject.c \
+intobject.h \
 koa.h \
 list.c \
 list.h \
