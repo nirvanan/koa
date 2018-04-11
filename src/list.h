@@ -23,6 +23,8 @@
 
 #include "koa.h"
 
+#define LIST(x) ((list_t *)x)
+
 #define LIST_NEXT(x) (((list_t *)x)->next)
 
 #define LIDT_PREV(x) (((list_t *)x)->prev)

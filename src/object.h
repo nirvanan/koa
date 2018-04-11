@@ -22,11 +22,11 @@
 #define OBJECT_H
 
 #include "koa.h"
-#include "str.h"
 
 typedef unsigned char byte_t;
 
 typedef enum object_type_e {
+	OBJECT_TYPE_NONE = 0x00,
 	OBJECT_TYPE_BYTE = 0x01,
 	OBJECT_TYPE_INT = 0x02,
 	OBJECT_TYPE_FLOAT = 0x04,
@@ -41,42 +41,52 @@ typedef struct object_head_s
 {
 	int ref;
 	object_type_t type;
+	void *ops;
+	void *udata;
 } object_head_t;
 
 typedef struct object_s
 {
 	object_head_t head;
-	union
-	{
-		byte_t b;
-		int i;
-		float f;
-		double d;
-		str_t *s;
-	} value;
-	void *udata;
 } object_t;
 
-object_t *
-object_byte_new (byte_t b, void *udata);
+typedef object_t *(*una_op_f) (object_t *obj);
+
+typedef void (*void_una_op_f) (object_t *obj);
+
+typedef object_t *(*bin_op_f) (object_t *obj1, object_t *obj2); 
+
+typedef object_t *(*ter_op_f) (object_t *obj1, object_t *obj2, object_t *ob3);
+
+typedef struct object_opset_s
+{
+	una_op_f not;
+	void_una_op_f free;
+	void_una_op_f dump;
+	una_op_f neg;
+	una_op_f call;
+	bin_op_f add;
+	bin_op_f sub;
+	bin_op_f mul;
+	bin_op_f mod;
+	bin_op_f div;
+	bin_op_f and;
+	bin_op_f or;
+	bin_op_f xor;
+	bin_op_f lshift;
+	bin_op_f rshift;
+	bin_op_f cmp;
+	bin_op_f index;
+} object_opset_t;
 
 object_t *
-object_int_new (const int i, void *udata);
-
-object_t *
-object_float_new (const float f, void *udata);
-
-object_t *
-object_double_new (const double d, void *udata);
+object_new (void *udata);
 
 void
 object_ref (object_t *ob);
 
 void
 object_unref (object_t *ob);
-
-object_t *
-object_str_new (const char *s, void *udata);
 
 void
 object_free (object_t *ob);

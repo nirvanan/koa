@@ -127,7 +127,7 @@ pool_page_hash_add (page_t *page)
 		fatal_error ("no enough memory.");
 	}
 	ph->p = page;
-	g_page_hash[b] = list_append (g_page_hash[b], (list_t *) ph);
+	g_page_hash[b] = list_append (g_page_hash[b], LIST (ph));
 	page->hash = ph;
 }
 
@@ -140,7 +140,7 @@ pool_page_hash_remove (page_t *page)
 
 	b = (intptr_t) page % PAGE_HASH_BUCKET;
 	ph = (page_hash_t *) page->hash;
-	g_page_hash[b] = list_remove (g_page_hash[b], (list_t *) ph);
+	g_page_hash[b] = list_remove (g_page_hash[b], LIST (ph));
 
 	pool_free (ph);
 }
@@ -173,7 +173,7 @@ pool_new (void *extra)
 		page_t *page;
 		
 		page = (page_t *) p;
-		new_pool->free = list_append (new_pool->free, (list_t *) page);
+		new_pool->free = list_append (new_pool->free, LIST (page));
 		page->pool = new_pool;
 	}
 
@@ -181,7 +181,7 @@ pool_new (void *extra)
 	new_pool->extra = extra;
 
 	/* Insert current pool to list. */
-	g_pool_list = list_append (g_pool_list, (list_t *) new_pool);
+	g_pool_list = list_append (g_pool_list, LIST (new_pool));
 }
 
 static void
@@ -190,9 +190,9 @@ pool_empty_page_out (pool_t *pool, cell_type_t t)
 	page_t *page;
 
 	page = (page_t *) pool->free;
-	pool->free = list_remove (pool->free, (list_t *) page);
+	pool->free = list_remove (pool->free, LIST (page));
 	pool->used++;
-	g_page_table[t] = list_append (g_page_table[t], (list_t *) page);
+	g_page_table[t] = list_append (g_page_table[t], LIST (page));
 
 	pool_page_hash_add (page);
 }
@@ -203,8 +203,8 @@ pool_empty_page_in (pool_t *pool, page_t *page)
 	cell_type_t t;
 	
 	t = page->t;
-	g_page_table[t] = list_remove (g_page_table[t], (list_t *) page);
-	pool->free = list_append (pool->free, (list_t *) page);
+	g_page_table[t] = list_remove (g_page_table[t], LIST (page));
+	pool->free = list_append (pool->free, LIST (page));
 	pool->used--;
 
 	pool_page_hash_remove (page);
@@ -221,6 +221,7 @@ pool_get_page (size_t size)
 	cell_type_t cell_idx;
 	list_t *l;
 	page_t *page;
+	pool_t *first_pool;
 
 	cell_idx = REQ_2_CELL_TYPE (size);
 
@@ -236,8 +237,8 @@ pool_get_page (size_t size)
 		pool = (pool_t *) l;
 		if (pool->free != NULL) {
 			page = (page_t *) pool->free;
-			pool_page_init (page, (cell_type_t) cell_idx);
-			pool_empty_page_out (pool, (cell_type_t) cell_idx);
+			pool_page_init (page, cell_idx);
+			pool_empty_page_out (pool, cell_idx);
 			pool->used++;
 
 			return page;
@@ -246,10 +247,11 @@ pool_get_page (size_t size)
 
 	/* No empty page? Allocte a new pool! */
 	pool_new (NULL);
-	page = (page_t *) ((pool_t *) g_pool_list)->free;
-	pool_page_init (page, (cell_type_t) cell_idx);
-	pool_empty_page_out ((pool_t *) g_pool_list, (cell_type_t) cell_idx);
-	((pool_t *) g_pool_list)->used++;
+	first_pool = (pool_t *) g_pool_list;
+	page = (page_t *) first_pool->free;
+	pool_page_init (page, cell_idx);
+	pool_empty_page_out (first_pool, cell_idx);
+	first_pool->used++;
 
 	return page;
 }
@@ -272,8 +274,8 @@ pool_get_cell (page_t *page)
 	/* Full? */
 	if (page->free == NULL) {
 		t = page->t;
-		g_page_table[t] = list_remove (g_page_table[t], (list_t *) page);
-		g_full_table[t] = list_append (g_full_table[t], (list_t *) page);
+		g_page_table[t] = list_remove (g_page_table[t], LIST (page));
+		g_full_table[t] = list_append (g_full_table[t], LIST (page));
 	}
 
 	return cell;
@@ -315,7 +317,7 @@ pool_is_pool_cell (void *bl)
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 	h = (intptr_t) page % PAGE_HASH_BUCKET;
 
-	return list_find (g_page_hash[h], (list_t *) page);
+	return list_find (g_page_hash[h], LIST (page));
 }
 
 static void
@@ -324,8 +326,8 @@ pool_page_full_2_used (page_t *page)
 	cell_type_t t;
 
 	t = page->t;
-	g_full_table[t] = list_remove (g_full_table[t], (list_t *) page);
-	g_page_table[t] = list_append (g_page_table[t], (list_t *) page);
+	g_full_table[t] = list_remove (g_full_table[t], LIST (page));
+	g_page_table[t] = list_append (g_page_table[t], LIST (page));
 }
 
 void

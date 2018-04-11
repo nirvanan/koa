@@ -24,6 +24,7 @@
 #include <stddef.h>
 
 #include "koa.h"
+#include "list.h"
 
 typedef int (*hash_f) (void *data);
 typedef int (*hash_eq_f) (void *value, void *data);
@@ -31,14 +32,13 @@ typedef int (*hash_test_f) (void *value, void *hd);
 
 typedef struct hash_node_s
 {
-	struct hash_node_s *prev;
-	struct hash_node_s *next;
+	list_t link;
 	void *value;
 } hash_node_t;
 
 typedef struct hash_s
 {
-	hash_node_t **h;
+	list_t **h;
 	hash_f hf;
 	hash_eq_f ef;
 	hash_test_f tf;
