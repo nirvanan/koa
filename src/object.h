@@ -27,14 +27,15 @@ typedef unsigned char byte_t;
 
 typedef enum object_type_e {
 	OBJECT_TYPE_NONE = 0x00,
-	OBJECT_TYPE_BYTE = 0x01,
-	OBJECT_TYPE_INT = 0x02,
+	OBJECT_TYPE_BOOL = 0x01,
+	OBJECT_TYPE_BYTE = 0x02,
+	OBJECT_TYPE_INT = 0x03,
 	OBJECT_TYPE_FLOAT = 0x04,
-	OBJECT_TYPE_DOUBLE = 0x08,
-	OBJECT_TYPE_STR = 0x10,
-	OBJECT_TYPE_VEC = 0x20,
-	OBJECT_TYPE_DICT = 0x40,
-	OBJECT_TYPE_RAW = 0x80,
+	OBJECT_TYPE_DOUBLE = 0x05,
+	OBJECT_TYPE_STR = 0x06,
+	OBJECT_TYPE_VEC = 0x07,
+	OBJECT_TYPE_DICT = 0x08,
+	OBJECT_TYPE_RAW = 0x09,
 } object_type_t;
 
 typedef struct object_head_s

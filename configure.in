@@ -23,6 +23,7 @@ PKG_PROG_PKG_CONFIG
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 # Checks for library functions.

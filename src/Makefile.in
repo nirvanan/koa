@@ -99,8 +99,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_koa_OBJECTS = error.$(OBJEXT) hash.$(OBJEXT) list.$(OBJEXT) \
-	main.$(OBJEXT) object.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT)
+am_koa_OBJECTS = boolobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
+	list.$(OBJEXT) main.$(OBJEXT) object.$(OBJEXT) pool.$(OBJEXT) \
+	str.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -254,20 +255,22 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = 
 AM_LDFLAGS = 
-koa_SOURCES = error.h \
+koa_SOURCES = boolobject.c \
+boolobject.h \
 error.c \
-hash.h \
+error.h \
 hash.c \
+hash.h \
 koa.h \
-list.h \
 list.c \
+list.h \
 main.c \
-object.h \
 object.c \
-pool.h \
+object.h \
 pool.c \
-str.h \
-str.c
+pool.h \
+str.c \
+str.h
 
 all: all-am
 
@@ -355,6 +358,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boolobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@

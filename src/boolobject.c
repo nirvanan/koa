@@ -1,5 +1,5 @@
 /*
- * object.c
+ * boolobject.c
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -20,20 +20,21 @@
 
 #include <stdio.h>
 
-#include "object.h"
+#include "boolobject.h"
 #include "pool.h"
 #include "error.h"
-#include "boolobject.h"
 
-/* Note that the 'null' object is shared everywhere. */
-static object_t *g_null_object;
+/* Note that the 'true' and 'false' objects are shared everywhere. */
+static object_t *g_true_object;
+static object_t *g_false_object;
 
 /* Object ops. */
-static object_t *object_op_compare (object_t *obj1, object_t *obj2);
+static object_t *boolobject_op_not (object_t *obj);
+static object_t *boolobject_op_compare (object_t *obj1, object_t *obj2);
 
 static object_opset_t g_object_ops =
 {
-	NULL, /* Not. */
+	boolobject_op_not, /* Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
 	NULL, /* Negative. */
@@ -48,15 +49,26 @@ static object_opset_t g_object_ops =
 	NULL, /* Bitwise xor. */
 	NULL, /* Left shift. */
 	NULL, /* Right shift. */
-	object_op_compare, /* Comparation. */
+	boolobject_op_compare, /* Comparation. */
 	NULL  /* Index. */
 };
 
+/* Not. */
+static object_t *
+boolobject_op_not (object_t *obj)
+{
+	if (obj == g_false_object) {
+		return g_true_object;
+	}
+
+	return g_false_object;
+}
+
 /* Comparation. */
 static object_t *
-object_op_compare (object_t *obj1, object_t *obj2)
+boolobject_op_compare (object_t *obj1, object_t *obj2)
 {
-	/* Since there is only one 'null' object, comparing
+	/* Since there is only one 'true' or 'false' object, comparing
 	 * address is enough. */
 	if (obj1 == obj2) {
 		return boolobject_new (true, NULL);
@@ -67,62 +79,33 @@ object_op_compare (object_t *obj1, object_t *obj2)
 
 /* This object is known as 'null'. */
 object_t *
-object_new (void *udata)
+boolobject_new (bool val, void *udata)
 {
-	object_t *ob;
+	boolobject_t *ob;
 
-	if (g_null_object != NULL) {
-		return g_null_object;
+	if (val && g_true_object != NULL) {
+		return g_true_object;
 	}
-	ob = (object_t *) pool_alloc (sizeof (object_t));
+	else if (!val && g_false_object != NULL) {
+		return g_false_object;
+	}
+	ob = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
 	ob->head.ref = 0;
-	ob->head.type = OBJECT_TYPE_NONE;
+	ob->head.type = OBJECT_TYPE_BOOL;
 	ob->head.ops = &g_object_ops;
 	ob->head.udata = udata;
+	ob->val = val;
 
-	return ob;
+	return (object_t *) ob;
 }
 
 void
-object_ref (object_t *ob)
+boolobject_init ()
 {
-	ob->head.ref++;
-}
+	/* This two objects should never be freed. */
+	g_true_object = boolobject_new (true, NULL);
+	object_ref (g_true_object);
 
-void
-object_unref (object_t *ob)
-{
-	ob->head.ref--;
-	if (ob->head.ref <= 0) {
-		object_free (ob);
-	}
-}
-
-void
-object_free (object_t *ob)
-{
-	void_una_op_f free_fun;
-
-	/* Refed objects should not be freed. */
-	if (ob->head.ref > 0) {
-		return;
-	}
-
-	/* Call object specifiled cleanup routine. */
-	free_fun = ((object_opset_t *) ob->head.ops)->free;
-	if (free_fun != NULL) {
-		free_fun (ob);
-	}
-
-	pool_free (ob);
-}
-
-void
-object_init ()
-{
-	g_null_object = object_new (NULL);
-	object_ref (g_null_object);
-	
-	/* Init some types of objects. */
-	boolobject_init ();
+	g_false_object = boolobject_new (false, NULL);
+	object_ref (g_false_object);
 }

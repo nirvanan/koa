@@ -2,17 +2,19 @@
 bin_PROGRAMS = koa
 AM_CPPFLAGS =
 AM_LDFLAGS =
-koa_SOURCES = error.h \
+koa_SOURCES = boolobject.c \
+boolobject.h \
 error.c \
-hash.h \
+error.h \
 hash.c \
+hash.h \
 koa.h \
-list.h \
 list.c \
+list.h \
 main.c \
-object.h \
 object.c \
-pool.h \
+object.h \
 pool.c \
-str.h \
-str.c
+pool.h \
+str.c \
+str.h
