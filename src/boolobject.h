@@ -35,6 +35,9 @@ typedef struct boolobject_s
 object_t *
 boolobject_new (bool val, void *udata);
 
+bool
+boolobject_get_value (object_t *obj);
+
 void
 boolobject_init ();
 

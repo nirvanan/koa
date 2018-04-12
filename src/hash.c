@@ -58,7 +58,7 @@ hash_add (hash_t *ha, void *data)
 		}
 	}
 	node = pool_alloc (sizeof (hash_node_t));
-	ha->h[idx] = list_append (ha->h[idx], (list_t *) node);
+	ha->h[idx] = list_append (ha->h[idx], LIST (node));
 }
 
 void

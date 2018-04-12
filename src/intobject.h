@@ -33,6 +33,9 @@ typedef struct intobject_s
 object_t *
 intobject_new (int val, void *udata);
 
+int
+intobject_get_value (object_t *obj);
+
 void
 intobject_init ();
 

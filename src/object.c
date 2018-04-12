@@ -33,7 +33,7 @@ static object_t *object_op_compare (object_t *obj1, object_t *obj2);
 
 static object_opset_t g_object_ops =
 {
-	NULL, /* Not. */
+	NULL, /* Logic Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
 	NULL, /* Negative. */
@@ -46,6 +46,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Bitwise and. */
 	NULL, /* Bitwise or. */
 	NULL, /* Bitwise xor. */
+	NULL, /* Logic and. */
+	NULL, /* Logic or. */
 	NULL, /* Left shift. */
 	NULL, /* Right shift. */
 	object_op_compare, /* Comparation. */
@@ -69,57 +71,58 @@ object_op_compare (object_t *obj1, object_t *obj2)
 object_t *
 object_new (void *udata)
 {
-	object_t *ob;
+	object_t *obj;
 
 	if (g_null_object != NULL) {
 		return g_null_object;
 	}
-	ob = (object_t *) pool_alloc (sizeof (object_t));
-	ob->head.ref = 0;
-	ob->head.type = OBJECT_TYPE_NONE;
-	ob->head.ops = &g_object_ops;
-	ob->head.udata = udata;
+	obj = (object_t *) pool_alloc (sizeof (object_t));
+	obj->head.ref = 0;
+	obj->head.type = OBJECT_TYPE_NONE;
+	obj->head.ops = &g_object_ops;
+	obj->head.udata = udata;
 
-	return ob;
+	return obj;
 }
 
 void
-object_ref (object_t *ob)
+object_ref (object_t *obj)
 {
-	ob->head.ref++;
+	obj->head.ref++;
 }
 
 void
-object_unref (object_t *ob)
+object_unref (object_t *obj)
 {
-	ob->head.ref--;
-	if (ob->head.ref <= 0) {
-		object_free (ob);
+	obj->head.ref--;
+	if (obj->head.ref <= 0) {
+		object_free (obj);
 	}
 }
 
 void
-object_free (object_t *ob)
+object_free (object_t *obj)
 {
 	void_una_op_f free_fun;
 
 	/* Refed objects should not be freed. */
-	if (ob->head.ref > 0) {
+	if (obj->head.ref > 0) {
 		return;
 	}
 
 	/* Call object specifiled cleanup routine. */
-	free_fun = ((object_opset_t *) ob->head.ops)->free;
+	free_fun = ((object_opset_t *) obj->head.ops)->free;
 	if (free_fun != NULL) {
-		free_fun (ob);
+		free_fun (obj);
 	}
 
-	pool_free (ob);
+	pool_free (obj);
 }
 
 void
 object_init ()
 {
+	/* The 'null' object should never be freed. */
 	g_null_object = object_new (NULL);
 	object_ref (g_null_object);
 	

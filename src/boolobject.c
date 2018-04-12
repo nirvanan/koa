@@ -34,21 +34,23 @@ static object_t *boolobject_op_compare (object_t *obj1, object_t *obj2);
 
 static object_opset_t g_object_ops =
 {
-	boolobject_op_not, /* Not. */
+	boolobject_op_not, /* Logic Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
-	NULL, /* Negative. */
+	boolobject_op_neg, /* Negative. */
 	NULL, /* Call. */
-	NULL, /* Addition. */
-	NULL, /* Substraction. */
-	NULL, /* Multiplication. */
-	NULL, /* Mod. */
-	NULL, /* division. */
-	NULL, /* Bitwise and. */
-	NULL, /* Bitwise or. */
-	NULL, /* Bitwise xor. */
-	NULL, /* Left shift. */
-	NULL, /* Right shift. */
+	boolobject_op_add, /* Addition. */
+	boolobject_op_sub, /* Substraction. */
+	boolobject_op_mul, /* Multiplication. */
+	boolobject_op_mod, /* Mod. */
+	boolobject_op_div, /* division. */
+	boolobject_op_and, /* Bitwise and. */
+	boolobject_op_or, /* Bitwise or. */
+	boolobject_op_xor, /* Bitwise xor. */
+	boolobject_op_land, /* Logic and. */
+	boolobject_op_lor, /* Logic or. */
+	boolobject_op_lshift, /* Left shift. */
+	boolobject_op_rshift, /* Right shift. */
 	boolobject_op_compare, /* Comparation. */
 	NULL  /* Index. */
 };
@@ -77,7 +79,6 @@ boolobject_op_compare (object_t *obj1, object_t *obj2)
 	return boolobject_new (false, NULL);
 }
 
-/* This object is known as 'null'. */
 object_t *
 boolobject_new (bool val, void *udata)
 {
@@ -97,6 +98,16 @@ boolobject_new (bool val, void *udata)
 	ob->val = val;
 
 	return (object_t *) ob;
+}
+
+bool
+boolobject_get_value (object_t *obj)
+{
+	boolobject_t *ob;
+
+	ob = (boolobject_t *) obj;
+
+	return ob->val;
 }
 
 void

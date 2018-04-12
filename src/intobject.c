@@ -23,6 +23,9 @@
 #include "intobject.h"
 #include "pool.h"
 #include "error.h"
+#include "boolobject.h"
+#include "byteobject.h"
+#include "longobject.h"
 
 #define INT_CACHE_MIN -1000
 #define INT_CACHE_MAX 10000
@@ -33,11 +36,24 @@ static object_t *g_int_cache[INT_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *intobject_op_not (object_t *obj);
+static object_t *intobject_op_neg (object_t *obj);
+static object_t *intobject_op_add (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_sub (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_mul (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_mod (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_div (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_and (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_or (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_xor (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_land (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_lor (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_lshift (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_rshift (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_compare (object_t *obj1, object_t *obj2);
 
 static object_opset_t g_object_ops =
 {
-	intobject_op_not, /* Not. */
+	intobject_op_not, /* Logic Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
 	intobject_op_neg, /* Negative. */
@@ -46,45 +62,191 @@ static object_opset_t g_object_ops =
 	intobject_op_sub, /* Substraction. */
 	intobject_op_mul, /* Multiplication. */
 	intobject_op_mod, /* Mod. */
-	intobject_op_div, /* division. */
+	intobject_op_div, /* Division. */
 	intobject_op_and, /* Bitwise and. */
-	intobject_, /* Bitwise or. */
-	NULL, /* Bitwise xor. */
-	NULL, /* Left shift. */
-	NULL, /* Right shift. */
-	boolobject_op_compare, /* Comparation. */
+	intobject_op_or, /* Bitwise or. */
+	intobject_op_xor, /* Bitwise xor. */
+	intobject_op_land, /* Logic and. */
+	intobject_op_lor, /* Logic or. */
+	intobject_op_lshift, /* Left shift. */
+	intobject_op_rshift, /* Right shift. */
+	intobject_op_compare, /* Comparation. */
 	NULL  /* Index. */
 };
 
-/* Not. */
+/* Logic Not. */
 static object_t *
-boolobject_op_not (object_t *obj)
+intobject_op_not (object_t *obj)
 {
-	if (obj == g_false_object) {
-		return g_true_object;
+	int val;
+
+	val = intobject_get_value (obj);
+	if (val == 0) {
+		return boolobject_new (true, NULL);
 	}
 
-	return g_false_object;
+	return boolobject_new (false, NULL);
 }
+
+/* Negative. */
+static object_t *
+intobject_op_neg (object_t *obj)
+{
+	int val;
+
+	val = intobject_get_value (obj);
+
+	return intobject_new (-val, NULL);
+}
+
+static int
+intobject_get_lower_type_value (object_t *obj)
+{
+	if (OBJECT_TYPE (obj2) == OBJECT_TYPE_BOOL) {
+		return (int) boolobject_get_value (obj2);
+	}
+	else if (OBJECT_TYPE (obj2) == OBJECT_TYPE_BYTE) {
+		return (int) byteobject_get_value (obj2);
+	}
+	else if (OBJECT_TYPE (obj2) == OBJECT_TYPE_INT) {
+		return intobject_get_value (obj2);
+	}
+
+	/* Unreachable. */
+	return 0;
+}
+
+statoc object_t *
+intobject_arithmetical (object_t *obj1, object_t *obj2, char op)
+{
+	int val1;
+	int val2;
+	object_t *obj;
+
+	if (!INTEGER_TYPE (obj2)) {
+		error ("invalid right operand");
+
+		return NULL;
+	}
+
+	val1 = intobject_get_value (obj1);
+	if (OBJECT_TYPE (obj2) == OBJECT_TYPE_LONG) {
+		long long_val2;
+
+		longval2 = longobject_get_value (obj2);
+		switch (op) {
+			case '+':
+				obj = longobject_new (val1 + long_val2, NULL);
+				break;
+			case '-':
+				obj = longobject_new (val1 - long_val2, NULL);
+				break;
+			case '*':
+				obj = longobject_new (val1 * long_val2, NULL);
+				break;
+			case '/':
+				obj = longobject_new (val1 / long_val2, NULL);
+				break;
+			case '%':
+				obj = longobject_new (val1 % long_val2, NULL);
+				break;
+			case '&':
+				obj = longobject_new (val1 & long_val2, NULL);
+				break;
+			case '|':
+				obj = longobject_new (val1 | long_val2, NULL);
+				break;
+			case '^':
+				obj = longobject_new (val1 ^ long_val2, NULL);
+				break;
+		}
+	}
+	else {
+		val2 = intobject_get_lower_type_value (obj2);
+		switch (op) {
+			case '+':
+				obj = intobject_new (val1 + val2, NULL);
+				break;
+			case '-':
+				obj = intobject_new (val1 - val2, NULL);
+				break;
+			case '*':
+				obj = intobject_new (val1 * val2, NULL);
+				break;
+			case '/':
+				obj = intobject_new (val1 / val2, NULL);
+				break;
+			case '%':
+				obj = intobject_new (val1 % val2, NULL);
+				break;
+			case '&':
+				obj = intobject_new (val1 & val2, NULL);
+				break;
+			case '|':
+				obj = intobject_new (val1 | val2, NULL);
+				break;
+			case '^':
+				obj = intobject_new (val1 ^ val2, NULL);
+				break;
+		}
+	}
+
+	return obj;
+}
+
+int
+intobject_right_operand_is_zero (object_t *t)
+{
+}
+
+/* Addition. */
+static object_t *
+intobject_op_add (object_t *obj1, object_t *obj2)
+{
+	return intobject_arithmetical (obj1, obj2, '+');
+}
+
+/* Substraction. */
+static object_t *
+intobject_op_sub (object_t *obj1, object_t *obj2)
+{
+	return intobject_arithmetical (obj1, obj2, '-');
+}
+
+/* Multiplication. */
+static object_t *
+intobject_op_mul (object_t *obj1, object_t *obj2)
+{
+	return intobject_arithmetical (obj1, obj2, '*');
+}
+
+/* Mod. */
+static object_t *
+intobject_op_mod (object_t *obj1, object_t *obj2)
+{
+	
+	return intobject_arithmetical (obj1, obj2, '%');
+}
+
+/* Division. */
 
 /* Comparation. */
 static object_t *
-boolobject_op_compare (object_t *obj1, object_t *obj2)
+intobject_op_compare (object_t *obj1, object_t *obj2)
 {
 	/* Since there is only one 'true' or 'false' object, comparing
 	 * address is enough. */
 	if (obj1 == obj2) {
-		return boolobject_new (true, NULL);
+		return intobject_new (true, NULL);
 	}
 	
-	return boolobject_new (false, NULL);
+	return intobject_new (false, NULL);
 }
 
-/* This object is known as 'null'. */
 object_t *
-boolobject_new (bool val, void *udata)
+intobject_new (int val, void *udata)
 {
-	boolobject_t *ob;
+	intobject_t *ob;
 
 	if (val && g_true_object != NULL) {
 		return g_true_object;
@@ -92,7 +254,7 @@ boolobject_new (bool val, void *udata)
 	else if (!val && g_false_object != NULL) {
 		return g_false_object;
 	}
-	ob = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
+	ob = (intobject_t *) pool_alloc (sizeof (intobject_t));
 	ob->head.ref = 0;
 	ob->head.type = OBJECT_TYPE_BOOL;
 	ob->head.ops = &g_object_ops;
@@ -102,13 +264,17 @@ boolobject_new (bool val, void *udata)
 	return (object_t *) ob;
 }
 
-void
-boolobject_init ()
+int
+intobject_get_value (object_t *obj)
 {
-	/* This two objects should never be freed. */
-	g_true_object = boolobject_new (true, NULL);
-	object_ref (g_true_object);
+	intobject_t *ob;
 
-	g_false_object = boolobject_new (false, NULL);
-	object_ref (g_false_object);
+	ob = (intobject_t *) obj;
+
+	return ob->val;
+}
+
+void
+intobject_init ()
+{
 }

@@ -23,6 +23,15 @@
 
 #include "koa.h"
 
+#define INTEGER_TYPE(x) (x->head.type == OBJECT_TYPE_BOOL\
+	|| x->head.type == OBJECT_TYPE_BYTE\
+	|| x->head.type == OBJECT_TYPE_INT\
+	|| x->head.type == OBJECT_TYPE_LONG)
+
+#define TYPE_NAME(x) (g_type_name[x->head.type])
+
+#define OBJECT_TYPE(x) (x->head.type)
+
 typedef unsigned char byte_t;
 
 typedef enum object_type_e {
@@ -30,12 +39,13 @@ typedef enum object_type_e {
 	OBJECT_TYPE_BOOL = 0x01,
 	OBJECT_TYPE_BYTE = 0x02,
 	OBJECT_TYPE_INT = 0x03,
-	OBJECT_TYPE_FLOAT = 0x04,
-	OBJECT_TYPE_DOUBLE = 0x05,
-	OBJECT_TYPE_STR = 0x06,
-	OBJECT_TYPE_VEC = 0x07,
-	OBJECT_TYPE_DICT = 0x08,
-	OBJECT_TYPE_RAW = 0x09,
+	OBJECT_TYPE_LONG = 0x04,
+	OBJECT_TYPE_FLOAT = 0x05,
+	OBJECT_TYPE_DOUBLE = 0x06,
+	OBJECT_TYPE_STR = 0x07,
+	OBJECT_TYPE_VEC = 0x08,
+	OBJECT_TYPE_DICT = 0x09,
+	OBJECT_TYPE_RAW = 0x0a,
 } object_type_t;
 
 typedef struct object_head_s
@@ -74,23 +84,40 @@ typedef struct object_opset_s
 	bin_op_f and;
 	bin_op_f or;
 	bin_op_f xor;
+	bin_op_f land;
+	bin_op_f lor;
 	bin_op_f lshift;
 	bin_op_f rshift;
 	bin_op_f cmp;
 	bin_op_f index;
 } object_opset_t;
 
+static const char *g_type_name[] =
+{
+	"null",
+	"bool",
+	"byte",
+	"int",
+	"long",
+	"float",
+	"double",
+	"str",
+	"vec",
+	"dict",
+	"raw"
+};
+
 object_t *
 object_new (void *udata);
 
 void
-object_ref (object_t *ob);
+object_ref (object_t *obj);
 
 void
-object_unref (object_t *ob);
+object_unref (object_t *obj);
 
 void
-object_free (object_t *ob);
+object_free (object_t *obj);
 
 void
 object_init ();
