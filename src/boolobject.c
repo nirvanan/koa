@@ -23,6 +23,7 @@
 #include "boolobject.h"
 #include "pool.h"
 #include "error.h"
+#include "intobject.h"
 
 /* Note that the 'true' and 'false' objects are shared everywhere. */
 static object_t *g_true_object;
@@ -30,59 +31,98 @@ static object_t *g_false_object;
 
 /* Object ops. */
 static object_t *boolobject_op_not (object_t *obj);
-static object_t *boolobject_op_compare (object_t *obj1, object_t *obj2);
+static object_t *boolobject_op_land (object_t *obj1, object_t *obj2);
+static object_t *boolobject_op_lor (object_t *obj1, object_t *obj2);
+static object_t *boolobject_op_eq (object_t *obj1, object_t *obj2);
+static object_t *boolobject_op_cmp (object_t *obj1, object_t *obj2);
 
 static object_opset_t g_object_ops =
 {
 	boolobject_op_not, /* Logic Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
-	boolobject_op_neg, /* Negative. */
+	NULL, /* Negative. */
 	NULL, /* Call. */
-	boolobject_op_add, /* Addition. */
-	boolobject_op_sub, /* Substraction. */
-	boolobject_op_mul, /* Multiplication. */
-	boolobject_op_mod, /* Mod. */
-	boolobject_op_div, /* division. */
-	boolobject_op_and, /* Bitwise and. */
-	boolobject_op_or, /* Bitwise or. */
-	boolobject_op_xor, /* Bitwise xor. */
+	NULL, /* Addition. */
+	NULL, /* Substraction. */
+	NULL, /* Multiplication. */
+	NULL, /* Division. */
+	NULL, /* Mod. */
+	NULL, /* Bitwise and. */
+	NULL, /* Bitwise or. */
+	NULL, /* Bitwise xor. */
 	boolobject_op_land, /* Logic and. */
 	boolobject_op_lor, /* Logic or. */
-	boolobject_op_lshift, /* Left shift. */
-	boolobject_op_rshift, /* Right shift. */
-	boolobject_op_compare, /* Comparation. */
+	NULL, /* Left shift. */
+	NULL, /* Right shift. */
+	boolobject_op_eq, /* Equality. */
+	boolobject_op_cmp, /* Comparation. */
 	NULL  /* Index. */
 };
 
-/* Not. */
+/* Logic Not. */
 static object_t *
 boolobject_op_not (object_t *obj)
 {
-	if (obj == g_false_object) {
-		return g_true_object;
-	}
+	bool val;
 
-	return g_false_object;
+	val = boolobject_get_value (obj);
+
+	return boolobject_new (!val, NULL);
 }
 
-/* Comparation. */
+/* Logic and. */
 static object_t *
-boolobject_op_compare (object_t *obj1, object_t *obj2)
+boolobject_op_land (object_t *obj1, object_t *obj2)
 {
-	/* Since there is only one 'true' or 'false' object, comparing
-	 * address is enough. */
+	bool val1;
+
+	val1 = boolobject_get_value (obj1);
+
+	return boolobject_new (val1 && NUMBERICAL_GET_VALUE (obj2), NULL);
+}
+
+/* Logic or. */
+static object_t *
+boolobject_op_lor (object_t *obj1, object_t *obj2)
+{
+	bool val1;
+
+	val1 = boolobject_get_value (obj1);
+
+	return boolobject_new (val1 || NUMBERICAL_GET_VALUE (obj2), NULL);
+}
+
+/* Equality. */
+static object_t *
+boolobject_op_eq (object_t *obj1, object_t *obj2)
+{
 	if (obj1 == obj2) {
 		return boolobject_new (true, NULL);
+	}
+
+	if (NUMBERICAL_TYPE (obj2)) {
+		bool val1;
+	
+		val1 = boolobject_get_value (obj1);
+
+		return boolobject_new (val1 == NUMBERICAL_GET_VALUE (obj2), NULL);
 	}
 	
 	return boolobject_new (false, NULL);
 }
 
+/* Comparation. */
+static object_t *
+boolobject_op_cmp (object_t *obj1, object_t *obj2)
+{
+	return intobject_new (object_numberical_compare (obj1, obj2), NULL);
+}
+
 object_t *
 boolobject_new (bool val, void *udata)
 {
-	boolobject_t *ob;
+	boolobject_t *obj;
 
 	if (val && g_true_object != NULL) {
 		return g_true_object;
@@ -90,14 +130,14 @@ boolobject_new (bool val, void *udata)
 	else if (!val && g_false_object != NULL) {
 		return g_false_object;
 	}
-	ob = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
-	ob->head.ref = 0;
-	ob->head.type = OBJECT_TYPE_BOOL;
-	ob->head.ops = &g_object_ops;
-	ob->head.udata = udata;
-	ob->val = val;
+	obj = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
+	obj->head.ref = 0;
+	obj->head.type = OBJECT_TYPE_BOOL;
+	obj->head.ops = &g_object_ops;
+	obj->head.udata = udata;
+	obj->val = val;
 
-	return (object_t *) ob;
+	return (object_t *) obj;
 }
 
 bool

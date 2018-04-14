@@ -1,5 +1,5 @@
 /*
- * koa.h
+ * floatobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,9 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef KOA_H
-#define KOA_H
+#ifndef FLOATOBJECT_H
+#define FLOATOBJECT_H
 
-#define UNUSED(x) (void)(x)
+#include "koa.h"
+#include "object.h"
 
-#endif /* KOA_H */
+typedef struct floatobject_s
+{
+	object_head_t head;
+	float val;
+} floatobject_t;
+
+object_t *
+floatobject_new (float val, void *udata);
+
+float
+floatobject_get_value (object_t *obj);
+
+void
+floatobject_init ();
+
+#endif /* FLOATOBJECT_H */

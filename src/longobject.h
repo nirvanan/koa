@@ -1,5 +1,5 @@
 /*
- * koa.h
+ * longobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,9 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef KOA_H
-#define KOA_H
+#ifndef LONGOBJECT_H
+#define LONGOBJECT_H
 
-#define UNUSED(x) (void)(x)
+#include "koa.h"
+#include "object.h"
 
-#endif /* KOA_H */
+typedef struct longobject_s
+{
+	object_head_t head;
+	long val;
+} longobject_t;
+
+object_t *
+longobject_new (long val, void *udata);
+
+long
+longobject_get_value (object_t *obj);
+
+void
+longobject_init ();
+
+#endif /* LONGOBJECT_H */

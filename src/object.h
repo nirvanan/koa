@@ -23,21 +23,47 @@
 
 #include "koa.h"
 
-#define INTEGER_TYPE(x) (x->head.type == OBJECT_TYPE_BOOL\
-	|| x->head.type == OBJECT_TYPE_BYTE\
-	|| x->head.type == OBJECT_TYPE_INT\
-	|| x->head.type == OBJECT_TYPE_LONG)
+#define INTEGER_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
+	|| (x)->head.type == OBJECT_TYPE_CHAR\
+	|| (x)->head.type == OBJECT_TYPE_INT\
+	|| (x)->head.type == OBJECT_TYPE_LONG)
 
-#define TYPE_NAME(x) (g_type_name[x->head.type])
+#define FLOATING_TYPE(x) ((x)->head.type == OBJECT_TYPE_FLOAT\
+	|| (x)->head.type == OBJECT_TYPE_DOUBLE)
 
-#define OBJECT_TYPE(x) (x->head.type)
+#define NUMBERICAL_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL \
+	|| (x)->head.type == OBJECT_TYPE_CHAR \
+	|| (x)->head.type == OBJECT_TYPE_INT \
+	|| (x)->head.type == OBJECT_TYPE_LONG \
+	|| (x)->head.type == OBJECT_TYPE_FLOAT \
+	|| (x)->head.type == OBJECT_TYPE_DOUBLE)
 
-typedef unsigned char byte_t;
+#define TYPE_NAME(x) (g_type_name[(x)->head.type])
+
+#define OBJECT_TYPE(x) ((x)->head.type)
+
+#define OBJECT_REF(x) ((x)->head.ref)
+
+#define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))
+
+#define OBJECT_UDATA(x) ((x)->head.udata)
+
+#define OBJECT_BIGGER(o1, o2) (OBJECT_TYPE((o1))<OBJECT_TYPE((o2))?\
+	object_cast((o1),OBJECT_TYPE((o2))):(o1))
+
+#define NUMBERICAL_GET_VALUE(x) (INTEGER_TYPE((x))?\
+	object_get_integer((x)):object_get_floating((x)))
+
+/* This type can hold all integer values of koa objects. */
+typedef long integer_value_t;
+
+/* This type can hold all floating values of koa objects. */
+typedef double floating_value_t;
 
 typedef enum object_type_e {
 	OBJECT_TYPE_NONE = 0x00,
 	OBJECT_TYPE_BOOL = 0x01,
-	OBJECT_TYPE_BYTE = 0x02,
+	OBJECT_TYPE_CHAR = 0x02,
 	OBJECT_TYPE_INT = 0x03,
 	OBJECT_TYPE_LONG = 0x04,
 	OBJECT_TYPE_FLOAT = 0x05,
@@ -73,14 +99,14 @@ typedef struct object_opset_s
 {
 	una_op_f not;
 	void_una_op_f free;
-	void_una_op_f dump;
+	una_op_f dump;
 	una_op_f neg;
 	una_op_f call;
 	bin_op_f add;
 	bin_op_f sub;
 	bin_op_f mul;
-	bin_op_f mod;
 	bin_op_f div;
+	bin_op_f mod;
 	bin_op_f and;
 	bin_op_f or;
 	bin_op_f xor;
@@ -88,15 +114,17 @@ typedef struct object_opset_s
 	bin_op_f lor;
 	bin_op_f lshift;
 	bin_op_f rshift;
+	bin_op_f eq;
 	bin_op_f cmp;
 	bin_op_f index;
 } object_opset_t;
 
+/*
 static const char *g_type_name[] =
 {
 	"null",
 	"bool",
-	"byte",
+	"char",
 	"int",
 	"long",
 	"float",
@@ -106,6 +134,7 @@ static const char *g_type_name[] =
 	"dict",
 	"raw"
 };
+*/
 
 object_t *
 object_new (void *udata);
@@ -116,8 +145,77 @@ object_ref (object_t *obj);
 void
 object_unref (object_t *obj);
 
+integer_value_t
+object_get_integer (object_t *obj);
+
+floating_value_t
+object_get_floating (object_t *obj);
+
+int
+object_is_zero (object_t *obj);
+
+object_t *
+object_cast (object_t *obj, object_type_t type);
+
+int
+object_numberical_compare (object_t *obj1, object_t *obj2);
+
+object_t *
+object_not (object_t *obj1);
+
 void
 object_free (object_t *obj);
+
+object_t *
+object_dump (object_t *obj);
+
+object_t *
+object_neg (object_t *obj1);
+
+object_t *
+object_add (object_t *obj1, object_t *obj2);
+
+object_t *
+object_sub (object_t *obj1, object_t *obj2);
+
+object_t *
+object_mul (object_t *obj1, object_t *obj2);
+
+object_t *
+object_div (object_t *obj1, object_t *obj2);
+
+object_t *
+object_mod (object_t *obj1, object_t *obj2);
+
+object_t *
+object_bit_and (object_t *obj1, object_t *obj2);
+
+object_t *
+object_bit_or (object_t *obj1, object_t *obj2);
+
+object_t *
+object_bit_xor (object_t *obj1, object_t *obj2);
+
+object_t *
+object_logic_and (object_t *obj1, object_t *obj2);
+
+object_t *
+object_logic_or (object_t *obj1, object_t *obj2);
+
+object_t *
+object_left_shift (object_t *obj1, object_t *obj2);
+
+object_t *
+object_right_shift (object_t *obj1, object_t *obj2);
+
+object_t *
+object_equal (object_t *obj1, object_t *obj2);
+
+object_t *
+object_compare (object_t *obj1, object_t *obj2);
+
+object_t *
+object_index (object_t *obj1, object_t *obj2);
 
 void
 object_init ();

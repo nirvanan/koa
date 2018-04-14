@@ -4,6 +4,12 @@ AM_CPPFLAGS =
 AM_LDFLAGS =
 koa_SOURCES = boolobject.c \
 boolobject.h \
+charobject.c \
+charobject.h \
+doubleobject.c \
+doubleobject.h \
+floatobject.c \
+floatobject.h \
 error.c \
 error.h \
 hash.c \
@@ -13,6 +19,8 @@ intobject.h \
 koa.h \
 list.c \
 list.h \
+longobject.c \
+longobject.h \
 main.c \
 object.c \
 object.h \

@@ -1,5 +1,5 @@
 /*
- * koa.h
+ * charobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,9 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef KOA_H
-#define KOA_H
+#ifndef CHAROBJECT_H
+#define CHAROBJECT_H
 
-#define UNUSED(x) (void)(x)
+#include "koa.h"
+#include "object.h"
 
-#endif /* KOA_H */
+typedef struct charobject_s
+{
+	object_head_t head;
+	char val;
+} charobject_t;
+
+object_t *
+charobject_new (char val, void *udata);
+
+char
+charobject_get_value (object_t *obj);
+
+void
+charobject_init ();
+
+#endif /* CHAROBJECT_H */

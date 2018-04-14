@@ -99,9 +99,11 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_koa_OBJECTS = boolobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
-	list.$(OBJEXT) main.$(OBJEXT) object.$(OBJEXT) pool.$(OBJEXT) \
-	str.$(OBJEXT)
+am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
+	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) error.$(OBJEXT) \
+	hash.$(OBJEXT) intobject.$(OBJEXT) list.$(OBJEXT) \
+	longobject.$(OBJEXT) main.$(OBJEXT) object.$(OBJEXT) \
+	pool.$(OBJEXT) str.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -257,13 +259,23 @@ AM_CPPFLAGS =
 AM_LDFLAGS = 
 koa_SOURCES = boolobject.c \
 boolobject.h \
+charobject.c \
+charobject.h \
+doubleobject.c \
+doubleobject.h \
+floatobject.c \
+floatobject.h \
 error.c \
 error.h \
 hash.c \
 hash.h \
+intobject.c \
+intobject.h \
 koa.h \
 list.c \
 list.h \
+longobject.c \
+longobject.h \
 main.c \
 object.c \
 object.h \
@@ -359,9 +371,14 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boolobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doubleobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/floatobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/longobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool.Po@am__quote@
