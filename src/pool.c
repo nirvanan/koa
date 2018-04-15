@@ -62,7 +62,7 @@ typedef struct page_s
 	size_t cell_size; /* Pages can be reused for another size. */
 	void *free; /* The first allocable cell. */
 } page_t;
-	
+
 typedef struct pool_s
 {
 	list_t link;
@@ -76,7 +76,7 @@ typedef struct pool_s
 typedef struct page_hash_s
 {
 	list_t link;
-	void *p;
+	page_t *p;
 } page_hash_t;
 
 /* All pools. */
@@ -123,9 +123,9 @@ pool_page_hash_add (page_t *page)
 	/* Hash data can be allocated from pool! */
 	ph = (page_hash_t *) pool_alloc (sizeof (page_hash_t));
 	if (ph == NULL) {
-		/* TODO: Need throw. */
 		fatal_error ("no enough memory.");
 	}
+
 	ph->p = page;
 	g_page_hash[b] = list_append (g_page_hash[b], LIST (ph));
 	page->hash = ph;
@@ -156,7 +156,6 @@ pool_new (void *extra)
 	 * For example, freebsd. */
 	new_pool = (pool_t *) calloc (1, POOL_REQUEST_SIZE);
 	if (new_pool == NULL) {
-		/* TODO: Need throw. */
 		fatal_error ("no enough memory.");
 	}
 
@@ -239,7 +238,6 @@ pool_get_page (size_t size)
 			page = (page_t *) pool->free;
 			pool_page_init (page, cell_idx);
 			pool_empty_page_out (pool, cell_idx);
-			pool->used++;
 
 			return page;
 		}
@@ -251,7 +249,6 @@ pool_get_page (size_t size)
 	page = (page_t *) first_pool->free;
 	pool_page_init (page, cell_idx);
 	pool_empty_page_out (first_pool, cell_idx);
-	first_pool->used++;
 
 	return page;
 }
@@ -264,7 +261,6 @@ pool_get_cell (page_t *page)
 
 	/* It should have a valid cell. */
 	if (page->free == NULL) {
-		/* TODO: Need throw. */
 		fatal_error ("no free cell in an empty or used page?");
 	}
 	
@@ -292,7 +288,6 @@ pool_alloc (size_t size)
 
 		ret = malloc (size);
 		if (ret == NULL) {
-			/* TODO: Need throw. */
 			fatal_error ("no enough memory.");
 		}
 
@@ -301,7 +296,6 @@ pool_alloc (size_t size)
 
 	page = pool_get_page (size);
 	if (page == NULL) {
-		/* TODO: Need throw. */
 		fatal_error ("can not find an avaliable page.");
 	}
 
@@ -317,7 +311,7 @@ pool_is_pool_cell (void *bl)
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 	h = (intptr_t) page % PAGE_HASH_BUCKET;
 
-	return list_find (g_page_hash[h], LIST (page));
+	return list_find (g_page_hash[h], LIST (page->hash));
 }
 
 static void
@@ -400,6 +394,6 @@ pool_init ()
 		pool_new (NULL);
 	}
 	memset (g_page_table, 0, sizeof (g_page_table));
-	memset (g_full_table, 0, sizeof (g_page_table));
+	memset (g_full_table, 0, sizeof (g_full_table));
 	memset (g_page_hash, 0, sizeof (g_page_hash));
 }

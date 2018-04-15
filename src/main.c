@@ -18,8 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include "pool.h"
 #include "object.h"
+#include "intobject.h"
+#include "strobject.h"
+#include "str.h"
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +33,9 @@ int main(int argc, char *argv[])
 	object_init ();
 
 	while (1) {
+		void *str1 = pool_alloc (200);
+
+		pool_free (str1);
 	}
 
 	return 0;

@@ -27,4 +27,6 @@ object.h \
 pool.c \
 pool.h \
 str.c \
-str.h
+str.h \
+strobject.c \
+strobject.h

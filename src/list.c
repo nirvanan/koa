@@ -37,17 +37,24 @@ list_append (list_t *list, list_t *n)
 list_t *
 list_remove (list_t *list, list_t *n)
 {
+	list_t *head;
+
 	if (n->next != NULL) {
 		n->next->prev = n->prev;
 	}
 	if (n->prev != NULL) {
 		n->prev->next = n->next;
 	}
+
+	head = list;
 	if (list == n) {
-		return n->next;
+		 head = n->next;
 	}
 
-	return list;
+	n->next = NULL;
+	n->prev = NULL;
+
+	return head;
 }
 
 int

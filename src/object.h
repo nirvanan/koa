@@ -54,12 +54,6 @@
 #define NUMBERICAL_GET_VALUE(x) (INTEGER_TYPE((x))?\
 	object_get_integer((x)):object_get_floating((x)))
 
-/* This type can hold all integer values of koa objects. */
-typedef long integer_value_t;
-
-/* This type can hold all floating values of koa objects. */
-typedef double floating_value_t;
-
 typedef enum object_type_e {
 	OBJECT_TYPE_NONE = 0x00,
 	OBJECT_TYPE_BOOL = 0x01,

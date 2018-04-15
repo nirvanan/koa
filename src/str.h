@@ -21,10 +21,12 @@
 #ifndef STR_H
 #define STR_H
 
+#include <stddef.h>
+
 #include "koa.h"
 
 typedef struct str_s {
-	int len;
+	size_t len;
 	char s[];
 } str_t;
 
@@ -33,5 +35,20 @@ str_new (const char *s);
 
 void
 str_free (str_t *str);
+
+size_t
+str_len (str_t *str);
+
+const char *
+str_c_str (str_t *str);
+
+str_t *
+str_concat (str_t *str1, str_t *str2);
+
+char
+str_pos (str_t *str, integer_value_t pos);
+
+int
+str_cmp (str_t *str1, str_t *str2);
 
 #endif /* STR_H */

@@ -317,6 +317,29 @@ object_add (object_t *obj1, object_t *obj2)
 	object_t *res;
 	bin_op_f add_fun;
 
+	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_STR) {
+		if (OBJECT_TYPE (obj2) != OBJECT_TYPE_STR && !NUMBERICAL_TYPE (obj2)) {
+			error ("invalid right operand type for '+'.");
+		
+			return NULL;
+		}
+
+		add_fun = (OBJECT_OPSET (obj1))->add;
+		
+		return add_fun (obj1, obj2);
+	}
+	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_VEC) {
+		if (OBJECT_TYPE (obj1) != OBJECT_TYPE (obj2)) {
+			error ("invalid right operand type for '+'.");
+		
+			return NULL;
+		}
+
+		add_fun = (OBJECT_OPSET (obj1))->add;
+		
+		return add_fun (obj1, obj2);
+	}
+
 	if (!NUMBERICAL_TYPE (obj1)) {
 		error ("invalid left operand type for '+'.");
 
@@ -766,12 +789,6 @@ object_index (object_t *obj1, object_t *obj2)
 {
 	bin_op_f index_fun;
 
-	if (!INTEGER_TYPE (obj2)) {
-		error ("index must be an integer type.");
-		
-		return NULL;
-	}
-
 	index_fun = (OBJECT_OPSET (obj1))->index;
 	if (index_fun == NULL) {
 		error ("left operand has no index routine.");
@@ -792,4 +809,5 @@ object_init ()
 	/* Init some types of objects. */
 	boolobject_init ();
 	intobject_init ();
+	longobject_init ();
 }
