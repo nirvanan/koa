@@ -105,7 +105,11 @@ str_concat (str_t *str1, str_t *str2)
 char
 str_pos (str_t *str, integer_value_t pos)
 {
-	return str->s[pos];
+	if (pos >= 0 && pos < str->len) {
+		return str->s[pos];
+	}
+
+	return '\0';
 }
 
 int

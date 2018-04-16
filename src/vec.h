@@ -1,5 +1,5 @@
 /*
- * pool.h
+ * vec.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,26 +18,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef POOL_H
-#define POOL_H
+#ifndef VEC_H
+#define VEC_H
 
 #include <stddef.h>
 
 #include "koa.h"
 
+typedef struct vec_s {
+	size_t size;
+	size_t allocated;
+	void **v;
+} vec_t;
+
+vec_t *
+vec_new (size_t size);
+
+void
+vec_free (vec_t *vec);
+
+size_t
+vec_size (vec_t *vec);
+
+size_t
+vec_capacity (vec_t *str);
+
+vec_t *
+vec_concat (vec_t *vec1, vec_t *vec2);
+
 void *
-pool_alloc (size_t size);
+vec_pos (vec_t *vec, integer_value_t pos);
+
+int
+vec_push_back (vec_t *vec, void *data);
+
+int
+vec_pop_back (vec_t *vec);
+
+int
+vec_push_front (vec_t *vec, void *data);
+
+int
+vec_pop_front (vec_t *vec);
 
 void *
-pool_calloc (size_t member, size_t size);
+vec_first (vec_t *vec);
 
-void
-pool_free (void *bl);
+void *
+vec_last (vec_t *vec);
 
-void
-pool_init ();
+int
+vec_find (vec_t *vec, void *data);
 
-void
-pool_recycle ();
+int
+vec_insert (vec_t *vec, integer_value_t pos, void *data);
 
-#endif /* POOL_H */
+int
+vec_remove (vec_t *vec, void *data);
+
+#endif /* STR_H */

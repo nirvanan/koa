@@ -302,6 +302,28 @@ pool_alloc (size_t size)
 	return pool_get_cell (page);
 }
 
+void *
+pool_calloc (size_t member, size_t size)
+{
+	size_t total;
+	void *ret;
+
+	total = member * size;
+	if (total > MAX_CELL_SIZE) {
+		ret = calloc (member, size);
+		if (ret == NULL) {
+			fatal_error ("no enough memory.");
+		}
+
+		return ret;
+	}
+
+	ret = pool_alloc (total);
+	memset (ret, 0, total);
+
+	return ret;
+}
+
 static int
 pool_is_pool_cell (void *bl)
 {
