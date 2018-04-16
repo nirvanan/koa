@@ -84,7 +84,14 @@ object_new (void *udata)
 	if (g_null_object != NULL) {
 		return g_null_object;
 	}
+
 	obj = (object_t *) pool_alloc (sizeof (object_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_NONE;
 	obj->head.ops = &g_object_ops;
@@ -266,7 +273,7 @@ object_free (object_t *obj)
 		free_fun (obj);
 	}
 
-	pool_free (obj);
+	pool_free ((void *) obj);
 }
 
 object_t *
@@ -804,6 +811,12 @@ object_init ()
 {
 	/* The 'null' object should never be freed. */
 	g_null_object = object_new (NULL);
+	if (g_null_object == NULL) {
+		fatal_error ("failed to init object system.");
+
+		return;
+	}
+
 	object_ref (g_null_object);
 	
 	/* Init some types of objects. */

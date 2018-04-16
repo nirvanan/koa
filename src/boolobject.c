@@ -130,7 +130,13 @@ boolobject_new (bool val, void *udata)
 	else if (!val && g_false_object != NULL) {
 		return g_false_object;
 	}
+
 	obj = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_BOOL;
 	obj->head.ops = &g_object_ops;
@@ -155,8 +161,20 @@ boolobject_init ()
 {
 	/* This two objects should never be freed. */
 	g_true_object = boolobject_new (true, NULL);
+	if (g_true_object == NULL) {
+		fatal_error ("failed to init object system.");
+
+		return;
+	}
+
 	object_ref (g_true_object);
 
 	g_false_object = boolobject_new (false, NULL);
+	if (g_false_object == NULL) {
+		fatal_error ("failed to init object system.");
+
+		return;
+	}
+
 	object_ref (g_false_object);
 }

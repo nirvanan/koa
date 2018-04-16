@@ -41,7 +41,7 @@ size_t
 vec_size (vec_t *vec);
 
 size_t
-vec_capacity (vec_t *str);
+vec_capacity (vec_t *vec);
 
 vec_t *
 vec_concat (vec_t *vec1, vec_t *vec2);

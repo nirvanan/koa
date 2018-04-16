@@ -151,11 +151,23 @@ strobject_new (const char *val, void *udata)
 	strobject_t *obj;
 
 	obj = (strobject_t *) pool_alloc (sizeof (strobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_STR;
 	obj->head.ops = &g_object_ops;
 	obj->head.udata = udata;
 	obj->val = str_new (val);
+	if (obj->val == NULL) {
+		pool_free ((void *) obj);
+
+		return NULL;
+	}
+
 
 	return (object_t *) obj;
 }
@@ -166,6 +178,12 @@ strobject_str_new (str_t *val, void *udata)
 	strobject_t *obj;
 
 	obj = (strobject_t *) pool_alloc (sizeof (strobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_STR;
 	obj->head.ops = &g_object_ops;

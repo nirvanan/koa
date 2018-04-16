@@ -113,7 +113,7 @@ pool_page_init (page_t *page, cell_type_t t)
 	}
 }
 
-static void
+static int
 pool_page_hash_add (page_t *page)
 {
 	int b;
@@ -123,12 +123,14 @@ pool_page_hash_add (page_t *page)
 	/* Hash data can be allocated from pool! */
 	ph = (page_hash_t *) pool_alloc (sizeof (page_hash_t));
 	if (ph == NULL) {
-		fatal_error ("no enough memory.");
+		return 0;
 	}
 
 	ph->p = page;
 	g_page_hash[b] = list_append (g_page_hash[b], LIST (ph));
 	page->hash = ph;
+
+	return 1;
 }
 
 
@@ -142,10 +144,10 @@ pool_page_hash_remove (page_t *page)
 	ph = (page_hash_t *) page->hash;
 	g_page_hash[b] = list_remove (g_page_hash[b], LIST (ph));
 
-	pool_free (ph);
+	pool_free ((void *) ph);
 }
 
-static void
+static pool_t *
 pool_new (void *extra)
 {
 	pool_t *new_pool;
@@ -156,7 +158,7 @@ pool_new (void *extra)
 	 * For example, freebsd. */
 	new_pool = (pool_t *) calloc (1, POOL_REQUEST_SIZE);
 	if (new_pool == NULL) {
-		fatal_error ("no enough memory.");
+		return NULL;
 	}
 
 	/* Align pages. */
@@ -181,6 +183,8 @@ pool_new (void *extra)
 
 	/* Insert current pool to list. */
 	g_pool_list = list_append (g_pool_list, LIST (new_pool));
+
+	return new_pool;
 }
 
 static void
@@ -192,8 +196,6 @@ pool_empty_page_out (pool_t *pool, cell_type_t t)
 	pool->free = list_remove (pool->free, LIST (page));
 	pool->used++;
 	g_page_table[t] = list_append (g_page_table[t], LIST (page));
-
-	pool_page_hash_add (page);
 }
 
 static void
@@ -205,8 +207,6 @@ pool_empty_page_in (pool_t *pool, page_t *page)
 	g_page_table[t] = list_remove (g_page_table[t], LIST (page));
 	pool->free = list_append (pool->free, LIST (page));
 	pool->used--;
-
-	pool_page_hash_remove (page);
 
 	/* Set empty flag for recycling empty pools. */
 	if (pool->used <= 0) {
@@ -236,19 +236,31 @@ pool_get_page (size_t size)
 		pool = (pool_t *) l;
 		if (pool->free != NULL) {
 			page = (page_t *) pool->free;
-			pool_page_init (page, cell_idx);
 			pool_empty_page_out (pool, cell_idx);
+			pool_page_init (page, cell_idx);
+			if (pool_page_hash_add (page) == 0) {
+				pool_empty_page_in (pool, page);
+
+				return NULL;
+			}
 
 			return page;
 		}
 	}
 
 	/* No empty page? Allocte a new pool! */
-	pool_new (NULL);
-	first_pool = (pool_t *) g_pool_list;
+	first_pool = (pool_t *) pool_new (NULL);
+	if (first_pool == NULL) {
+		return NULL;
+	}
 	page = (page_t *) first_pool->free;
-	pool_page_init (page, cell_idx);
 	pool_empty_page_out (first_pool, cell_idx);
+	pool_page_init (page, cell_idx);
+	if (pool_page_hash_add (page) == 0) {
+		pool_empty_page_in (first_pool, page);
+
+		return NULL;
+	}
 
 	return page;
 }
@@ -261,7 +273,7 @@ pool_get_cell (page_t *page)
 
 	/* It should have a valid cell. */
 	if (page->free == NULL) {
-		fatal_error ("no free cell in an empty or used page?");
+		return NULL;
 	}
 	
 	cell = page->free;
@@ -288,7 +300,7 @@ pool_alloc (size_t size)
 
 		ret = malloc (size);
 		if (ret == NULL) {
-			fatal_error ("no enough memory.");
+			return NULL;
 		}
 
 		return ret;
@@ -296,7 +308,7 @@ pool_alloc (size_t size)
 
 	page = pool_get_page (size);
 	if (page == NULL) {
-		fatal_error ("can not find an avaliable page.");
+		return NULL;
 	}
 
 	return pool_get_cell (page);
@@ -312,13 +324,17 @@ pool_calloc (size_t member, size_t size)
 	if (total > MAX_CELL_SIZE) {
 		ret = calloc (member, size);
 		if (ret == NULL) {
-			fatal_error ("no enough memory.");
+			return NULL;
 		}
 
 		return ret;
 	}
 
 	ret = pool_alloc (total);
+	if (ret == NULL) {
+		return NULL;
+	}
+
 	memset (ret, 0, total);
 
 	return ret;
@@ -372,6 +388,7 @@ pool_free (void *bl)
 
 	/* Page from used to free? */
 	if (page->allocated <= 0) {
+		pool_page_hash_remove (page);
 		pool_empty_page_in ((pool_t *) page->pool, page);
 	}
 }
@@ -413,7 +430,12 @@ pool_init ()
 {
 	/* Init pool(s) when startup. */
 	for (int i = 0; i < INIT_POOL_NUM; i++) {
-		pool_new (NULL);
+		pool_t *pool;
+		
+		pool = pool_new (NULL);
+		if (pool == NULL) {
+			fatal_error ("failed to allocate pool on startup.");
+		}
 	}
 	memset (g_page_table, 0, sizeof (g_page_table));
 	memset (g_full_table, 0, sizeof (g_full_table));

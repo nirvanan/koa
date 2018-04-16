@@ -290,7 +290,14 @@ longobject_new (long val, void *udata)
 	if (LONG_HAS_CACHE (val) && g_long_cache[LONG_CACHE_INDEX (val)] != NULL) {
 		return g_long_cache[LONG_CACHE_INDEX (val)];
 	}
+
 	obj = (longobject_t *) pool_alloc (sizeof (longobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_LONG;
 	obj->head.ops = &g_object_ops;
@@ -316,6 +323,12 @@ longobject_init ()
 	/* Make small int cache. */
 	for (int i = LONG_CACHE_MIN; i <= LONG_CACHE_MAX; i++) {
 		g_long_cache[LONG_CACHE_INDEX (i)] = longobject_new (i, NULL);
+		if (g_long_cache[LONG_CACHE_INDEX (i)] == NULL) {
+			fatal_error ("failed to init object system.");
+
+			return;
+		}
+
 		/* Should never be freed. */
 		object_ref (g_long_cache[LONG_CACHE_INDEX (i)]);
 	}

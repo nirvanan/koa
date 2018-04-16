@@ -23,6 +23,7 @@
 
 #include "vec.h"
 #include "pool.h"
+#include "error.h"
 
 #define VEC_REQ_SIZE 2 /* Initial allocation size. */
 
@@ -39,13 +40,17 @@ vec_new (size_t size)
 	
 	vec = pool_alloc (sizeof (vec_t));
 	if (vec == NULL) {
+		error ("out of memery.");
+
 		return NULL;
 	}
+
 	vec->size = size;
 	vec->allocated = req;
 	vec->v = (void **) pool_calloc (req, sizeof (void *));
 	if (vec->v == NULL) {
-		pool_free (vec);
+		pool_free ((void *) vec);
+		error ("out of memery.");
 
 		return NULL;
 	}
@@ -67,7 +72,7 @@ vec_size (vec_t *vec)
 }
 
 size_t
-vec_capacity (vec_t *str)
+vec_capacity (vec_t *vec)
 {
 	return vec->allocated;
 }
@@ -104,6 +109,7 @@ vec_resize (vec_t *vec, size_t req)
 	size_t new_req;
 	void **new_v;
 
+	new_req = vec->allocated;
 	if (req > vec->allocated) {
 		new_req = vec->allocated * 2;
 	}
@@ -117,11 +123,13 @@ vec_resize (vec_t *vec, size_t req)
 	if (new_req != vec->allocated) {
 		new_v = pool_alloc (new_req * sizeof (void *));
 		if (new_v == NULL) {
+			error ("out of memory.");
+
 			return 0;
 		}
 		
 		memcpy (new_v, vec->v, vec->size * sizeof (void *));
-		pool_free (vec->v);
+		pool_free ((void *) vec->v);
 		vec->v = new_v;
 		vec->allocated = new_req;
 

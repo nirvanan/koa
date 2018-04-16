@@ -192,6 +192,12 @@ doubleobject_new (double val, void *udata)
 	doubleobject_t *obj;
 
 	obj = (doubleobject_t *) pool_alloc (sizeof (doubleobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_DOUBLE;
 	obj->head.ops = &g_object_ops;

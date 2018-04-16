@@ -23,6 +23,7 @@
 
 #include "str.h"
 #include "pool.h"
+#include "error.h"
 
 str_t *
 str_new (const char *s)
@@ -41,6 +42,12 @@ str_new (const char *s)
 	str_size = len + sizeof (str_t) + 1;
 
 	str = (str_t *) pool_alloc (str_size);
+	if (str == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	str->len = len;
 	if (len > 0) {
 		memcpy ((void *) str->s, (void *) s, len);
@@ -53,7 +60,7 @@ str_new (const char *s)
 void
 str_free (str_t *str)
 {
-	pool_free (str);
+	pool_free ((void *) str);
 }
 
 size_t
@@ -82,6 +89,12 @@ str_empty_str_new (size_t l)
 	str_size = len + sizeof (str_t) + 1;
 
 	str = (str_t *) pool_alloc (str_size);
+	if (str == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	str->len = len;
 	memset ((void *) str->s, 0, (len + 1) * sizeof (char));
 

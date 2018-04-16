@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		void *str1 = pool_alloc (200);
 
-		pool_free (str1);
+		pool_free ((void *) str1);
 	}
 
 	return 0;

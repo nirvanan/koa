@@ -137,7 +137,14 @@ charobject_new (char val, void *udata)
 	if (CHAR_HAS_CACHE (val) && g_char_cache[CHAR_CACHE_INDEX (val)] != NULL) {
 		return g_char_cache[CHAR_CACHE_INDEX (val)];
 	}
+
 	obj = (charobject_t *) pool_alloc (sizeof (charobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_CHAR;
 	obj->head.ops = &g_object_ops;
@@ -163,6 +170,12 @@ charobject_init ()
 	/* Make char cache. */
 	for (char i = CHAR_CACHE_MIN; i <= CHAR_CACHE_MAX; i++) {
 		g_char_cache[CHAR_CACHE_INDEX (i)] = charobject_new (i, NULL);
+		if (g_char_cache[CHAR_CACHE_INDEX (i)] == NULL) {
+			fatal_error ("failed to init object system.");
+
+			return;
+		}
+		
 		/* Should never be freed. */
 		object_ref (g_char_cache[CHAR_CACHE_INDEX (i)]);
 	}

@@ -22,6 +22,7 @@
 
 #include "hash.h"
 #include "pool.h"
+#include "error.h"
 
 hash_t *
 hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf)
@@ -30,9 +31,21 @@ hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf)
 	size_t bucket_size;
 
 	ha = pool_alloc (sizeof (hash_t));
+	if (ha == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	bucket_size = bu * sizeof (list_t *);
 	/* We can still use pool allocation when bu is small. */
 	ha->h = (list_t **) pool_alloc (bucket_size);
+	if (ha->h == NULL) {
+		pool_free ((void *) ha);
+		error ("out of memory.");
+
+		return NULL;
+	}
 	memset (ha->h, 0, bucket_size);
 	ha->hf = hf;
 	ha->ef = ef;

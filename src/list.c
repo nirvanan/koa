@@ -83,9 +83,14 @@ list_cleanup (list_t *list, list_del_f df, void *udata)
 	l = list;
 	head = list;
 	while (l != NULL) {
+		list_t *next;
+
+		next = l->next;
 		if (df (l, udata)) {
 			head = list_remove (head, l);
 		}
+
+		l = next;
 	}
 
 	return head;

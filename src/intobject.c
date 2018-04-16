@@ -289,7 +289,13 @@ intobject_new (int val, void *udata)
 	if (INT_HAS_CACHE (val) && g_int_cache[INT_CACHE_INDEX (val)] != NULL) {
 		return g_int_cache[INT_CACHE_INDEX (val)];
 	}
+
 	obj = (intobject_t *) pool_alloc (sizeof (intobject_t));
+	if (obj == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_INT;
 	obj->head.ops = &g_object_ops;
@@ -315,6 +321,12 @@ intobject_init ()
 	/* Make small int cache. */
 	for (int i = INT_CACHE_MIN; i <= INT_CACHE_MAX; i++) {
 		g_int_cache[INT_CACHE_INDEX (i)] = intobject_new (i, NULL);
+		if (g_int_cache[INT_CACHE_INDEX (i)] == NULL) {
+			fatal_error ("failed to init object system.");
+	
+			return;
+		}
+
 		/* Should never be freed. */
 		object_ref (g_int_cache[INT_CACHE_INDEX (i)]);
 	}
