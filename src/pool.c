@@ -40,13 +40,13 @@
 #define INIT_POOL_NUM 1
 #define RECYCLE_CYCLE 100
 
-#define BLOCK_START(x, s) ((void *)(((intptr_t)(x))&(~((intptr_t)(s-1)))))
+#define BLOCK_START(x, s) ((void *)(((intptr_t)(x))&(~((intptr_t)((s)-1)))))
 
 #define BLOCK_ALIGNED(x, s) ((intptr_t)BLOCK_START((x),(s))==(intptr_t)(x))
 
 #define CELL_SIZE(x) ((size_t)(x)*8)
 
-#define REQ_2_CELL_TYPE(x) ((int)(x-1)/8+1)
+#define REQ_2_CELL_TYPE(x) ((int)((x)-1)/8+1)
 
 #define PAGE_HASH_BUCKET 196613
 
