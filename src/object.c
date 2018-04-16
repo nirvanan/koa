@@ -307,6 +307,9 @@ object_neg (object_t *obj)
 	temp = obj;
 	if (OBJECT_TYPE (obj) < OBJECT_TYPE_INT) {
 		temp = object_cast (obj, OBJECT_TYPE_INT);
+		if (temp == NULL) {
+			return NULL;
+		}
 	}
 
 	neg_fun = (OBJECT_OPSET (obj))->neg;
@@ -369,6 +372,17 @@ object_add (object_t *obj1, object_t *obj2)
 		right = object_cast (obj2, OBJECT_TYPE_INT);
 	}
 
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
+	}
+
 	add_fun = (OBJECT_OPSET (left))->add;
 	res = add_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
@@ -406,6 +420,17 @@ object_sub (object_t *obj1, object_t *obj2)
 		right = object_cast (obj2, OBJECT_TYPE_INT);
 	}
 
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
+	}
+
 	sub_fun = (OBJECT_OPSET (left))->sub;
 	res = sub_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
@@ -441,6 +466,17 @@ object_mul (object_t *obj1, object_t *obj2)
 	else if (OBJECT_TYPE (obj1) < OBJECT_TYPE_INT) {
 		left = object_cast (obj1, OBJECT_TYPE_INT);
 		right = object_cast (obj2, OBJECT_TYPE_INT);
+	}
+
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
 	}
 
 	mul_fun = (OBJECT_OPSET (left))->mul;
@@ -485,6 +521,17 @@ object_div (object_t *obj1, object_t *obj2)
 		right = object_cast (obj2, OBJECT_TYPE_INT);
 	}
 
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
+	}
+
 	div_fun = (OBJECT_OPSET (left))->div;
 	res = div_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
@@ -527,6 +574,17 @@ object_mod (object_t *obj1, object_t *obj2)
 		right = object_cast (obj2, OBJECT_TYPE_INT);
 	}
 
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
+	}
+
 	mod_fun = (OBJECT_OPSET (left))->mod;
 	res = mod_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
@@ -562,6 +620,17 @@ object_and (object_t *obj1, object_t *obj2)
 	else if (OBJECT_TYPE (obj1) < OBJECT_TYPE_INT) {
 		left = object_cast (obj1, OBJECT_TYPE_INT);
 		right = object_cast (obj2, OBJECT_TYPE_INT);
+	}
+
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
 	}
 
 	and_fun = (OBJECT_OPSET (left))->and;
@@ -601,6 +670,17 @@ object_or (object_t *obj1, object_t *obj2)
 		right = object_cast (obj2, OBJECT_TYPE_INT);
 	}
 
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
+	}
+
 	or_fun = (OBJECT_OPSET (left))->or;
 	res = or_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
@@ -636,6 +716,17 @@ object_xor (object_t *obj1, object_t *obj2)
 	else if (OBJECT_TYPE (obj1) < OBJECT_TYPE_INT) {
 		left = object_cast (obj1, OBJECT_TYPE_INT);
 		right = object_cast (obj2, OBJECT_TYPE_INT);
+	}
+
+	if (left == NULL || right == NULL) {
+		if (left != NULL) {
+			object_free (left);
+		}
+		if (right != NULL) {
+			object_free (right);
+		}
+
+		return NULL;
 	}
 
 	xor_fun = (OBJECT_OPSET (left))->xor;
@@ -708,6 +799,9 @@ object_lshift (object_t *obj1, object_t *obj2)
 	left = obj1;
 	if (OBJECT_TYPE (obj1) < OBJECT_TYPE_INT) {
 		left = intobject_new ((int) object_get_integer (obj1), NULL);
+		if (left == NULL) {
+			return NULL;
+		}
 	}
 
 	lshift_fun = (OBJECT_OPSET (left))->lshift;
@@ -738,6 +832,9 @@ object_rshift (object_t *obj1, object_t *obj2)
 	left = obj1;
 	if (OBJECT_TYPE (obj1) < OBJECT_TYPE_INT) {
 		left = intobject_new ((int) object_get_integer (obj1), NULL);
+		if (left == NULL) {
+			return NULL;
+		}
 	}
 
 	rshift_fun = (OBJECT_OPSET (left))->rshift;
