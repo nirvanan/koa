@@ -108,7 +108,7 @@ doubleobject_op_sub (object_t *obj1, object_t *obj2)
 	val1 = doubleobject_get_value (obj1);
 	val2 = doubleobject_get_value (obj2);
 
-	return intobject_new (val1 - val2, NULL);
+	return doubleobject_new (val1 - val2, NULL);
 }
 
 /* Multiplication. */

@@ -101,9 +101,13 @@ strobject_op_add (object_t *obj1, object_t *obj2)
 	}
 
 	s1 = strobject_get_value (obj1);
-	s2 = strobject_get_value (obj2);
+	s2 = strobject_get_value (right);
 	cated = str_concat (s1, s2);
 	if (cated == NULL) {
+		if (right != obj2) {
+			object_free (right);
+		}
+
 		return NULL;
 	}
 

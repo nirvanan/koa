@@ -71,9 +71,9 @@ int
 vec_find (vec_t *vec, void *data);
 
 int
-vec_insert (vec_t *vec, integer_value_t pos, void *data);
+vec_insert (vec_t *vec, int pos, void *data);
 
 int
-vec_remove (vec_t *vec, void *data);
+vec_remove (vec_t *vec, int pos);
 
 #endif /* STR_H */
