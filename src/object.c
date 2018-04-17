@@ -29,6 +29,7 @@
 #include "longobject.h"
 #include "floatobject.h"
 #include "doubleobject.h"
+#include "strobject.h"
 
 /* Note that the 'null' object is shared everywhere. */
 static object_t *g_null_object;
@@ -156,7 +157,7 @@ object_get_floating (object_t *obj)
 int
 object_is_zero (object_t *obj)
 {
-	return NUMBERICAL_GET_VALUE (obj) == 0;
+	return (int) (NUMBERICAL_GET_VALUE (obj) == 0);
 }
 
 object_t *
@@ -920,4 +921,5 @@ object_init ()
 	boolobject_init ();
 	intobject_init ();
 	longobject_init ();
+	strobject_init ();
 }

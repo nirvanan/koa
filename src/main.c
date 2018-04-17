@@ -33,9 +33,9 @@ int main(int argc, char *argv[])
 	object_init ();
 
 	while (1) {
-		void *str1 = pool_alloc (200);
+		object_t *str = strobject_new ("fuck", NULL);
 
-		pool_free ((void *) str1);
+		object_free (str);
 	}
 
 	return 0;

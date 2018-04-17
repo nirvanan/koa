@@ -29,15 +29,15 @@
 
 #define LIDT_PREV(x) (((list_t *)x)->prev)
 
-typedef int (*list_del_f) (void *data, void *udata);
-
-typedef void (*list_for_f) (void *data, void *udata);
-
 typedef struct list_s
 {
 	struct list_s *prev;
 	struct list_s *next;
 } list_t;
+
+typedef int (*list_del_f) (list_t *list, void *data);
+
+typedef int (*list_for_f) (list_t *list, void *data);
 
 list_t *
 list_append (list_t *list, list_t *n);
@@ -49,7 +49,7 @@ int
 list_find (list_t *list, void *data);
 
 list_t *
-list_cleanup (list_t *list, list_del_f df, void *udata);
+list_cleanup (list_t *list, list_del_f df, int need_free, void *udata);
 
 void
 list_foreach (list_t *list, list_for_f ff, void *udata);

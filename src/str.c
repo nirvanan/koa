@@ -26,18 +26,10 @@
 #include "error.h"
 
 str_t *
-str_new (const char *s)
+str_new (const char *s, size_t len)
 {
-	size_t len;
 	size_t str_size;
 	str_t *str;
-
-	if (s == NULL) {
-		len = 0;
-	}
-	else {
-		len = strlen (s);
-	}
 
 	str_size = len + sizeof (str_t) + 1;
 
@@ -50,7 +42,7 @@ str_new (const char *s)
 
 	str->len = len;
 	if (len > 0) {
-		memcpy ((void *) str->s, (void *) s, len);
+		strcpy (str->s, s);
 	}
 	str->s[len] = '\0';
 
@@ -133,4 +125,10 @@ str_cmp (str_t *str1, str_t *str2)
 	}
 
 	return strcmp (str1->s, str2->s);
+}
+
+int
+str_cmp_c_str (str_t *str, const char *s)
+{
+	return strcmp (str->s, s);
 }

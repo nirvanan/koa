@@ -24,8 +24,20 @@
 #include "pool.h"
 #include "error.h"
 
+typedef struct hash_list_foreach_s
+{
+	void *data;
+	void *res;
+} hash_list_foreach_t;
+
+typedef struct hash_test_s
+{
+	hash_t *ha;
+	void *data; /* Heterogeneous data. */
+} hash_test_t;
+
 hash_t *
-hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf)
+hash_new (size_t bu, hash_f hf, hash_test_f tf)
 {
 	hash_t *ha;
 	size_t bucket_size;
@@ -38,7 +50,7 @@ hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf)
 	}
 
 	bucket_size = bu * sizeof (list_t *);
-	/* We can still use pool allocation when bu is small. */
+	/* We can still take use of pool allocation when bu is small. */
 	ha->h = (list_t **) pool_alloc (bucket_size);
 	if (ha->h == NULL) {
 		pool_free ((void *) ha);
@@ -48,69 +60,107 @@ hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf)
 	}
 	memset (ha->h, 0, bucket_size);
 	ha->hf = hf;
-	ha->ef = ef;
 	ha->tf = tf;
 	ha->bu = bu;
 
 	return ha;
 }
 
-void
+int
 hash_add (hash_t *ha, void *data)
 {
-	int idx;
-	list_t *l;
+	size_t idx;
 	hash_node_t *node;
 
 	idx = ha->hf (data) % ha->bu;
 	/* Check whether there is already a node presenting the same value. */
-	for (l = ha->h[idx]; l; l = LIST_NEXT (l)) {
-		node = (hash_node_t *) l;
-		if (ha->ef (node->value, data)) {
-			return;
-		}
+	if (hash_find (ha, data) > 0) {
+		return 0;
 	}
+
 	node = pool_alloc (sizeof (hash_node_t));
+	if (node == NULL) {
+		return 0;
+	}
+
+	node->value = data;
 	ha->h[idx] = list_append (ha->h[idx], LIST (node));
+
+	return 1;
+}
+
+/* Cleanup function for list cleanup routine. */
+static int
+hash_remove_fun (list_t *list, void *data)
+{
+	hash_node_t *node;
+
+	node = (hash_node_t *) list;
+	
+	return (int) (node->value == data);
 }
 
 void
 hash_remove (hash_t *ha, void *data)
 {
-	int idx;
-	list_t *l;
-	hash_node_t *node;
+	size_t idx;
 
 	idx = ha->hf (data) % ha->bu;
-	l = ha->h[idx];
-	while (l != NULL) {
-		node = (hash_node_t *) l;
-		if (ha->ef (node->value, data)) {
-			ha->h[idx] = list_remove (ha->h[idx], l);
-			break;
-		}
-
-		l = LIST_NEXT (l);
-	}
+	ha->h[idx] = list_cleanup (ha->h[idx], hash_remove_fun, 1, data);
 }
 
-/* This function is used for heterogeneous data. */
-int
-hash_test (hash_t *ha, void *hd, int hash)
+/* Test function for list finding routine. */
+static int
+hash_test_fun (list_t *list, void *data)
 {
-	int idx;
-	list_t *l;
 	hash_node_t *node;
+	hash_list_foreach_t *test;
+	hash_test_t *test_info;
 
-	idx = hash % ha->bu;
-	l = ha->h[idx];
-	while (l != NULL) {
-		node = (hash_node_t *) l;
-		if (ha->tf (node->value, hd)) {
-			return 1;
-		}
+	node = (hash_node_t *) list;
+	test = (hash_list_foreach_t *) data;
+	test_info = (hash_test_t *) test->data;
+	if (test_info->ha->tf (node->value, test_info->data) != 0) {
+		test->res = node->value;
 
-		l = LIST_NEXT (l);
+		return 1;
+	}
+
+	return 0;
+}
+
+/* This function is used for finding heterogeneous data. */
+void *
+hash_test (hash_t *ha, void *hd, uint64_t hash)
+{
+	size_t idx;
+	hash_list_foreach_t test;
+	hash_test_t test_info;
+
+	idx = (size_t) hash % ha->bu;
+	test_info.ha = ha;
+	test_info.data = hd;
+	test.data = (void *) &test_info;
+	test.res = NULL;
+
+	list_foreach (ha->h[idx], hash_test_fun, (void *) &test);
+
+	return test.res;
+}
+
+/* Find function for list finding routine. */
+static int
+hash_find_fun (list_t *list, void *data)
+{
+	hash_node_t *node;
+	hash_list_foreach_t *find;
+
+	node = (hash_node_t *) list;
+	find = (hash_list_foreach_t *) data;
+	if (node->value == find->data) {
+		*((int *) find->res) = 1;
+
+		return 1;
 	}
 
 	return 0;
@@ -119,20 +169,16 @@ hash_test (hash_t *ha, void *hd, int hash)
 int
 hash_find (hash_t *ha, void *data)
 {
-	int idx;
-	list_t *l;
-	hash_node_t *node;
+	size_t idx;
+	hash_list_foreach_t find;
+	int res;
 
-	idx = ha->hf (data) % ha->bu;
-	l = ha->h[idx];
-	while (l != NULL) {
-		node = (hash_node_t *) l;
-		if (ha->ef (node->value, data)) {
-			return 1;
-		}
+	idx = (size_t) ha->hf (data) % ha->bu;
+	find.data = data;
+	res = 0;
+	find.res = (void *) &res;
 
-		l = LIST_NEXT (l);
-	}
+	list_foreach (ha->h[idx], hash_find_fun, (void *) &find);
 
-	return 0;
+	return res;
 }

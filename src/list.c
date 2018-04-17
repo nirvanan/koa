@@ -21,6 +21,7 @@
 #include <stddef.h>
 
 #include "list.h"
+#include "pool.h"
 
 list_t *
 list_append (list_t *list, list_t *n)
@@ -75,19 +76,21 @@ list_find (list_t *list, void *data)
 }
 
 list_t *
-list_cleanup (list_t *list, list_del_f df, void *udata)
+list_cleanup (list_t *list, list_del_f df, int need_free, void *udata)
 {
 	list_t *l;
 	list_t *head;
+	list_t *next;
 
 	l = list;
 	head = list;
 	while (l != NULL) {
-		list_t *next;
-
 		next = l->next;
 		if (df (l, udata)) {
 			head = list_remove (head, l);
+			if (need_free) {
+				pool_free ((void *) l);
+			}
 		}
 
 		l = next;
@@ -103,7 +106,9 @@ list_foreach (list_t *list, list_for_f ff, void *udata)
 
 	l = list;
 	while (l != NULL) {
-		ff (l, udata);
+		if (ff (l, udata) > 0) {
+			return;
+		}
 		l = l->next;
 	}
 }

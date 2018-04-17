@@ -31,7 +31,7 @@ typedef struct str_s {
 } str_t;
 
 str_t *
-str_new (const char *s);
+str_new (const char *s, size_t len);
 
 void
 str_free (str_t *str);
@@ -50,5 +50,8 @@ str_pos (str_t *str, integer_value_t pos);
 
 int
 str_cmp (str_t *str1, str_t *str2);
+
+int
+str_cmp_c_str (str_t *str, const char *s);
 
 #endif /* STR_H */

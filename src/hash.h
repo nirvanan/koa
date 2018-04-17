@@ -22,12 +22,14 @@
 #define HASH_H
 
 #include <stddef.h>
+#include <inttypes.h>
 
 #include "koa.h"
 #include "list.h"
 
-typedef int (*hash_f) (void *data);
-typedef int (*hash_eq_f) (void *value, void *data);
+#define HASH_SEED(x) ((x)->seed)
+
+typedef uint64_t (*hash_f) (void *data);
 typedef int (*hash_test_f) (void *value, void *hd);
 
 typedef struct hash_node_s
@@ -40,22 +42,21 @@ typedef struct hash_s
 {
 	list_t **h;
 	hash_f hf;
-	hash_eq_f ef;
 	hash_test_f tf;
 	size_t bu;
 } hash_t;
 
 hash_t *
-hash_new (size_t bu, hash_f hf, hash_eq_f ef, hash_test_f tf);
+hash_new (size_t bu, hash_f hf, hash_test_f tf);
 
-void
+int
 hash_add (hash_t *ha, void *data);
 
 void
 hash_remove (hash_t *ha, void *data);
 
-int
-hash_test (hash_t *ha, void *hd, int hash);
+void *
+hash_test (hash_t *ha, void *hd, uint64_t hash);
 
 int
 hash_find (hash_t *ha, void *data);

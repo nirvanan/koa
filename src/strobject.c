@@ -19,13 +19,26 @@
  */
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "strobject.h"
 #include "pool.h"
+#include "hash.h"
 #include "error.h"
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
+
+#define INTERNAL_STR_LENGTH 10
+
+#define HASH_M 0xc6a4a7935bd1e995
+
+#define INTERNAL_HASH_SIZE 4096
+
+static hash_t *g_internal_hash;
+
+static unsigned int g_internal_hash_seed;
 
 /* Object ops. */
 static void strobject_op_free (object_t *obj);
@@ -62,6 +75,10 @@ static object_opset_t g_object_ops =
 void
 strobject_op_free (object_t *obj)
 {
+	/* If it's an interned str, delete it. */
+	if (str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH) {
+		hash_remove (g_internal_hash, (void *) obj);
+	}
 	str_free (strobject_get_value (obj));
 }
 
@@ -78,11 +95,17 @@ strobject_op_add (object_t *obj1, object_t *obj2)
 	/* Convert numberical to string. */
 	if (NUMBERICAL_TYPE (obj2)) {
 		right = object_dump (obj2);
+		if (right == NULL) {
+			return NULL;
+		}
 	}
 
 	s1 = strobject_get_value (obj1);
 	s2 = strobject_get_value (obj2);
 	cated = str_concat (s1, s2);
+	if (cated == NULL) {
+		return NULL;
+	}
 
 	if (right != obj2) {
 		object_free (right);
@@ -145,10 +168,81 @@ strobject_op_index (object_t *obj1, object_t *obj2)
 	return charobject_new (str_pos (s, pos), NULL);
 }
 
+/* Murmurhash2. */
+static uint64_t
+strobject_murmur (const char *s, size_t len, unsigned int seed)
+{
+	const uint8_t *start;
+	const uint8_t *end;
+	uint64_t m;
+	int r;
+	uint64_t h;
+
+	start = (const uint8_t *) s;
+	end = start + (len - (len & 7));
+
+	m = HASH_M;
+	r = 47;
+	h = seed ^ (len * m);
+
+	while (start != end) {
+		uint64_t k;
+
+		k = *((uint64_t *) start);
+		k *= m;
+		k ^= k >> r;
+		k *= m;
+		h ^= k;
+		h *= m;
+
+		start += 8;
+	}
+
+	switch (len & 7) {
+		case 7:
+			h ^= (uint64_t) start[6] << 48;
+		case 6:
+			h ^= (uint64_t) start[5] << 40;
+		case 5:
+			h ^= (uint64_t) start[4] << 32;
+		case 4:
+			h ^= (uint64_t) start[3] << 24;
+		case 3:
+			h ^= (uint64_t) start[2] << 16;
+		case 2:
+			h ^= (uint64_t) start[1] << 8;
+		case 1:
+			h ^= (uint64_t) start[0];
+			h *= m;
+	}
+
+	h ^= h >> r;
+	h *= m;
+	h ^= h >> r;
+
+	return h;
+}
+
 object_t *
 strobject_new (const char *val, void *udata)
 {
 	strobject_t *obj;
+	size_t len;
+
+	if (val == NULL) {
+		val = "";
+	}
+	
+	len = strlen (val);
+
+	/* If len is small, this object gonna be interned. */
+	if (len <= INTERNAL_STR_LENGTH) {
+		obj = (strobject_t *) hash_test (g_internal_hash, (void *) val,
+			strobject_murmur (val, len, g_internal_hash_seed));
+		if (obj != NULL) {
+			return (object_t *) obj;
+		}
+	}
 
 	obj = (strobject_t *) pool_alloc (sizeof (strobject_t));
 	if (obj == NULL) {
@@ -161,13 +255,22 @@ strobject_new (const char *val, void *udata)
 	obj->head.type = OBJECT_TYPE_STR;
 	obj->head.ops = &g_object_ops;
 	obj->head.udata = udata;
-	obj->val = str_new (val);
+	obj->val = str_new (val, len);
 	if (obj->val == NULL) {
 		pool_free ((void *) obj);
 
 		return NULL;
 	}
 
+	/* Add to internal hash. */
+	if (len <= INTERNAL_STR_LENGTH) {
+		if (hash_add (g_internal_hash, (void *) obj) == 0) {
+			object_free ((object_t *) obj);
+			error ("failed to hash interned str object.");
+
+			return NULL;
+		}
+	}
 
 	return (object_t *) obj;
 }
@@ -203,7 +306,41 @@ strobject_get_value (object_t *obj)
 	return ob->val;
 }
 
+/* For hash table. */
+static uint64_t
+strobject_hash_fun (void *data)
+{
+	object_t *obj;
+	str_t *str;
+	size_t len;
+	unsigned int seed;
+
+	obj = (object_t *) data;
+	str = strobject_get_value (obj);
+	len = str_len (str);
+	seed = g_internal_hash_seed;
+
+	return strobject_murmur (str_c_str (str), len, seed);
+}
+
+static int
+strobject_test_fun (void *value, void *hd)
+{
+	object_t *obj;
+
+	obj = (object_t *) value;
+
+	return (int) str_cmp_c_str (strobject_get_value (obj),
+		(const char *) hd) == 0;
+}
+
 void
 strobject_init ()
 {
+	g_internal_hash = hash_new (INTERNAL_HASH_SIZE, strobject_hash_fun, strobject_test_fun);
+	if (g_internal_hash == NULL) {
+		fatal_error ("failed to init str internal hash.");
+	}
+
+	g_internal_hash_seed = random () & (((unsigned int) 1 << sizeof (unsigned int)) - 1);
 }

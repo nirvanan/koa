@@ -26,7 +26,7 @@
 #include "list.h"
 #include "error.h"
 
-/* The general structure of koa memory allocation is pool=>Page=>Cell.
+/* The general structure of koa memory allocation is Pool=>Page=>Cell.
  * There are several kinds of cells: from 8 bytes to 256 bytes, and all
  * allocations will be done by choosing the most proper size of cell.
  * We use a linked list to trace all pools and use a hash table to trace
@@ -393,24 +393,28 @@ pool_free (void *bl)
 	}
 }
 
-static void
-pool_add_cycle (void *data, void *udata)
+static int
+pool_add_cycle (list_t *list, void *data)
 {
 	pool_t *p;
 
-	UNUSED (udata);
-	p = (pool_t *) data;
+	UNUSED (data);
+	p = (pool_t *) list;
 	
-	p->cycle++;
+	if (p->used <= 0) {
+		p->cycle++;
+	}
+
+	return 0;
 }
 
 static int
-pool_need_recycle (void *data, void *udata)
+pool_need_recycle (list_t *list, void *data)
 {
 	pool_t *p;
 
-	UNUSED (udata);
-	p = (pool_t *) data;
+	UNUSED (data);
+	p = (pool_t *) list;
 	
 	return p->cycle > RECYCLE_CYCLE;
 }
@@ -422,7 +426,7 @@ pool_recycle ()
 	 * more than RECYCLE_CYCLE cycles, we recycle it. */
 	list_foreach (g_pool_list, pool_add_cycle, NULL);
 
-	g_pool_list = list_cleanup (g_pool_list, pool_need_recycle, NULL);
+	g_pool_list = list_cleanup (g_pool_list, pool_need_recycle, 1, NULL);
 }
 
 void

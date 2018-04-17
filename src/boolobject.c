@@ -137,6 +137,7 @@ boolobject_new (bool val, void *udata)
 
 		return NULL;
 	}
+
 	obj->head.ref = 0;
 	obj->head.type = OBJECT_TYPE_BOOL;
 	obj->head.ops = &g_object_ops;
