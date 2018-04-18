@@ -103,7 +103,8 @@ am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
 	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) error.$(OBJEXT) \
 	hash.$(OBJEXT) intobject.$(OBJEXT) list.$(OBJEXT) \
 	longobject.$(OBJEXT) main.$(OBJEXT) object.$(OBJEXT) \
-	pool.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT)
+	pool.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT) \
+	vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -286,7 +287,9 @@ str.h \
 strobject.c \
 strobject.h \
 vec.c \
-vec.h
+vec.h \
+vecobject.c \
+vecobject.h
 
 all: all-am
 
@@ -389,6 +392,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vecobject.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

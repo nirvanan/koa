@@ -1,5 +1,5 @@
 /*
- * vec.h
+ * vecobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,62 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef VEC_H
-#define VEC_H
-
-#include <stddef.h>
+#ifndef VECOBJECT_H
+#define VECOBJECT_H
 
 #include "koa.h"
+#include "object.h"
+#include "vec.h"
 
-typedef struct vec_s {
-	size_t size;
-	size_t allocated;
-	void **v;
-} vec_t;
+typedef struct vecobject_s
+{
+	object_head_t head;
+	vec_t *val;
+} vecobject_t;
 
-vec_t *
-vec_new (size_t size);
+object_t *
+vecobject_new (size_t len, void *udata);
 
-void
-vec_free (vec_t *vec);
-
-size_t
-vec_size (vec_t *vec);
-
-size_t
-vec_capacity (vec_t *vec);
+object_t *
+vecobject_vec_new (vec_t *val, void *udata);
 
 vec_t *
-vec_concat (vec_t *vec1, vec_t *vec2);
+vecobject_get_value (object_t *obj);
 
-void *
-vec_pos (vec_t *vec, integer_value_t pos);
-
-int
-vec_push_back (vec_t *vec, void *data);
-
-int
-vec_pop_back (vec_t *vec);
-
-int
-vec_push_front (vec_t *vec, void *data);
-
-int
-vec_pop_front (vec_t *vec);
-
-void *
-vec_first (vec_t *vec);
-
-void *
-vec_last (vec_t *vec);
-
-int
-vec_find (vec_t *vec, void *data);
-
-int
-vec_insert (vec_t *vec, int pos, void *data);
-
-int
-vec_remove (vec_t *vec, int pos);
-
-#endif /* VEC_H */
+#endif /* VECOBJECT_H */

@@ -31,4 +31,6 @@ str.h \
 strobject.c \
 strobject.h \
 vec.c \
-vec.h
+vec.h \
+vecobject.c \
+vecobject.h

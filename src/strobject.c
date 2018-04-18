@@ -1,5 +1,5 @@
 /*
- * charobject.c
+ * strobject.c
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -347,5 +347,4 @@ strobject_init ()
 	}
 
 	g_internal_hash_seed = random () & ((~(unsigned int) 0));
-	printf ("%d\n", g_internal_hash_seed);
 }
