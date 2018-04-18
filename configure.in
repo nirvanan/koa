@@ -13,7 +13,7 @@ AM_MAINTAINER_MODE
 AM_INIT_AUTOMAKE([1.15 -Wall no-define tar-ustar no-dist-gzip dist-xz])
 
 # Checks for programs.
-AC_PROG_CC
+AC_PROG_CC_C99
 
 PKG_PROG_PKG_CONFIG
 
@@ -33,10 +33,10 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset])
 
-# enable debug or not                                                         
+# Enable debug or not. 
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [enable DEBUG mode(default=no)]),[], [enable_debug=no])
-AS_IF([test "x$enable_debug" = "xyes"], [CFLAGS="-g2 -O0 -DDEBUG -Wall"], 
-	  [test "x$enable_debug" = "xno"], [CFLAGS="-O2 -Wall"], [])
+AS_IF([test "x$enable_debug" = "xyes"], [CFLAGS="-g2 -O0 -DDEBUG -Wall --std=c99"], 
+	  [test "x$enable_debug" = "xno"], [CFLAGS="-O2 -Wall --std=c99"], [])
 
 AC_CONFIG_FILES([Makefile
 src/Makefile

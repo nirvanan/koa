@@ -68,16 +68,11 @@ str_c_str (str_t *str)
 }
 
 static str_t *
-str_empty_str_new (size_t l)
+str_empty_str_new (size_t len)
 {
 	size_t str_size;
-	size_t len;
 	str_t *str;
 
-	len = l;
-	if (len < 0) {
-		len = 0;
-	}
 	str_size = len + sizeof (str_t) + 1;
 
 	str = (str_t *) pool_alloc (str_size);

@@ -346,5 +346,6 @@ strobject_init ()
 		fatal_error ("failed to init str internal hash.");
 	}
 
-	g_internal_hash_seed = random () & (((unsigned int) 1 << sizeof (unsigned int)) - 1);
+	g_internal_hash_seed = random () & ((~(unsigned int) 0));
+	printf ("%d\n", g_internal_hash_seed);
 }

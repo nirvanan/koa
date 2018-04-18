@@ -24,6 +24,7 @@
 #include "intobject.h"
 #include "strobject.h"
 #include "str.h"
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
@@ -31,11 +32,16 @@ int main(int argc, char *argv[])
 	pool_init ();
 	/* Init object caches. */
 	object_init ();
+	int c = 0;
 
 	while (1) {
 		object_t *str = strobject_new ("fuck", NULL);
 
 		object_free (str);
+		c++;
+		if (c % 60000000 == 0) {
+			printf ("%d %ld\n", c, time(NULL));
+		}
 	}
 
 	return 0;
