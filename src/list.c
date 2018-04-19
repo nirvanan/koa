@@ -47,10 +47,7 @@ list_remove (list_t *list, list_t *n)
 		n->prev->next = n->next;
 	}
 
-	head = list;
-	if (list == n) {
-		 head = n->next;
-	}
+	head = list == n? n->next: list;
 
 	n->next = NULL;
 	n->prev = NULL;

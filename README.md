@@ -1,5 +1,5 @@
 # Koa
-A toy script language based on design ideas in Python, lua.
+A toy script language.
 ## Proposals
 - Complete C-style syntactics.
 - Fast data types.

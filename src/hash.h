@@ -36,6 +36,7 @@ typedef struct hash_node_s
 {
 	list_t link;
 	void *value;
+	size_t idx;
 } hash_node_t;
 
 typedef struct hash_s
@@ -49,11 +50,14 @@ typedef struct hash_s
 hash_t *
 hash_new (size_t bu, hash_f hf, hash_test_f tf);
 
-int
+hash_node_t *
 hash_add (hash_t *ha, void *data);
 
 void
 hash_remove (hash_t *ha, void *data);
+
+void
+hash_fast_remove (hash_t *ha, hash_node_t *hn);
 
 void *
 hash_test (hash_t *ha, void *hd, uint64_t hash);

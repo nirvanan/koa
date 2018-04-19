@@ -24,7 +24,6 @@
 
 #include "strobject.h"
 #include "pool.h"
-#include "hash.h"
 #include "error.h"
 #include "boolobject.h"
 #include "charobject.h"
@@ -35,6 +34,8 @@
 #define HASH_M 0xc6a4a7935bd1e995
 
 #define INTERNAL_HASH_SIZE 4096
+
+#define HASH_NODE(x) (((strobject_t *)(x))->hn)
 
 static hash_t *g_internal_hash;
 
@@ -77,7 +78,7 @@ strobject_op_free (object_t *obj)
 {
 	/* If it's an interned str, delete it. */
 	if (str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH) {
-		hash_remove (g_internal_hash, (void *) obj);
+		hash_fast_remove (g_internal_hash, HASH_NODE (obj));
 	}
 	str_free (strobject_get_value (obj));
 }
@@ -260,6 +261,7 @@ strobject_new (const char *val, void *udata)
 	obj->head.ops = &g_object_ops;
 	obj->head.udata = udata;
 	obj->val = str_new (val, len);
+	obj->hn = NULL;
 	if (obj->val == NULL) {
 		pool_free ((void *) obj);
 
@@ -268,12 +270,17 @@ strobject_new (const char *val, void *udata)
 
 	/* Add to internal hash. */
 	if (len <= INTERNAL_STR_LENGTH) {
-		if (hash_add (g_internal_hash, (void *) obj) == 0) {
+		hash_node_t *hn;
+
+		hn = hash_add (g_internal_hash, (void *) obj);
+		if (hn == NULL) {
 			object_free ((object_t *) obj);
 			error ("failed to hash interned str object.");
 
 			return NULL;
 		}
+
+		obj->hn = hn;
 	}
 
 	return (object_t *) obj;

@@ -24,11 +24,13 @@
 #include "koa.h"
 #include "object.h"
 #include "str.h"
+#include "hash.h"
 
 typedef struct strobject_s
 {
 	object_head_t head;
 	str_t *val;
+	hash_node_t *hn; /* For quick dehash. */
 } strobject_t;
 
 object_t *

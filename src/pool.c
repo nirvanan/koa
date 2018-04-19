@@ -107,9 +107,7 @@ pool_page_init (page_t *page, cell_type_t t)
 	/* Chain all cells. */
 	page_end = (void *) page + PAGE_SIZE;
 	for (void *c = page->free; c < page_end; c += CELL_SIZE (t)) {
-		if (c + CELL_SIZE (t) < page_end) {
-			*((void **) c) = c + CELL_SIZE (t);
-		}
+		*((void **) c) = c + CELL_SIZE (t) < page_end? c + CELL_SIZE (t): NULL;
 	}
 }
 

@@ -66,7 +66,7 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 	return ha;
 }
 
-int
+hash_node_t *
 hash_add (hash_t *ha, void *data)
 {
 	size_t idx;
@@ -75,18 +75,19 @@ hash_add (hash_t *ha, void *data)
 	idx = ha->hf (data) % ha->bu;
 	/* Check whether there is already a node presenting the same value. */
 	if (hash_find (ha, data) > 0) {
-		return 0;
+		return NULL;
 	}
 
 	node = pool_alloc (sizeof (hash_node_t));
 	if (node == NULL) {
-		return 0;
+		return NULL;
 	}
 
 	node->value = data;
+	node->idx = idx;
 	ha->h[idx] = list_append (ha->h[idx], LIST (node));
 
-	return 1;
+	return node;
 }
 
 /* Cleanup function for list cleanup routine. */
@@ -107,6 +108,18 @@ hash_remove (hash_t *ha, void *data)
 
 	idx = ha->hf (data) % ha->bu;
 	ha->h[idx] = list_cleanup (ha->h[idx], hash_remove_fun, 1, data);
+}
+
+void
+hash_fast_remove (hash_t *ha, hash_node_t *hn)
+{
+	size_t idx;
+
+	idx = hn->idx;
+
+	ha->h[idx] = list_remove (ha->h[idx], LIST (hn));
+
+	pool_free ((void *) hn);
 }
 
 /* Test function for list finding routine. */
