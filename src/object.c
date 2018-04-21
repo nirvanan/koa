@@ -58,7 +58,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Right shift. */
 	object_op_eq, /* Equality. */
 	NULL, /* Comparation. */
-	NULL  /* Index. */
+	NULL, /* Index. */
+	NULL /* Inplace index. */
 };
 
 /* Equality. */
@@ -902,6 +903,21 @@ object_index (object_t *obj1, object_t *obj2)
 	}
 
 	return index_fun (obj1, obj2);
+}
+
+object_t *
+object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
+{
+	ter_op_f ipindex_fun;
+
+	ipindex_fun = (OBJECT_OPSET (obj1))->ipindex;
+	if (ipindex_fun == NULL) {
+		error ("left operand has no inplace index routine.");
+		
+		return NULL;
+	}
+
+	return ipindex_fun (obj1, obj2, obj3);
 }
 
 void

@@ -49,6 +49,9 @@ vec_concat (vec_t *vec1, vec_t *vec2);
 void *
 vec_pos (vec_t *vec, integer_value_t pos);
 
+void *
+vec_set (vec_t *vec, integer_value_t pos, void *data);
+
 int
 vec_push_back (vec_t *vec, void *data);
 
@@ -71,9 +74,9 @@ int
 vec_find (vec_t *vec, void *data);
 
 int
-vec_insert (vec_t *vec, int pos, void *data);
+vec_insert (vec_t *vec, integer_value_t pos, void *data);
 
 int
-vec_remove (vec_t *vec, int pos);
+vec_remove (vec_t *vec, integer_value_t pos);
 
 #endif /* VEC_H */

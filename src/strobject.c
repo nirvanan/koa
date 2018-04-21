@@ -69,7 +69,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Right shift. */
 	strobject_op_eq, /* Equality. */
 	strobject_op_cmp, /* Comparation. */
-	strobject_op_index /* Index. */
+	strobject_op_index, /* Index. */
+	NULL /* Inplace index. */ /* Note that str objects are read-only! */
 };
 
 /* Free. */

@@ -65,7 +65,6 @@ typedef enum object_type_e {
 	OBJECT_TYPE_STR = 0x07,
 	OBJECT_TYPE_VEC = 0x08,
 	OBJECT_TYPE_DICT = 0x09,
-	OBJECT_TYPE_RAW = 0x0a,
 } object_type_t;
 
 typedef struct object_head_s
@@ -111,6 +110,7 @@ typedef struct object_opset_s
 	bin_op_f eq;
 	bin_op_f cmp;
 	bin_op_f index;
+	ter_op_f ipindex;
 } object_opset_t;
 
 /*
@@ -125,8 +125,7 @@ static const char *g_type_name[] =
 	"double",
 	"str",
 	"vec",
-	"dict",
-	"raw"
+	"dict"
 };
 */
 
@@ -210,6 +209,9 @@ object_compare (object_t *obj1, object_t *obj2);
 
 object_t *
 object_index (object_t *obj1, object_t *obj2);
+
+object_t *
+object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3);
 
 void
 object_init ();

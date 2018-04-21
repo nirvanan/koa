@@ -74,7 +74,8 @@ static object_opset_t g_object_ops =
 	longobject_op_rshift, /* Right shift. */
 	longobject_op_eq, /* Equality. */
 	longobject_op_cmp, /* Comparation. */
-	NULL  /* Index. */
+	NULL, /* Index. */
+	NULL /* Inplace index. */
 };
 
 /* Logic Not. */

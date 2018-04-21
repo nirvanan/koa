@@ -66,7 +66,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Right shift. */
 	charobject_op_eq, /* Equality. */
 	charobject_op_cmp, /* Comparation. */
-	NULL  /* Index. */
+	NULL, /* Index. */
+	NULL /* Inplace index. */
 };
 
 /* Logic Not. */

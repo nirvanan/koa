@@ -118,6 +118,21 @@ vec_pos (vec_t *vec, integer_value_t pos)
 	return NULL;
 }
 
+void *
+vec_set (vec_t *vec, integer_value_t pos, void *data)
+{
+	if (pos >= 0 && pos < vec->size) {
+		void *prev;
+
+		prev = vec->v[pos];
+		vec->v[pos] = NULL;
+
+		return prev;
+	}
+
+	return NULL;
+}
+
 static int
 vec_check_and_resize (vec_t *vec, size_t req)
 {
@@ -223,7 +238,7 @@ vec_find (vec_t *vec, void *data)
 }
 
 int
-vec_insert (vec_t *vec, int pos, void *data)
+vec_insert (vec_t *vec, integer_value_t pos, void *data)
 {
 	if (pos < 0 || pos > vec->size) {
 		error ("invalid vec pos for inserting.");
@@ -246,7 +261,7 @@ vec_insert (vec_t *vec, int pos, void *data)
 }
 
 int
-vec_remove (vec_t *vec, int pos)
+vec_remove (vec_t *vec, integer_value_t pos)
 {
 	void *to_del;
 

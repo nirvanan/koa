@@ -27,6 +27,8 @@
 static void vecobject_op_free (object_t *obj);
 static object_t *vecobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_index (object_t *obj1, object_t *obj2);
+static object_t *vecobject_op_ipindex (object_t *obj1,
+	object_t *obj2, object_t *obj3);
 
 static object_opset_t g_object_ops =
 {
@@ -49,7 +51,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Right shift. */
 	NULL, /* Equality. */
 	NULL, /* Comparation. */
-	vecobject_op_index /* Index. */
+	vecobject_op_index, /* Index. */
+	vecobject_op_ipindex /* Inplace index. */
 };
 
 /* Free. */
@@ -99,6 +102,30 @@ vecobject_op_index (object_t *obj1, object_t *obj2)
 	}
 
 	return vec_pos (v, pos);
+}
+
+/* Inplace index. */
+static object_t *
+vecobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
+{
+	vec_t *v;
+	integer_value_t pos;
+
+	if (!INTEGER_TYPE (obj2)) {
+		error ("vec index must be an integer.");
+
+		return NULL;
+	}
+
+	v = vecobject_get_value (obj1);
+	pos = object_get_integer (obj2);
+	if (pos >= vec_size (v) || pos < 0) {
+		error ("vec index out of bound.");
+
+		return NULL;
+	}
+
+	return vec_set (v, pos, obj3);
 }
 
 object_t *
