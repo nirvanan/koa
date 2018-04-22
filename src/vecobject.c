@@ -52,7 +52,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Equality. */
 	NULL, /* Comparation. */
 	vecobject_op_index, /* Index. */
-	vecobject_op_ipindex /* Inplace index. */
+	vecobject_op_ipindex, /* Inplace index. */
+	NULL
 };
 
 /* Free. */
