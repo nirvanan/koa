@@ -23,6 +23,7 @@
 #include "error.h"
 #include "boolobject.h"
 #include "intobject.h"
+#include "longobject.h"
 
 /* Object ops. */
 static object_t *doubleobject_op_not (object_t *obj);
@@ -35,6 +36,7 @@ static object_t *doubleobject_op_land (object_t *obj1, object_t *obj2);
 static object_t *doubleobject_op_lor (object_t *obj1, object_t *obj2);
 static object_t *doubleobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *doubleobject_op_cmp (object_t *obj1, object_t *obj2);
+static object_t *doubleobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -57,7 +59,9 @@ static object_opset_t g_object_ops =
 	NULL, /* Right shift. */
 	doubleobject_op_eq, /* Equality. */
 	doubleobject_op_cmp, /* Comparation. */
-	NULL  /* Index. */
+	NULL, /* Index. */
+	NULL, /* Inplace index. */
+	doubleobject_op_hash /* Hash. */
 };
 
 /* Logic Not. */
@@ -186,6 +190,17 @@ doubleobject_op_cmp (object_t *obj1, object_t *obj2)
 	return intobject_new (object_numberical_compare (obj1, obj2), NULL);
 }
 
+/* Hash. */
+static object_t *
+doubleobject_op_hash(object_t *obj)
+{
+	if (OBJECT_DIGEST (obj) == 0) {
+		OBJECT_DIGEST (obj) = object_floating_hash (object_get_floating (obj));
+	}
+
+	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
 object_t *
 doubleobject_new (double val, void *udata)
 {
@@ -198,10 +213,8 @@ doubleobject_new (double val, void *udata)
 		return NULL;
 	}
 
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_DOUBLE;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DOUBLE);
+
 	obj->val = val;
 
 	return (object_t *) obj;

@@ -22,6 +22,7 @@
 #include "pool.h"
 #include "error.h"
 #include "boolobject.h"
+#include "longobject.h"
 
 #define INT_CACHE_MIN -1000
 #define INT_CACHE_MAX 10000
@@ -51,6 +52,7 @@ static object_t *intobject_op_lshift (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_rshift (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_cmp (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -74,7 +76,8 @@ static object_opset_t g_object_ops =
 	intobject_op_eq, /* Equality. */
 	intobject_op_cmp, /* Comparation. */
 	NULL, /* Index. */
-	NULL /* Inplace index. */
+	NULL, /* Inplace index. */
+	intobject_op_hash /* Hash. */
 };
 
 /* Logic Not. */
@@ -281,6 +284,17 @@ intobject_op_cmp (object_t *obj1, object_t *obj2)
 	return intobject_new (object_numberical_compare (obj1, obj2), NULL);
 }
 
+/* Hash. */
+static object_t *
+intobject_op_hash(object_t *obj)
+{
+	if (OBJECT_DIGEST (obj) == 0) {
+		OBJECT_DIGEST (obj) = object_integer_hash (object_get_integer (obj));
+	}
+
+	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
 object_t *
 intobject_new (int val, void *udata)
 {
@@ -297,10 +311,9 @@ intobject_new (int val, void *udata)
 
 		return NULL;
 	}
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_INT;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
+
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT);
+
 	obj->val = val;
 
 	return (object_t *) obj;

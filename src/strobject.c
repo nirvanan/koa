@@ -28,6 +28,7 @@
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
+#include "longobject.h"
 
 #define INTERNAL_STR_LENGTH 10
 
@@ -47,6 +48,7 @@ static object_t *strobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_cmp (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_index (object_t *obj1, object_t *obj2);
+static object_t *strobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -70,7 +72,8 @@ static object_opset_t g_object_ops =
 	strobject_op_eq, /* Equality. */
 	strobject_op_cmp, /* Comparation. */
 	strobject_op_index, /* Index. */
-	NULL /* Inplace index. */ /* Note that str objects are read-only! */
+	NULL, /* Inplace index. */ /* Note that str objects are read-only! */
+	strobject_op_hash /* Hash. */
 };
 
 /* Free. */
@@ -229,6 +232,21 @@ strobject_murmur (const char *s, size_t len, unsigned int seed)
 	return h;
 }
 
+/* Hash. */
+static object_t *
+strobject_op_hash(object_t *obj)
+{
+	if (OBJECT_DIGEST (obj) == 0) {
+		str_t *str;
+
+		str = strobject_get_value (obj);
+
+		OBJECT_DIGEST (obj) = strobject_murmur (str_c_str (str), str_len (str), g_internal_hash_seed);
+	}
+
+	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
 object_t *
 strobject_new (const char *val, void *udata)
 {
@@ -257,12 +275,10 @@ strobject_new (const char *val, void *udata)
 		return NULL;
 	}
 
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_STR;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
-	obj->val = str_new (val, len);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+
 	obj->hn = NULL;
+	obj->val = str_new (val, len);
 	if (obj->val == NULL) {
 		pool_free ((void *) obj);
 
@@ -299,10 +315,8 @@ strobject_str_new (str_t *val, void *udata)
 		return NULL;
 	}
 
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_STR;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+
 	obj->val = val;
 
 	return (object_t *) obj;

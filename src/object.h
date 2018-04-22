@@ -25,6 +25,11 @@
 
 #include "koa.h"
 
+/* In koa world, we do not present unsigned integers
+ * explitly, as negetive values of signed objects can
+ * be parsed as BIG unsigned value if you are willing
+ * to do so.*/
+
 #define INTEGER_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
 	|| (x)->head.type == OBJECT_TYPE_CHAR\
 	|| (x)->head.type == OBJECT_TYPE_INT\
@@ -42,15 +47,23 @@
 
 #define TYPE_NAME(x) (g_type_name[(x)->head.type])
 
-#define OBJECT_TYPE(x) ((x)->head.type)
-
 #define OBJECT_REF(x) ((x)->head.ref)
 
+#define OBJECT_TYPE(x) ((x)->head.type)
+
 #define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))
+
+#define OBJECT_OPSET_P(x) ((x)->head.ops)
 
 #define OBJECT_DIGEST(x) ((x)->head.digest)
 
 #define OBJECT_UDATA(x) ((x)->head.udata)
+
+#define OBJECT_NEW_INIT(x, t) OBJECT_REF ((x)) = 0;\
+	OBJECT_TYPE ((x)) = t;\
+	OBJECT_OPSET_P ((x)) = (void *) &g_object_ops;\
+	OBJECT_DIGEST ((x)) = 0;\
+	OBJECT_UDATA ((x)) = udata
 
 #define OBJECT_BIGGER(o1, o2) (OBJECT_TYPE((o1))<OBJECT_TYPE((o2))?\
 	object_cast((o1),OBJECT_TYPE((o2))):(o1))
@@ -58,8 +71,12 @@
 #define NUMBERICAL_GET_VALUE(x) (INTEGER_TYPE((x))?\
 	object_get_integer((x)):object_get_floating((x)))
 
+#define FLOATING_IS_NAN isnan
+#define FLOATING_IS_INFINITY(x) (!isfinite((x))&&!isnan((x)))
+#define FLOATING_FINITE(x) isfinite((x))
+
 typedef enum object_type_e {
-	OBJECT_TYPE_NONE = 0x00,
+	OBJECT_TYPE_NULL = 0x00,
 	OBJECT_TYPE_BOOL = 0x01,
 	OBJECT_TYPE_CHAR = 0x02,
 	OBJECT_TYPE_INT = 0x03,
@@ -215,6 +232,12 @@ object_index (object_t *obj1, object_t *obj2);
 
 object_t *
 object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3);
+
+uint64_t
+object_integer_hash (integer_value_t val);
+
+uint64_t
+object_floating_hash (floating_value_t val);
 
 object_t *
 object_hash (object_t *obj);

@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 
 #include "object.h"
 #include "pool.h"
@@ -31,6 +32,9 @@
 #include "floatobject.h"
 #include "doubleobject.h"
 #include "strobject.h"
+
+#define FLOATING_INT_TO_HASH_NEG -271828
+#define FLOATING_INT_TO_HASH_POS 314159
 
 void
 object_ref (object_t *obj)
@@ -848,6 +852,69 @@ object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	}
 
 	return ipindex_fun (obj1, obj2, obj3);
+}
+
+uint64_t
+object_integer_hash (integer_value_t val)
+{
+	return val;
+}
+
+uint64_t
+object_floating_hash (floating_value_t val)
+{
+	floating_value_t frac_part;
+	floating_value_t int_part;
+	uint64_t int_to_hash;
+
+	int_to_hash = 0;
+	/* f64 can hold all floating values on koa. */
+	if (!FLOATING_FINITE (val)) {
+		if (FLOATING_IS_INFINITY (val)) {
+			int_to_hash = val < 0?
+				FLOATING_INT_TO_HASH_NEG: FLOATING_INT_TO_HASH_POS;
+		}
+		else
+			int_to_hash = 0;
+	}
+	else {
+		/* If val has fraction part, it won't bother
+		 * to hash as an integer directly. */
+		frac_part = modf (val, &int_part);
+		if (frac_part == 0.0) {
+			int_to_hash = (uint64_t) (int_part + 0.1);
+		}
+		else {
+			void *val_p;
+
+			/* It is safe to convert a floating value (double)
+			 * to an uint64_t bitwise. */
+			val_p = (void *) &val;
+			int_to_hash = *((uint64_t *) val_p);
+		}
+	}
+
+	return object_integer_hash (int_to_hash);	
+}
+
+/* We use a long object to represent hash digest of objects.
+ * Although it may be down casted when a long is presented
+ * as 32 bits integer, it will still works well if our 64-bit
+ * hash algorithm is solid enough. */
+object_t *
+object_hash (object_t *obj)
+{
+	una_op_f hash_fun;
+
+	hash_fun = (OBJECT_OPSET (obj))->hash;
+	/* At this stage, this is impossible, =_=. */
+	if (hash_fun == NULL) {
+		error ("this type has no inplace index routine.");
+		
+		return NULL;
+	}
+
+	return hash_fun (obj);
 }
 
 void

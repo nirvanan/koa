@@ -76,10 +76,10 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 
 /* Hash. */
 static object_t *
-nullobject_op_hash(object_t *obj)
+nullobject_op_hash (object_t *obj)
 {
 	/* The digest is already computed. */
-	return longobject_new (OBJECT_DIGEST (obj), NULL);
+	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
 /* This object is known as 'null'. */
@@ -99,10 +99,7 @@ nullobject_new (void *udata)
 		return NULL;
 	}
 
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_NONE;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_NULL);
 
 	return (object_t *) obj;
 }
@@ -119,5 +116,6 @@ nullobject_init ()
 	}
 
 	object_ref (g_null_object);
+
 	OBJECT_DIGEST (g_null_object) = (uint64_t) random ();
 }
