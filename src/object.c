@@ -23,6 +23,7 @@
 #include "object.h"
 #include "pool.h"
 #include "error.h"
+#include "nullobject.h"
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
@@ -30,77 +31,6 @@
 #include "floatobject.h"
 #include "doubleobject.h"
 #include "strobject.h"
-
-/* Note that the 'null' object is shared everywhere. */
-static object_t *g_null_object;
-
-/* Object ops. */
-static object_t *object_op_eq (object_t *obj1, object_t *obj2);
-
-static object_opset_t g_object_ops =
-{
-	NULL, /* Logic Not. */
-	NULL, /* Free. */
-	NULL, /* Dump. */
-	NULL, /* Negative. */
-	NULL, /* Call. */
-	NULL, /* Addition. */
-	NULL, /* Substraction. */
-	NULL, /* Multiplication. */
-	NULL, /* Division. */
-	NULL, /* Mod. */
-	NULL, /* Bitwise and. */
-	NULL, /* Bitwise or. */
-	NULL, /* Bitwise xor. */
-	NULL, /* Logic and. */
-	NULL, /* Logic or. */
-	NULL, /* Left shift. */
-	NULL, /* Right shift. */
-	object_op_eq, /* Equality. */
-	NULL, /* Comparation. */
-	NULL, /* Index. */
-	NULL /* Inplace index. */
-};
-
-/* Equality. */
-static object_t *
-object_op_eq (object_t *obj1, object_t *obj2)
-{
-	/* Since there is only one 'null' object, comparing
-	 * address is enough. Moreover, comparing 'null'
-	 * object to other objects will always be illegal
-	 * except for equality comparing. */
-	if (obj1 == obj2) {
-		return boolobject_new (true, NULL);
-	}
-	
-	return boolobject_new (false, NULL);
-}
-
-/* This object is known as 'null'. */
-object_t *
-object_new (void *udata)
-{
-	object_t *obj;
-
-	if (g_null_object != NULL) {
-		return g_null_object;
-	}
-
-	obj = (object_t *) pool_alloc (sizeof (object_t));
-	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
-	}
-
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_NONE;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
-
-	return obj;
-}
 
 void
 object_ref (object_t *obj)
@@ -923,17 +853,8 @@ object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 void
 object_init ()
 {
-	/* The 'null' object should never be freed. */
-	g_null_object = object_new (NULL);
-	if (g_null_object == NULL) {
-		fatal_error ("failed to init object system.");
-
-		return;
-	}
-
-	object_ref (g_null_object);
-	
 	/* Init some types of objects. */
+	nullobject_init ();
 	boolobject_init ();
 	intobject_init ();
 	longobject_init ();

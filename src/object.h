@@ -21,6 +21,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include <stdint.h>
+
 #include "koa.h"
 
 #define INTEGER_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
@@ -45,6 +47,8 @@
 #define OBJECT_REF(x) ((x)->head.ref)
 
 #define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))
+
+#define OBJECT_DIGEST(x) ((x)->head.digest)
 
 #define OBJECT_UDATA(x) ((x)->head.udata)
 
@@ -71,6 +75,7 @@ typedef struct object_head_s
 {
 	int ref;
 	object_type_t type;
+	uint64_t digest;
 	void *ops;
 	void *udata;
 } object_head_t;
@@ -111,6 +116,7 @@ typedef struct object_opset_s
 	bin_op_f cmp;
 	bin_op_f index;
 	ter_op_f ipindex;
+	una_op_f hash;
 } object_opset_t;
 
 /*
@@ -128,9 +134,6 @@ static const char *g_type_name[] =
 	"dict"
 };
 */
-
-object_t *
-object_new (void *udata);
 
 void
 object_ref (object_t *obj);
@@ -212,6 +215,9 @@ object_index (object_t *obj1, object_t *obj2);
 
 object_t *
 object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3);
+
+object_t *
+object_hash (object_t *obj);
 
 void
 object_init ();

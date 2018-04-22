@@ -107,7 +107,7 @@ pool_page_init (page_t *page, cell_type_t t)
 	/* Chain all cells. */
 	page_end = (void *) page + PAGE_SIZE;
 	for (void *c = page->free; c < page_end; c += CELL_SIZE (t)) {
-		*((void **) c) = c + CELL_SIZE (t) < page_end? c + CELL_SIZE (t): NULL;
+		*((void **) c) = c + 2 * CELL_SIZE (t) <= page_end? c + CELL_SIZE (t): NULL;
 	}
 }
 
@@ -213,7 +213,7 @@ pool_empty_page_in (pool_t *pool, page_t *page)
 }
 
 static page_t *
-pool_get_page (size_t size)
+pool_get_page (size_t size, int *need_hash)
 {
 	cell_type_t cell_idx;
 	list_t *l;
@@ -236,11 +236,7 @@ pool_get_page (size_t size)
 			page = (page_t *) pool->free;
 			pool_empty_page_out (pool, cell_idx);
 			pool_page_init (page, cell_idx);
-			if (pool_page_hash_add (page) == 0) {
-				pool_empty_page_in (pool, page);
-
-				return NULL;
-			}
+			*need_hash = 1;
 
 			return page;
 		}
@@ -254,11 +250,7 @@ pool_get_page (size_t size)
 	page = (page_t *) first_pool->free;
 	pool_empty_page_out (first_pool, cell_idx);
 	pool_page_init (page, cell_idx);
-	if (pool_page_hash_add (page) == 0) {
-		pool_empty_page_in (first_pool, page);
-
-		return NULL;
-	}
+	*need_hash = 1;
 
 	return page;
 }
@@ -291,6 +283,8 @@ void *
 pool_alloc (size_t size)
 {
 	page_t *page;
+	void *cell;
+	int need_hash;
 
 	/* If size is larger than max cell size, use system malloc then. */
 	if (size > MAX_CELL_SIZE) {
@@ -304,12 +298,25 @@ pool_alloc (size_t size)
 		return ret;
 	}
 
-	page = pool_get_page (size);
+	need_hash = 0;
+	page = pool_get_page (size, &need_hash);
 	if (page == NULL) {
 		return NULL;
 	}
 
-	return pool_get_cell (page);
+	cell = pool_get_cell (page);
+	if (cell == NULL) {
+		return NULL;
+	}
+
+	if (need_hash && pool_page_hash_add (page) == 0) {
+		pool_free (cell);
+		error ("failed to hash page table.");
+
+		return NULL;
+	}
+
+	return cell;
 }
 
 void *

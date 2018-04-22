@@ -22,6 +22,8 @@ list.h \
 longobject.c \
 longobject.h \
 main.c \
+nullobject.c \
+nullobject.h \
 object.c \
 object.h \
 pool.c \
