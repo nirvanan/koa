@@ -909,7 +909,7 @@ object_hash (object_t *obj)
 	hash_fun = (OBJECT_OPSET (obj))->hash;
 	/* At this stage, this is impossible, =_=. */
 	if (hash_fun == NULL) {
-		error ("this type has no inplace index routine.");
+		error ("this type has no hash routine.");
 		
 		return NULL;
 	}
