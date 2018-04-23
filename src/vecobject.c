@@ -22,6 +22,7 @@
 #include "pool.h"
 #include "hash.h"
 #include "error.h"
+#include "nullobject.h"
 
 /* Object ops. */
 static void vecobject_op_free (object_t *obj);
@@ -129,6 +130,19 @@ vecobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	return vec_set (v, pos, obj3);
 }
 
+static void
+vecobject_empty_init (vecobject_t *obj)
+{
+	vec_t *vec;
+	size_t size;
+
+	vec = obj->val;
+	size = vec_size (vec);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		UNUSED (vec_set (vec, i, nullobject_new (NULL)));
+	}
+}
+
 object_t *
 vecobject_new (size_t len, void *udata)
 {
@@ -151,6 +165,9 @@ vecobject_new (size_t len, void *udata)
 
 		return NULL;
 	}
+
+	/* Full obj with 'null' object. */
+	vecobject_empty_init (obj);
 
 	return (object_t *) obj;
 }
