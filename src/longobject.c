@@ -333,7 +333,7 @@ void
 longobject_init ()
 {
 	/* Make small int cache. */
-	for (int i = LONG_CACHE_MIN; i <= LONG_CACHE_MAX; i++) {
+	for (long i = LONG_CACHE_MIN; i <= LONG_CACHE_MAX; i++) {
 		g_long_cache[LONG_CACHE_INDEX (i)] = longobject_new (i, NULL);
 		if (g_long_cache[LONG_CACHE_INDEX (i)] == NULL) {
 			fatal_error ("failed to init object system.");

@@ -36,7 +36,7 @@
 
 #define INTERNAL_HASH_SIZE 4096
 
-#define HASH_NODE(x) (((strobject_t *)(x))->hn)
+#define HASH_HANDLE(x) (((strobject_t *)(x))->hn)
 
 static hash_t *g_internal_hash;
 
@@ -82,7 +82,7 @@ strobject_op_free (object_t *obj)
 {
 	/* If it's an interned str, delete it. */
 	if (str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH) {
-		hash_fast_remove (g_internal_hash, HASH_NODE (obj));
+		hash_fast_remove (g_internal_hash, HASH_HANDLE (obj));
 	}
 	str_free (strobject_get_value (obj));
 }
@@ -287,7 +287,7 @@ strobject_new (const char *val, void *udata)
 
 	/* Add to internal hash. */
 	if (len <= INTERNAL_STR_LENGTH) {
-		hash_node_t *hn;
+		void *hn;
 
 		hn = hash_add (g_internal_hash, (void *) obj);
 		if (hn == NULL) {

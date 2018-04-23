@@ -30,7 +30,7 @@
 
 #define MAX_DICT_BUCKET INT_MAX
 
-static integer_value_t
+static uint64_t
 dict_hash_fun (void *data)
 {
 	dict_node_t *node;
@@ -56,7 +56,7 @@ dict_new (hash_f hf, hash_test_f tf)
 	size_t req;
 	dict_t *dict;
 
-	req = size;
+	req = DICT_REQ_BUCKET;
 
 	dict = pool_alloc (sizeof (dict_t));
 	if (dict == NULL) {
@@ -87,7 +87,7 @@ dict_free (dict_t *dict)
 }
 
 static int
-dict_rehash (dict_t *dict. size_t req)
+dict_rehash (dict_t *dict, size_t req)
 {
 	if (req > MAX_DICT_BUCKET) {
 		error ("hash bucket too big.");
@@ -95,12 +95,23 @@ dict_rehash (dict_t *dict. size_t req)
 		return 0;
 	}
 
-	if (req > dict->bu_size || req < dict->bu_size / 4) {
+	if (req > dict->bu_size) {
+		req = dict->bu_size * 2;
+	}
+	else if (req < dict->bu_size / 4) {
+		req = dict->bu_size / 2;
+		if (req < DICT_REQ_BUCKET) {
+			req = DICT_REQ_BUCKET;
+		}
+	}
+
+	if (req != dict->bu_size) {
 		hash_t *new_hash;
 		vec_t *vec;
 		size_t size;
+		dict_node_t *dn;
 
-		new_hash = hash_new (req);
+		new_hash = hash_new (req, dict_hash_fun, dict_hash_test_fun);
 		if (new_hash == NULL) {
 			error ("failed to rehash.");
 
@@ -116,9 +127,24 @@ dict_rehash (dict_t *dict. size_t req)
 
 		size = vec_size (vec);
 		for (integer_value_t i = 0; i < size; i++) {
-			hash_add (new_hash, vec_pos (vec, i));
+			dn = (dict_node_t *) vec_pos (vec, i);
+			dn->hn = hash_add (new_hash, (void *) dn);
+			if (dn->hn == NULL) {
+				hash_free (new_hash);
+				error ("failed to rehash, can not add hash node.");
+
+				return 0;
+			}
 		}
+
+		/* Clear old hash table. */
+		hash_free (dict->h);
+
+		dict->h = new_hash;
+		dict->bu_size = req;
 	}
+
+	return 1;
 }
 
 void *
@@ -131,6 +157,7 @@ dict_set (dict_t *dict, void *key, void *value)
 
 	hash = dict->hf (key);
 	
+	/* Already a node with this key? */
 	node = (dict_node_t *) hash_test (dict->h, key, hash);
 	if (node != NULL) {
 		prev_value = node->second;
@@ -139,6 +166,109 @@ dict_set (dict_t *dict, void *key, void *value)
 		return prev_value;
 	}
 	
-	occupied = hash_occupied (ha, hash);
-	if ()
+	/* Need rehash? */
+	occupied = hash_occupied (dict->h, hash);
+	if (occupied > 0) {
+		if (dict_rehash (dict, dict->used + 1) == 0) {
+			return NULL;
+		}
+	}
+
+	node = (dict_node_t *) pool_alloc (sizeof (dict_node_t));
+	if (node == NULL) {
+		error ("out of memery.");
+
+		return NULL;
+	}
+
+	node->first = key;
+	node->second = value;
+	node->hn = hash_add (dict->h, (void *) node);
+	if (node->hn == NULL) {
+		pool_free ((void *) node);
+		error ("failed to add hash node.");
+
+		return NULL;
+	}
+	
+	dict->size++;
+	dict->used += occupied? 0: 1;
+
+	return value;
+}
+
+void *
+dict_get (dict_t *dict, void *key)
+{
+	uint64_t hash;
+	dict_node_t *node;
+
+	hash = dict->hf (key);
+
+	node = (dict_node_t *) hash_test (dict->h, key, hash);
+	if (node == NULL) {
+		return NULL;
+	}
+
+	return node->second;
+}
+
+/* Return the original key and set *value to the
+ * orininal value. */
+void *
+dict_remove (dict_t *dict, void *key, void **value)
+{
+	uint64_t hash;
+	dict_node_t *node;
+	int occupied;
+	void *orin_key;
+	void *copied_handle;
+
+	hash = dict->hf (key);
+	
+	/* Key is not presented? */
+	node = (dict_node_t *) hash_test (dict->h, key, hash);
+	if (node == NULL) {
+		*value = NULL;
+		error ("try to removing a nonexisting key.");
+
+		return NULL;
+	}
+	
+	/* Backup the hash handle. */
+	copied_handle = hash_handle_copy (node->hn);
+	if (copied_handle == NULL) {
+		*value = NULL;
+
+		return NULL;
+	}
+
+	hash_fast_remove (dict->h, node->hn);
+
+	/* Need rehash? */
+	occupied = hash_occupied (dict->h, hash);
+	if (occupied == 0) {
+		if (dict_rehash (dict, dict->used - 1) == 0) {
+			*value = NULL;
+
+			/* Restore backup handle. */
+			hash_fast_add (dict->h, copied_handle);
+
+			return NULL;
+		}
+	}
+
+	orin_key = node->first;
+	*value = node->second;
+
+	pool_free ((void *) copied_handle);
+	pool_free ((void *) node);
+
+	return orin_key;
+}
+
+size_t
+dict_size (dict_t *dict)
+{
+	return dict->size;
 }

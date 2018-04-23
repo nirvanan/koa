@@ -30,7 +30,7 @@ typedef struct strobject_s
 {
 	object_head_t head;
 	str_t *val;
-	hash_node_t *hn; /* For quick dehash. */
+	void *hn; /* For quick dehash. */
 } strobject_t;
 
 object_t *

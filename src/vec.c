@@ -251,7 +251,7 @@ vec_insert (vec_t *vec, integer_value_t pos, void *data)
 		return 0;
 	}
 
-	for (size_t i = vec->size; i > pos; i++) {
+	for (size_t i = vec->size; i > (size_t) pos; i++) {
 		vec->v[i] = vec->v[i - 1];
 	}
 	vec->v[pos] = data;
@@ -273,13 +273,13 @@ vec_remove (vec_t *vec, integer_value_t pos)
 
 	to_del = vec->v[pos];
 	/* Do not use memcpy even for moving forward. */
-	for (size_t i = pos; i < vec->size; i++) {
+	for (size_t i = (size_t) pos; i < vec->size; i++) {
 		vec->v[i] = vec->v[i + 1];
 	}
 
 	if (vec_check_and_resize (vec, vec->size - 1) == 0) {
 		/* Rollback. */
-		for (size_t i = vec->size - 1; i > pos; i++) {
+		for (size_t i = vec->size - 1; i > (size_t) pos; i++) {
 			vec->v[i] = vec->v[i - 1];
 		}
 		vec->v[pos] = to_del;

@@ -36,6 +36,7 @@ typedef struct dict_s {
 typedef struct dict_node_s
 {
 	dict_t *ha;
+	void *hn; /* Handle for fast removing. */
 	void *first;
 	void *second;
 } dict_node_t;

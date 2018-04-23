@@ -55,14 +55,17 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf);
 void
 hash_free (hash_t *ha);
 
-hash_node_t *
+void *
 hash_add (hash_t *ha, void *data);
+
+void
+hash_fast_add (hash_t *ha, void *hn);
 
 void
 hash_remove (hash_t *ha, void *data);
 
 void
-hash_fast_remove (hash_t *ha, hash_node_t *hn);
+hash_fast_remove (hash_t *ha, void *hn);
 
 void *
 hash_test (hash_t *ha, void *hd, uint64_t hash);
@@ -75,4 +78,8 @@ hash_occupied (hash_t *ha, uint64_t hash);
 
 vec_t *
 hash_get_all_values (hash_t *ha);
+
+void *
+hash_handle_copy (void *hn);
+
 #endif /* HASH_H */

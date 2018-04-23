@@ -63,14 +63,13 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 
 	bucket_size = bu * sizeof (list_t *);
 	/* We can still take use of pool allocation when bu is small. */
-	ha->h = (list_t **) pool_alloc (bucket_size);
+	ha->h = (list_t **) pool_calloc (bucket_size, sizeof (list_t *));
 	if (ha->h == NULL) {
 		pool_free ((void *) ha);
 		error ("out of memory.");
 
 		return NULL;
 	}
-	memset (ha->h, 0, bucket_size);
 	ha->hf = hf;
 	ha->tf = tf;
 	ha->bu = bu;
@@ -103,7 +102,7 @@ hash_free (hash_t *ha)
 	pool_free ((void *) ha);
 }
 
-hash_node_t *
+void *
 hash_add (hash_t *ha, void *data)
 {
 	size_t idx;
@@ -126,7 +125,19 @@ hash_add (hash_t *ha, void *data)
 	ha->h[idx] = list_append (ha->h[idx], LIST (node));
 	ha->size++;
 
-	return node;
+	return (void *) node;
+}
+
+void
+hash_fast_add (hash_t *ha, void *hn)
+{
+	size_t idx;
+	hash_node_t *node;
+
+	node = (hash_node_t *) hn;
+	idx = node->idx;
+
+	ha->h[idx] = list_append (ha->h[idx], LIST (node));
 }
 
 /* Cleanup function for list cleanup routine. */
@@ -157,15 +168,17 @@ hash_remove (hash_t *ha, void *data)
 }
 
 void
-hash_fast_remove (hash_t *ha, hash_node_t *hn)
+hash_fast_remove (hash_t *ha, void *hn)
 {
 	size_t idx;
+	hash_node_t *node;
 
-	idx = hn->idx;
+	node = (hash_node_t *) hn;
+	idx = node->idx;
 
-	ha->h[idx] = list_remove (ha->h[idx], LIST (hn));
+	ha->h[idx] = list_remove (ha->h[idx], LIST (node));
 
-	pool_free ((void *) hn);
+	pool_free ((void *) node);
 }
 
 /* Test function for list finding routine. */
@@ -253,15 +266,15 @@ hash_occupied (hash_t *ha, uint64_t hash)
 }
 
 static int
-hash_collect_foreach (list_t *list, void udata)
+hash_collect_foreach (list_t *list, void *udata)
 {
 	hash_node_t *node;
 	hash_collect_foreach_t *collect;
 
-	node = (hash_node_t *) node;
+	node = (hash_node_t *) udata;
 	collect = (hash_collect_foreach_t *) udata;
 
-	UNUSED (vec_set (collect->vec, (*collect->pos)++, node->value);
+	UNUSED (vec_set (collect->vec, (*collect->pos)++, node->value));
 
 	return 0;
 }
@@ -286,4 +299,21 @@ hash_get_all_values (hash_t *ha)
 	}
 
 	return vec;
+}
+
+void *
+hash_handle_copy (void *hn)
+{
+	hash_node_t *node;
+
+	node = (hash_node_t *) pool_alloc (sizeof (hash_node_t));
+	if (node == NULL) {
+		error ("out of memery.");
+
+		return NULL;
+	}
+
+	memcpy ((void *) node, hn, sizeof (hash_node_t));
+
+	return (void *) node;
 }

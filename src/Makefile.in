@@ -100,11 +100,12 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
-	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) error.$(OBJEXT) \
-	hash.$(OBJEXT) intobject.$(OBJEXT) list.$(OBJEXT) \
-	longobject.$(OBJEXT) main.$(OBJEXT) nullobject.$(OBJEXT) \
-	object.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT) \
-	strobject.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
+	dict.$(OBJEXT) doubleobject.$(OBJEXT) floatobject.$(OBJEXT) \
+	error.$(OBJEXT) hash.$(OBJEXT) intobject.$(OBJEXT) \
+	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
+	nullobject.$(OBJEXT) object.$(OBJEXT) pool.$(OBJEXT) \
+	str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT) \
+	vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -262,6 +263,8 @@ koa_SOURCES = boolobject.c \
 boolobject.h \
 charobject.c \
 charobject.h \
+dict.c \
+dict.h \
 doubleobject.c \
 doubleobject.h \
 floatobject.c \
@@ -381,6 +384,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boolobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dict.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doubleobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/floatobject.Po@am__quote@
