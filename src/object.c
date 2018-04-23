@@ -865,10 +865,9 @@ object_floating_hash (floating_value_t val)
 {
 	floating_value_t frac_part;
 	floating_value_t int_part;
-	uint64_t int_to_hash;
+	integer_value_t int_to_hash;
 
 	int_to_hash = 0;
-	/* f64 can hold all floating values on koa. */
 	if (!FLOATING_FINITE (val)) {
 		if (FLOATING_IS_INFINITY (val)) {
 			int_to_hash = val < 0?
@@ -878,19 +877,22 @@ object_floating_hash (floating_value_t val)
 			int_to_hash = 0;
 	}
 	else {
-		/* If val has fraction part, it won't bother
-		 * to hash as an integer directly. */
 		frac_part = modf (val, &int_part);
 		if (frac_part == 0.0) {
-			int_to_hash = (uint64_t) (int_part + 0.1);
+			/* It is ok that int_part is bigger than the max
+			 * of integer_value_t. Since all we need is to
+			 * guarantee that an integer_value_t has the same
+			 * hash digest as the equivalent floating value. */
+			int_to_hash = (integer_value_t)
+				(int_part >= 0.0? int_part + 0.1: int_part - 0.1);
 		}
 		else {
 			void *val_p;
 
-			/* It is safe to convert a floating value (double)
-			 * to an uint64_t bitwise. */
+			/* It is safe to convert a double value (64 bits)
+			 * to a long (<= 64 bits) bitwise. */
 			val_p = (void *) &val;
-			int_to_hash = *((uint64_t *) val_p);
+			int_to_hash = *((integer_value_t *) val_p);
 		}
 	}
 

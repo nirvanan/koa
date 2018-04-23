@@ -25,10 +25,9 @@
 
 #include "koa.h"
 
-/* In koa world, we do not present unsigned integers
- * explitly, as negetive values of signed objects can
- * be parsed as BIG unsigned value if you are willing
- * to do so.*/
+/* In koa world, we do not present unsigned integers explitly,
+ * as negetive values of signed objects can be parsed as BIG
+ * unsigned value if you are willing to do so.*/
 
 #define INTEGER_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
 	|| (x)->head.type == OBJECT_TYPE_CHAR\

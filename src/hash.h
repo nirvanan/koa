@@ -26,6 +26,7 @@
 
 #include "koa.h"
 #include "list.h"
+#include "vec.h"
 
 #define HASH_SEED(x) ((x)->seed)
 
@@ -45,10 +46,14 @@ typedef struct hash_s
 	hash_f hf;
 	hash_test_f tf;
 	size_t bu;
+	size_t size;
 } hash_t;
 
 hash_t *
 hash_new (size_t bu, hash_f hf, hash_test_f tf);
+
+void
+hash_free (hash_t *ha);
 
 hash_node_t *
 hash_add (hash_t *ha, void *data);
@@ -65,4 +70,9 @@ hash_test (hash_t *ha, void *hd, uint64_t hash);
 int
 hash_find (hash_t *ha, void *data);
 
+int
+hash_occupied (hash_t *ha, uint64_t hash);
+
+vec_t *
+hash_get_all_values (hash_t *ha);
 #endif /* HASH_H */

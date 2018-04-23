@@ -83,7 +83,7 @@ list_cleanup (list_t *list, list_del_f df, int need_free, void *udata)
 	head = list;
 	while (l != NULL) {
 		next = l->next;
-		if (df (l, udata)) {
+		if (df (l, udata) > 0) {
 			head = list_remove (head, l);
 			if (need_free) {
 				pool_free ((void *) l);

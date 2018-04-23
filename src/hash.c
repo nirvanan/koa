@@ -24,17 +24,29 @@
 #include "pool.h"
 #include "error.h"
 
-typedef struct hash_list_foreach_s
+typedef struct hash_find_foreach_s
 {
 	void *data;
 	void *res;
-} hash_list_foreach_t;
+} hash_find_foreach_t;
 
-typedef struct hash_test_s
+typedef struct hash_test_foreach_s
 {
 	hash_t *ha;
 	void *data; /* Heterogeneous data. */
-} hash_test_t;
+} hash_test_foreach_t;
+
+typedef struct hash_collect_foreach_s
+{
+	vec_t *vec;
+	int *pos;
+} hash_collect_foreach_t;
+
+typedef struct hash_remove_cleanup_s
+{
+	hash_t *ha;
+	void *data;
+} hash_remove_cleanup_t;
 
 hash_t *
 hash_new (size_t bu, hash_f hf, hash_test_f tf)
@@ -66,6 +78,31 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 	return ha;
 }
 
+/* Used to delete whole hash bucket list. */
+static int
+hash_clear_fun (list_t *list, void *data)
+{
+	hash_t *ha;
+
+	UNUSED (list);
+	ha = (hash_t *) data;
+
+	ha->size--;
+
+	return 1;
+}
+
+void
+hash_free (hash_t *ha)
+{
+	for (size_t i = 0; i < ha->bu; i++) {
+		ha->h[i] = list_cleanup (ha->h[i], hash_clear_fun, 1, (void *) ha);
+	}
+
+	pool_free ((void *) ha->h);
+	pool_free ((void *) ha);
+}
+
 hash_node_t *
 hash_add (hash_t *ha, void *data)
 {
@@ -85,7 +122,9 @@ hash_add (hash_t *ha, void *data)
 
 	node->value = data;
 	node->idx = idx;
+
 	ha->h[idx] = list_append (ha->h[idx], LIST (node));
+	ha->size++;
 
 	return node;
 }
@@ -95,19 +134,26 @@ static int
 hash_remove_fun (list_t *list, void *data)
 {
 	hash_node_t *node;
+	hash_remove_cleanup_t *remove;
 
 	node = (hash_node_t *) list;
+	remove = (hash_remove_cleanup_t *) data;
+
+	remove->ha->size--;
 	
-	return (int) (node->value == data);
+	return (int) (node->value == remove->data);
 }
 
 void
 hash_remove (hash_t *ha, void *data)
 {
 	size_t idx;
+	hash_remove_cleanup_t remove;
 
 	idx = ha->hf (data) % ha->bu;
-	ha->h[idx] = list_cleanup (ha->h[idx], hash_remove_fun, 1, data);
+	remove.ha = ha;
+	remove.data = data;
+	ha->h[idx] = list_cleanup (ha->h[idx], hash_remove_fun, 1, (void *) &remove);
 }
 
 void
@@ -127,12 +173,12 @@ static int
 hash_test_fun (list_t *list, void *data)
 {
 	hash_node_t *node;
-	hash_list_foreach_t *test;
-	hash_test_t *test_info;
+	hash_find_foreach_t *test;
+	hash_test_foreach_t *test_info;
 
 	node = (hash_node_t *) list;
-	test = (hash_list_foreach_t *) data;
-	test_info = (hash_test_t *) test->data;
+	test = (hash_find_foreach_t *) data;
+	test_info = (hash_test_foreach_t *) test->data;
 	if (test_info->ha->tf (node->value, test_info->data) != 0) {
 		test->res = node->value;
 
@@ -147,8 +193,8 @@ void *
 hash_test (hash_t *ha, void *hd, uint64_t hash)
 {
 	size_t idx;
-	hash_list_foreach_t test;
-	hash_test_t test_info;
+	hash_find_foreach_t test;
+	hash_test_foreach_t test_info;
 
 	idx = (size_t) hash % ha->bu;
 	test_info.ha = ha;
@@ -166,10 +212,10 @@ static int
 hash_find_fun (list_t *list, void *data)
 {
 	hash_node_t *node;
-	hash_list_foreach_t *find;
+	hash_find_foreach_t *find;
 
 	node = (hash_node_t *) list;
-	find = (hash_list_foreach_t *) data;
+	find = (hash_find_foreach_t *) data;
 	if (node->value == find->data) {
 		*((int *) find->res) = 1;
 
@@ -183,7 +229,7 @@ int
 hash_find (hash_t *ha, void *data)
 {
 	size_t idx;
-	hash_list_foreach_t find;
+	hash_find_foreach_t find;
 	int res;
 
 	idx = (size_t) ha->hf (data) % ha->bu;
@@ -194,4 +240,50 @@ hash_find (hash_t *ha, void *data)
 	list_foreach (ha->h[idx], hash_find_fun, (void *) &find);
 
 	return res;
+}
+
+int
+hash_occupied (hash_t *ha, uint64_t hash)
+{
+	size_t idx;
+
+	idx = (size_t) hash % ha->bu;
+
+	return ha->h[idx] != NULL;
+}
+
+static int
+hash_collect_foreach (list_t *list, void udata)
+{
+	hash_node_t *node;
+	hash_collect_foreach_t *collect;
+
+	node = (hash_node_t *) node;
+	collect = (hash_collect_foreach_t *) udata;
+
+	UNUSED (vec_set (collect->vec, (*collect->pos)++, node->value);
+
+	return 0;
+}
+
+vec_t *
+hash_get_all_values (hash_t *ha)
+{
+	vec_t *vec;
+	int pos;
+	hash_collect_foreach_t collect;
+
+	vec = vec_new (ha->size);
+	if (vec == NULL) {
+		return NULL;
+	}
+
+	pos = 0;
+	collect.vec = vec;
+	collect.pos = &pos;
+	for (size_t i = 0; i < ha->bu; i++) {
+		list_foreach (ha->h[i], hash_collect_foreach, (void *) &collect);
+	}
+
+	return vec;
 }
