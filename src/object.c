@@ -781,11 +781,11 @@ object_rshift (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_eq (object_t *obj1, object_t *obj2)
+object_equal (object_t *obj1, object_t *obj2)
 {
 	bin_op_f eq_fun;
 
-	eq_fun = (OBJECT_OPSET (obj1))->rshift;
+	eq_fun = (OBJECT_OPSET (obj1))->eq;
 	if (eq_fun == NULL) {
 		/* Actually all types have equality routine. */
 		error ("on equality routine for left operand.");
@@ -797,7 +797,7 @@ object_eq (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_cmp (object_t *obj1, object_t *obj2)
+object_compare (object_t *obj1, object_t *obj2)
 {
 	bin_op_f cmp_fun;
 

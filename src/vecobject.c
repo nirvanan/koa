@@ -61,7 +61,17 @@ static object_opset_t g_object_ops =
 void
 vecobject_op_free (object_t *obj)
 {
-	vec_free (vecobject_get_value (obj));
+	vec_t *vec;
+	size_t size;
+
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+	/* Unref all elements. */
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_unref ((object_t *) vec_pos (vec, i));
+	}
+
+	vec_free (vec);
 }
 
 /* Addition. */
@@ -127,10 +137,10 @@ vecobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 		return NULL;
 	}
 
-	return vec_set (v, pos, obj3);
+	return (object_t *) vec_set (v, pos, obj3);
 }
 
-static void
+static int
 vecobject_empty_init (vecobject_t *obj)
 {
 	vec_t *vec;
@@ -139,8 +149,18 @@ vecobject_empty_init (vecobject_t *obj)
 	vec = obj->val;
 	size = vec_size (vec);
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		UNUSED (vec_set (vec, i, nullobject_new (NULL)));
+		object_t *null_obj;
+
+		null_obj = nullobject_new (NULL);
+		if (null_obj == NULL) {
+			return 0;
+		}
+
+		UNUSED (vec_set (vec, i, (void *) null_obj));
+		object_ref (null_obj);
 	}
+
+	return 1;
 }
 
 object_t *
@@ -155,10 +175,8 @@ vecobject_new (size_t len, void *udata)
 		return NULL;
 	}
 
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_VEC;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
+
 	obj->val = vec_new (len);
 	if (obj->val == NULL) {
 		pool_free ((void *) obj);
@@ -167,7 +185,11 @@ vecobject_new (size_t len, void *udata)
 	}
 
 	/* Full obj with 'null' object. */
-	vecobject_empty_init (obj);
+	if (vecobject_empty_init (obj) == 0) {
+		object_free ((object_t *) obj);
+
+		return NULL;
+	}
 
 	return (object_t *) obj;
 }
@@ -184,10 +206,8 @@ vecobject_vec_new (vec_t *val, void *udata)
 		return NULL;
 	}
 
-	obj->head.ref = 0;
-	obj->head.type = OBJECT_TYPE_VEC;
-	obj->head.ops = &g_object_ops;
-	obj->head.udata = udata;
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
+
 	obj->val = val;
 
 	return (object_t *) obj;

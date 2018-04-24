@@ -214,7 +214,7 @@ dict_get (dict_t *dict, void *key)
 }
 
 /* Return the original key and set *value to the
- * orininal value. */
+ * original value. */
 void *
 dict_remove (dict_t *dict, void *key, void **value)
 {
@@ -272,3 +272,10 @@ dict_size (dict_t *dict)
 {
 	return dict->size;
 }
+
+vec_t *
+dict_pairs (dict_t *dict)
+{
+	return hash_get_all_values (dict->h);
+}
+

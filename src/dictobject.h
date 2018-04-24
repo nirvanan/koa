@@ -1,5 +1,5 @@
 /*
- * main.c
+ * dictobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,31 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include "pool.h"
+#ifndef DICTOBJECT_H
+#define DICTOBJECT_H
+
+#include "koa.h"
 #include "object.h"
-#include "intobject.h"
-#include "strobject.h"
-#include "vecobject.h"
-#include "str.h"
-#include <time.h>
+#include "dict.h"
 
-int main(int argc, char *argv[])
+typedef struct dictobject_s
 {
-	/* Init pool utility. */
-	pool_init ();
-	/* Init object caches. */
-	object_init ();
-	int c = 0;
+	object_head_t head;
+	dict_t *val;
+} dictobject_t;
 
-	while (1) {
-		object_t *str = vecobject_new (100, NULL);
+object_t *
+dictobject_new (void *udata);
 
-		object_free (str);
-		c++;
-		if (c % 6000000 == 0)
-			printf ("%d\n", c);
-	}
+object_t *
+dictobject_dict_new (dict_t *val, void *udata);
 
-	return 0;
-}
+dict_t *
+dictobject_get_value (object_t *obj);
+
+#endif /* DICTOBJECT_H */

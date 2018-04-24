@@ -125,7 +125,7 @@ vec_set (vec_t *vec, integer_value_t pos, void *data)
 		void *prev;
 
 		prev = vec->v[pos];
-		vec->v[pos] = NULL;
+		vec->v[pos] = data;
 
 		return prev;
 	}

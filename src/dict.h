@@ -23,6 +23,10 @@
 
 #include "koa.h"
 #include "hash.h"
+#include "vec.h"
+
+#define DICT_PAIR_KEY(x) (((dict_node_t *)(x))->first)
+#define DICT_PAIR_VALUE(x) (((dict_node_t *)(x))->second)
 
 typedef struct dict_s {
 	hash_t *h;
@@ -58,5 +62,8 @@ dict_remove (dict_t *dict, void *key, void **value);
 
 size_t
 dict_size (dict_t *dict);
+
+vec_t *
+dict_pairs (dict_t *dict);
 
 #endif /* DICT_H */

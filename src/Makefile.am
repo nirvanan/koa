@@ -8,6 +8,8 @@ charobject.c \
 charobject.h \
 dict.c \
 dict.h \
+dictobject.c \
+dictobject.h \
 doubleobject.c \
 doubleobject.h \
 floatobject.c \
