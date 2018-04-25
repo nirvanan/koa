@@ -142,6 +142,12 @@ dict_rehash (dict_t *dict, size_t req)
 
 		dict->h = new_hash;
 		dict->bu_size = req;
+		dict->used = 0;
+		for (uint64_t i = 0; i < (uint64_t) req; i++) {
+			if (hash_occupied (dict->h, i)) {
+				dict->used++;
+			}
+		}
 	}
 
 	return 1;
@@ -248,11 +254,13 @@ dict_remove (dict_t *dict, void *key, void **value)
 	/* Need rehash? */
 	occupied = hash_occupied (dict->h, hash);
 	if (occupied == 0) {
+		dict->used--;
 		if (dict_rehash (dict, dict->used - 1) == 0) {
 			*value = NULL;
 
 			/* Restore backup handle. */
 			hash_fast_add (dict->h, copied_handle);
+			dict->used++;
 
 			return NULL;
 		}
@@ -260,6 +268,8 @@ dict_remove (dict_t *dict, void *key, void **value)
 
 	orin_key = node->first;
 	*value = node->second;
+
+	dict->size--;
 
 	pool_free ((void *) copied_handle);
 	pool_free ((void *) node);
