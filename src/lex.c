@@ -87,6 +87,9 @@ lex_next_char (reader_t *reader)
 	/* Try get previous loaded char. */
 	if (reader->next_loaded < reader->loaded_len) {
 		reader->current = reader->loaded[reader->next_loaded++];
+		if (reader->next_loaded == reader->loaded_len) {
+			lex_clear_loaded_buff (reader);
+		}
 
 		return;
 	}
