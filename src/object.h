@@ -74,7 +74,8 @@
 #define FLOATING_IS_INFINITY(x) (!isfinite((x))&&!isnan((x)))
 #define FLOATING_FINITE(x) isfinite((x))
 
-typedef enum object_type_e {
+typedef enum object_type_e
+{
 	OBJECT_TYPE_NULL = 0x00,
 	OBJECT_TYPE_BOOL = 0x01,
 	OBJECT_TYPE_CHAR = 0x02,
@@ -85,6 +86,8 @@ typedef enum object_type_e {
 	OBJECT_TYPE_STR = 0x07,
 	OBJECT_TYPE_VEC = 0x08,
 	OBJECT_TYPE_DICT = 0x09,
+	OBJECT_TYPE_FRAME = 0x0a,
+	OBJECT_TYPE_BLOCK = 0x0b,
 } object_type_t;
 
 typedef struct object_head_s

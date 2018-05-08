@@ -6,6 +6,8 @@ koa_SOURCES = boolobject.c \
 boolobject.h \
 charobject.c \
 charobject.h \
+code.c \
+code.h \
 dict.c \
 dict.h \
 dictobject.c \
@@ -21,6 +23,8 @@ hash.h \
 intobject.c \
 intobject.h \
 koa.h \
+lex.c \
+lex.h \
 list.c \
 list.h \
 longobject.c \

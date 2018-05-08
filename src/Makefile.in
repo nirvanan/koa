@@ -100,11 +100,12 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
-	dict.$(OBJEXT) dictobject.$(OBJEXT) doubleobject.$(OBJEXT) \
-	floatobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
-	intobject.$(OBJEXT) list.$(OBJEXT) longobject.$(OBJEXT) \
-	main.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
-	pool.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT) \
+	code.$(OBJEXT) dict.$(OBJEXT) dictobject.$(OBJEXT) \
+	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) error.$(OBJEXT) \
+	hash.$(OBJEXT) intobject.$(OBJEXT) lex.$(OBJEXT) \
+	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
+	nullobject.$(OBJEXT) object.$(OBJEXT) pool.$(OBJEXT) \
+	str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT) \
 	vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
@@ -263,6 +264,8 @@ koa_SOURCES = boolobject.c \
 boolobject.h \
 charobject.c \
 charobject.h \
+code.c \
+code.h \
 dict.c \
 dict.h \
 dictobject.c \
@@ -278,6 +281,8 @@ hash.h \
 intobject.c \
 intobject.h \
 koa.h \
+lex.c \
+lex.h \
 list.c \
 list.h \
 longobject.c \
@@ -386,6 +391,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boolobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/code.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dict.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dictobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doubleobject.Po@am__quote@
@@ -393,6 +399,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/floatobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/longobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@

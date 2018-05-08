@@ -118,7 +118,7 @@ dictobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	dict = dictobject_get_value (obj1);
 
 	/* obj3 is returned if successfully inserted. */
-	return dict_set (dict, (void *) obj2, (void *) obj3);
+	return (object_t *) dict_set (dict, (void *) obj2, (void *) obj3);
 }
 
 /* Hash function for dict. */
