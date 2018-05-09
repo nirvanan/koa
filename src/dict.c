@@ -37,7 +37,7 @@ dict_hash_fun (void *data)
 
 	node = (dict_node_t *) data;
 	
-	return node->ha->hf (node->first);
+	return node->d->hf (node->first);
 }
 
 static int
@@ -47,7 +47,7 @@ dict_hash_test_fun (void *value, void *hd)
 
 	node = (dict_node_t *) value;
 
-	return node->ha->tf (node->first, hd);
+	return node->d->tf (node->first, hd);
 }
 
 dict_t *
@@ -68,6 +68,8 @@ dict_new (hash_f hf, hash_test_f tf)
 	dict->used = 0;
 	dict->bu_size = req;
 	dict->size = 0;
+	dict->hf = hf;
+	dict->tf = tf;
 	dict->h = hash_new (req, dict_hash_fun, dict_hash_test_fun);
 	if (dict->h == NULL) {
 		pool_free ((void *) dict);
@@ -103,6 +105,9 @@ dict_rehash (dict_t *dict, size_t req)
 		if (req < DICT_REQ_BUCKET) {
 			req = DICT_REQ_BUCKET;
 		}
+	}
+	else {
+		req = dict->bu_size;
 	}
 
 	if (req != dict->bu_size) {
@@ -187,6 +192,7 @@ dict_set (dict_t *dict, void *key, void *value)
 		return NULL;
 	}
 
+	node->d = dict;
 	node->first = key;
 	node->second = value;
 	node->hn = hash_add (dict->h, (void *) node);

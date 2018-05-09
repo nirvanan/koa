@@ -38,6 +38,8 @@
 #define LEX_IS_SPACE(x) (isspace((x)))
 #define LEX_IS_PRINT(x) (isprint((x)))
 
+#define MAX_SOURCE_LINE (0xfffffff0)
+
 typedef struct reserved_word_s
 {
 	const char *word;
@@ -167,6 +169,147 @@ lex_reader_free (reader_t *reader)
 	UNUSED (fclose (reader->f));
 
 	pool_free ((void *) reader);
+}
+
+static void
+lex_new_line (reader_t *reader, char prev)
+{
+	lex_next_char (reader);
+	/* Skip "\r\n" and "\n\r" sequences. */
+	if ((reader->current == '\r' || reader->current == '\n') &&
+		reader->current != prev) {
+		lex_next_char (reader);
+	}
+	reader->line++;
+	if (reader->line > MAX_SOURCE_LINE) {
+		fatal_error ("source line exceeded.");
+	}
+}
+
+static token_t *
+lex_check_one_ahead (reader_t *reader, token_t *token)
+{
+	token->type = (token_type_t) reader->current;
+	lex_next_char (reader);
+	switch ((char) token->type) {
+		case '|':
+			if (reader->current == '|') {
+				token->type = TOKEN_LOR;
+			}
+			else if (reader->current == '=') {
+				token->type = TOKEN_IPOR;
+			}
+			break;
+		case '&':
+			if (reader->current == '&') {
+				token->type = TOKEN_LAND;
+			}
+			else if (reader->current == '=') {
+				token->type = TOKEN_IPAND;
+			}
+			break;
+		case '=':
+			if (reader->current == '=') {
+				token->type = TOKEN_EQ;
+			}
+			break;
+		case '!':
+			if (reader->current == '=') {
+				token->type = TOKEN_NEQ;
+			}
+			break;
+		case '<':
+			if (reader->current == '=') {
+				token->type = TOKEN_LEEQ;
+			}
+			else if (reader->current == '<') {
+				token->type = TOKEN_LSHFT;
+			}
+			break;
+		case '>':
+			if (reader->current == '=') {
+				token->type = TOKEN_LAEQ;
+			}
+			else if (reader->current == '>') {
+				token->type = TOKEN_RSHFT;
+			}
+			break;
+		case '+':
+			if (reader->current == '+') {
+				token->type = TOKEN_SADD;
+			}
+			else if (reader->current == '=') {
+				token->type = TOKEN_IPADD;
+			}
+			break;
+		case '-':
+			if (reader->current == '-') {
+				token->type = TOKEN_SSUB;
+			}
+			else if (reader->current == '=') {
+				token->type = TOKEN_IPADD;
+			}
+			break;
+		case '*':
+			if (reader->current == '=') {
+				token->type = TOKEN_IPMUL;
+			}
+			break;
+		case '/':
+			if (reader->current == '=') {
+				token->type = TOKEN_IPDIV;
+			}
+			break;
+		case '%':
+			if (reader->current == '=') {
+				token->type = TOKEN_IPMOD;
+			}
+			break;
+		case '^':
+			if (reader->current == '=') {
+				token->type = TOKEN_IPXOR;
+			}
+			break;
+	}
+
+	return token;
+}
+
+token_t *
+lex_next (reader_t *reader)
+{
+	token_t *token;
+
+	token = (token_t *) pool_calloc ((size_t) 1, sizeof (token_t));
+	if (token == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	for (;;) {
+		switch (reader->current) {
+			case '\r':
+			case '\n':
+				lex_new_line (reader, reader->current);
+				break;
+			case '|':
+			case '&':
+			case '=':
+			case '!':
+			case '<':
+			case '>':
+			case '+':
+			case '-':
+			case '*':
+			case '/':
+			case '%':
+			case '^':
+				return lex_check_one_ahead (reader, token);
+			default:
+				break;
+		}
+	}
+
+	return token;
 }
 
 void

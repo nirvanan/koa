@@ -51,7 +51,7 @@ typedef enum token_type_e
 	TOKEN_RSHFT, /* Shift-expression: >>. */
 	TOKEN_SADD, /* Unary-expression: ++. */
 	TOKEN_SSUB, /* Unary-expression: --. */
-	TOKEN_IMUL, /* Assignment-operator: *=. */
+	TOKEN_IPMUL, /* Assignment-operator: *=. */
 	TOKEN_IPDIV, /* Assignment-operator: /=. */
 	TOKEN_IPMOD, /* Assignment-operator: %=. */
 	TOKEN_IPADD, /* Assignment-operator: +=. */
@@ -84,7 +84,7 @@ typedef enum token_type_e
 
 typedef struct token_s
 {
-	token_type_t t;
+	token_type_t type;
 	int lineno;
 	char token[MAX_TOKEN_LEN + 1];
 } token_t;

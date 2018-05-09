@@ -73,6 +73,7 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 	ha->hf = hf;
 	ha->tf = tf;
 	ha->bu = bu;
+	ha->size = 0;
 
 	return ha;
 }
@@ -271,7 +272,7 @@ hash_collect_foreach (list_t *list, void *udata)
 	hash_node_t *node;
 	hash_collect_foreach_t *collect;
 
-	node = (hash_node_t *) udata;
+	node = (hash_node_t *) list;
 	collect = (hash_collect_foreach_t *) udata;
 
 	UNUSED (vec_set (collect->vec, (*collect->pos)++, node->value));

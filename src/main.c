@@ -25,6 +25,7 @@
 #include "strobject.h"
 #include "vecobject.h"
 #include "str.h"
+#include "lex.h"
 #include <time.h>
 
 int main(int argc, char *argv[])
@@ -33,6 +34,8 @@ int main(int argc, char *argv[])
 	pool_init ();
 	/* Init object caches. */
 	object_init ();
+	/* Init lex module. */
+	lex_init ();
 	int c = 0;
 
 	while (1) {
