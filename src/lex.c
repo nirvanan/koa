@@ -195,79 +195,97 @@ lex_check_one_ahead (reader_t *reader, token_t *token)
 		case '|':
 			if (reader->current == '|') {
 				token->type = TOKEN_LOR;
+				lex_next_char (reader);
 			}
 			else if (reader->current == '=') {
 				token->type = TOKEN_IPOR;
+				lex_next_char (reader);
 			}
 			break;
 		case '&':
 			if (reader->current == '&') {
 				token->type = TOKEN_LAND;
+				lex_next_char (reader);
 			}
 			else if (reader->current == '=') {
 				token->type = TOKEN_IPAND;
+				lex_next_char (reader);
 			}
 			break;
 		case '=':
 			if (reader->current == '=') {
 				token->type = TOKEN_EQ;
+				lex_next_char (reader);
 			}
 			break;
 		case '!':
 			if (reader->current == '=') {
 				token->type = TOKEN_NEQ;
+				lex_next_char (reader);
 			}
 			break;
 		case '<':
 			if (reader->current == '=') {
 				token->type = TOKEN_LEEQ;
+				lex_next_char (reader);
 			}
 			else if (reader->current == '<') {
 				token->type = TOKEN_LSHFT;
+				lex_next_char (reader);
 			}
 			break;
 		case '>':
 			if (reader->current == '=') {
 				token->type = TOKEN_LAEQ;
+				lex_next_char (reader);
 			}
 			else if (reader->current == '>') {
 				token->type = TOKEN_RSHFT;
+				lex_next_char (reader);
 			}
 			break;
 		case '+':
 			if (reader->current == '+') {
 				token->type = TOKEN_SADD;
+				lex_next_char (reader);
 			}
 			else if (reader->current == '=') {
 				token->type = TOKEN_IPADD;
+				lex_next_char (reader);
 			}
 			break;
 		case '-':
 			if (reader->current == '-') {
 				token->type = TOKEN_SSUB;
+				lex_next_char (reader);
 			}
 			else if (reader->current == '=') {
 				token->type = TOKEN_IPADD;
+				lex_next_char (reader);
 			}
 			break;
 		case '*':
 			if (reader->current == '=') {
 				token->type = TOKEN_IPMUL;
+				lex_next_char (reader);
 			}
 			break;
 		case '/':
 			if (reader->current == '=') {
 				token->type = TOKEN_IPDIV;
+				lex_next_char (reader);
 			}
 			break;
 		case '%':
 			if (reader->current == '=') {
 				token->type = TOKEN_IPMOD;
+				lex_next_char (reader);
 			}
 			break;
 		case '^':
 			if (reader->current == '=') {
 				token->type = TOKEN_IPXOR;
+				lex_next_char (reader);
 			}
 			break;
 	}
