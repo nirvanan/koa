@@ -24,15 +24,15 @@
 #include "koa.h"
 
 void
-fatal_error (const char *error);
+fatal_error (const char *error, ...);
 
 void
-error (const char *error);
+error (const char *error, ...);
 
 void
-warning (const char *error);
+warning (const char *error, ...);
 
 void
-message (const char *error);
+message (const char *error, ...);
 
 #endif /* ERROR_H */

@@ -20,39 +20,52 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "error.h"
 
 void
-fatal_error (const char *error)
+fatal_error (const char *error, ...)
 {
 	if (error != NULL) {
-		fprintf (stderr, "*** FATAL ***: %s\n", error);
+		va_list args;
+
+		va_start (args, error);
+		fprintf (stderr, error, args);
 	}
 
 	exit (EXIT_FAILURE);
 }
 
 void
-error (const char *error)
+error (const char *error, ...)
 {
 	if (error != NULL) {
-		fprintf (stderr, "*** ERROR ***: %s\n", error);
+		va_list args;
+
+		va_start (args, error);
+		fprintf (stderr, error, args);
 	}
 }
 
 void
-warning (const char *error)
+warning (const char *error, ...)
 {
 	if (error != NULL) {
-		fprintf (stderr, "*** WARNING ***: %s\n", error);
+		va_list args;
+
+		va_start (args, error);
+		fprintf (stderr, error, args);
 	}
 }
 
 void
-message (const char *error)
+message (const char *error, ...)
 {
 	if (error != NULL) {
-		fprintf (stdout, "*** WARNING ***: %s\n", error);
+		va_list args;
+
+		va_start (args, error);
+		fprintf (stderr, error, args);
 	}
 }

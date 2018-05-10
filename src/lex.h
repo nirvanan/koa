@@ -25,12 +25,15 @@
 
 #define TOKEN_MIN 257
 
-#define MAX_TOKEN_LEN 200 /* Let token be allocated from pool. */
+#define TOKEN_LEN_STEP 200 /* Step size for token expansion. */
+
+#define LOADED_BUF_SIZE 20
 
 /* Reserved single-char tokens stand for themselves, such as '+', '^', '?'.
  * Those are not listed here. */
 typedef enum token_type_e
 {
+	TOKEN_END = -1, /* End mark of token stream. */
 	TOKEN_STATIC = TOKEN_MIN, /* Storage-class-specifier: static. */
 	TOKEN_BOOL, /* Type-specifier: bool. */
 	TOKEN_CHAR, /* Type-specifier: char. */
@@ -86,17 +89,20 @@ typedef struct token_s
 {
 	token_type_t type;
 	int lineno;
-	char token[MAX_TOKEN_LEN + 1];
+	size_t len;
+	size_t allocated;
+	char *token;
 } token_t;
 
 typedef struct reader_s
 {
 	char current;
+	const char *path;
 	FILE *f;
 	int line;
 	int loaded_len;
 	int next_loaded;
-	char loaded[MAX_TOKEN_LEN + 1];
+	char loaded[LOADED_BUF_SIZE + 1];
 } reader_t;
 
 reader_t *
@@ -104,6 +110,9 @@ lex_reader_new (const char *path);
 
 void
 lex_reader_free (reader_t *reader);
+
+void
+lex_token_free (token_t *token);
 
 void
 lex_init ();

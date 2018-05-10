@@ -30,7 +30,7 @@
 #include "intobject.h"
 #include "longobject.h"
 
-#define INTERNAL_STR_LENGTH 10
+#define INTERNAL_STR_LENGTH 6
 
 #define HASH_M 0xc6a4a7935bd1e995
 
