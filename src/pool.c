@@ -30,7 +30,7 @@
  * There are several kinds of cells: from 8 bytes to 256 bytes, and all
  * allocations will be done by choosing the most proper size of cell.
  * We use a linked list to trace all pools and use a hash table to trace
- * pages for quick access. Pages appears in three states, that is,
+ * pages for quick access. Pages appear in three states, that is,
  * full, empty and used. Each page contains exactly one type of cells.
  */
 

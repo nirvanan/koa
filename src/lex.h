@@ -34,6 +34,7 @@
 typedef enum token_type_e
 {
 	TOKEN_END = -1, /* End mark of token stream. */
+	TOKEN_UNKNOWN = 0, /* Unknown token. */
 	TOKEN_STATIC = TOKEN_MIN, /* Storage-class-specifier: static. */
 	TOKEN_BOOL, /* Type-specifier: bool. */
 	TOKEN_CHAR, /* Type-specifier: char. */
@@ -78,8 +79,10 @@ typedef enum token_type_e
 	TOKEN_TRUE, /* Constant: true. */
 	TOKEN_FALSE, /* Constant: false. */
 	TOKEN_INTEGER, /* Constant: integer. */
-	TOKEN_LINTEGER, /* Constant: long integer. */
-	TOKEN_FLOATING, /* Constant: floating (NOT float). */
+	TOKEN_LONGINT, /* Constant: long integer. */
+	TOKEN_HEX, /* Constant: hex integer. */
+	TOKEN_FLOATING, /* Constant: floating. */
+	TOKEN_EXPO, /* Constant: exponential floating. */
 	TOKEN_CHARACTER, /* Constant: character. */
 	TOKEN_IDENTIFIER, /* Primary-expression: identifier. */
 	TOKEN_STRING /* Primary-expression: string. */

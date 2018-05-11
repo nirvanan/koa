@@ -215,114 +215,100 @@ lex_new_line (reader_t *reader, char prev)
 	}
 }
 
+static void
+lex_set_type_and_next (reader_t *reader, token_t *token, token_type_t type)
+{
+	token->type = type;
+	lex_next_char (reader);
+}
+
 static token_t *
 lex_check_one_ahead (reader_t *reader, token_t *token)
 {
-	token->type = (token_type_t) reader->current;
-	lex_next_char (reader);
+	lex_set_type_and_next (reader, token, (token_type_t) reader->current);
 	switch ((char) token->type) {
 		case '|':
 			if (reader->current == '|') {
-				token->type = TOKEN_LOR;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_LOR);
 			}
 			else if (reader->current == '=') {
-				token->type = TOKEN_IPOR;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPOR);
 			}
 			break;
 		case '&':
 			if (reader->current == '&') {
-				token->type = TOKEN_LAND;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_LAND);
 			}
 			else if (reader->current == '=') {
-				token->type = TOKEN_IPAND;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPAND);
 			}
 			break;
 		case '=':
 			if (reader->current == '=') {
-				token->type = TOKEN_EQ;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_EQ);
 			}
 			break;
 		case '!':
 			if (reader->current == '=') {
-				token->type = TOKEN_NEQ;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_NEQ);
 			}
 			break;
 		case '<':
 			if (reader->current == '=') {
-				token->type = TOKEN_LEEQ;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_LEEQ);
 			}
 			else if (reader->current == '<') {
-				token->type = TOKEN_LSHFT;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_LSHFT);
 				if (reader->current == '=') {
-					token->type = TOKEN_IPLS;
-					lex_next_char (reader);
+					lex_set_type_and_next (reader, token, TOKEN_IPLS);
 				}
 			}
 			break;
 		case '>':
 			if (reader->current == '=') {
-				token->type = TOKEN_LAEQ;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_LAEQ);
 			}
 			else if (reader->current == '>') {
-				token->type = TOKEN_RSHFT;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_RSHFT);
 				if (reader->current == '=') {
-					token->type = TOKEN_IPRS;
-					lex_next_char (reader);
+					lex_set_type_and_next (reader, token, TOKEN_IPRS);
 				}
 			}
 			break;
 		case '+':
 			if (reader->current == '+') {
-				token->type = TOKEN_SADD;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_SADD);
 			}
 			else if (reader->current == '=') {
-				token->type = TOKEN_IPADD;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPADD);
 			}
 			break;
 		case '-':
 			if (reader->current == '-') {
-				token->type = TOKEN_SSUB;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_SSUB);
 			}
 			else if (reader->current == '=') {
-				token->type = TOKEN_IPADD;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPADD);
 			}
 			break;
 		case '*':
 			if (reader->current == '=') {
-				token->type = TOKEN_IPMUL;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPMUL);
 			}
 			break;
 		case '/':
 			if (reader->current == '=') {
-				token->type = TOKEN_IPDIV;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPDIV);
 			}
 			break;
 		case '%':
 			if (reader->current == '=') {
-				token->type = TOKEN_IPMOD;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPMOD);
 			}
 			break;
 		case '^':
 			if (reader->current == '=') {
-				token->type = TOKEN_IPXOR;
-				lex_next_char (reader);
+				lex_set_type_and_next (reader, token, TOKEN_IPXOR);
 			}
 			break;
 	}
@@ -560,7 +546,47 @@ lex_read_str (reader_t *reader, token_t *token)
 static token_t *
 lex_read_numberical (reader_t *reader, token_t *token)
 {
-	return NULL;
+	if (reader->current == '.') {
+		reader->type = TOKEN_FLOATING;
+		lex_save_char (reader, token, -1, 1);
+	}
+	
+	for (;;) {
+		switch (reader->current) {
+			case '0':
+				lex_save_char (reader, token, -1, 1);
+				if (token->type == TOKEN_UNKNOWN &&
+					(reader->current == 'x' || reader->current == 'X')) {
+					reader->type = TOKEN_HEX;
+					lex_save_char (reader, token, -1, 1);
+				}
+				break;
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				lex_save_char (reader, token, -1, 1);
+				break;
+			case '.':
+				if (token->type == TOKEN_UNKNOWN) {
+					reader->type = TOKEN_FLOATING;
+					lex_save_char (reader, token, -1, 1);
+				}
+				else {
+					error ("%s:%d: invalid floating literal sequence.",
+						reader->path, reader->line);
+					lex_token_free (token);
+
+					return NULL;
+				}
+				break;
+		}
+	}
 }
 
 token_t *
@@ -604,7 +630,7 @@ lex_next (reader_t *reader)
 			case '8':
 			case '9':
 			case '.':
-				return lex_read_numberical (reder, token);
+				return lex_read_numberical (reader, token);
 			default:
 				break;
 		}
