@@ -97,6 +97,7 @@ lex_next_char (reader_t *reader)
 		return;
 	}
 
+	errno = 0;
 	reader->current = fgetc (reader->f);
 	if (reader->current == EOF && errno > 0) {
 		error ("failed to read source file.");
@@ -112,6 +113,7 @@ lex_skip_utf8_bom (reader_t *reader)
 	bom = "\xEF\xBB\xBF";
 	bom_len = strlen (bom);
 	for (size_t i = 0; i < bom_len && i < LOADED_BUF_SIZE; i++) {
+		errno = 0;
 		reader->loaded[reader->loaded_len++] = fgetc (reader->f);
 		if (reader->loaded[reader->loaded_len - 1] == EOF && errno > 0) {
 			error ("failed to read source file.");
@@ -773,6 +775,8 @@ lex_read_identifier (reader_t *reader, token_t *token)
 	else {
 		token->type = TOKEN_IDENTIFIER;
 	}
+
+	object_free (word);
 
 	return token;
 }

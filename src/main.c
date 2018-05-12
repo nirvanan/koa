@@ -40,8 +40,14 @@ int main(int argc, char *argv[])
 
 	while (1) {
 		object_t *str = vecobject_new (10, NULL);
+		object_t *idx = intobject_new (4, NULL);
+		object_t *val = strobject_new ("fuck", NULL);
+
+		object_ipindex (str, idx, val);
+		object_ref (val);
 
 		object_free (str);
+		object_free (idx);
 		c++;
 		if (c % 6000000 == 0)
 			printf ("%d\n", c);
