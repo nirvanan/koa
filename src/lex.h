@@ -80,7 +80,7 @@ typedef enum token_type_e
 	TOKEN_FALSE, /* Constant: false. */
 	TOKEN_INTEGER, /* Constant: integer. */
 	TOKEN_LONGINT, /* Constant: long integer. */
-	TOKEN_HEX, /* Constant: hex integer. */
+	TOKEN_HEXINT, /* Constant: hexadecimal integer. */
 	TOKEN_FLOATING, /* Constant: floating. */
 	TOKEN_EXPO, /* Constant: exponential floating. */
 	TOKEN_CHARACTER, /* Constant: character. */

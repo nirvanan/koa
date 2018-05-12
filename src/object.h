@@ -29,20 +29,20 @@
  * as negetive values of signed objects can be parsed as BIG
  * unsigned value if you are willing to do so.*/
 
-#define INTEGER_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
-	|| (x)->head.type == OBJECT_TYPE_CHAR\
-	|| (x)->head.type == OBJECT_TYPE_INT\
-	|| (x)->head.type == OBJECT_TYPE_LONG)
+#define INTEGER_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL\
+	||(x)->head.type==OBJECT_TYPE_CHAR\
+	||(x)->head.type==OBJECT_TYPE_INT\
+	||(x)->head.type==OBJECT_TYPE_LONG)
 
-#define FLOATING_TYPE(x) ((x)->head.type == OBJECT_TYPE_FLOAT\
-	|| (x)->head.type == OBJECT_TYPE_DOUBLE)
+#define FLOATING_TYPE(x) ((x)->head.type==OBJECT_TYPE_FLOAT\
+	||(x)->head.type==OBJECT_TYPE_DOUBLE)
 
-#define NUMBERICAL_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL \
-	|| (x)->head.type == OBJECT_TYPE_CHAR \
-	|| (x)->head.type == OBJECT_TYPE_INT \
-	|| (x)->head.type == OBJECT_TYPE_LONG \
-	|| (x)->head.type == OBJECT_TYPE_FLOAT \
-	|| (x)->head.type == OBJECT_TYPE_DOUBLE)
+#define NUMBERICAL_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
+	||(x)->head.type==OBJECT_TYPE_CHAR\
+	||(x)->head.type==OBJECT_TYPE_INT\
+	||(x)->head.type==OBJECT_TYPE_LONG\
+	||(x)->head.type==OBJECT_TYPE_FLOAT\
+	||(x)->head.type==OBJECT_TYPE_DOUBLE)
 
 #define TYPE_NAME(x) (g_type_name[(x)->head.type])
 
@@ -73,6 +73,19 @@
 #define FLOATING_IS_NAN isnan
 #define FLOATING_IS_INFINITY(x) (!isfinite((x))&&!isnan((x)))
 #define FLOATING_FINITE(x) isfinite((x))
+
+#define OBJECT_IS_NULL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_NULL)
+#define OBJECT_IS_BOOL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BOOL)
+#define OBJECT_IS_CHAR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_CHAR)
+#define OBJECT_IS_INT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT)
+#define OBJECT_IS_LONG(x) (OBJECT_TYPE((x))==OBJECT_TYPE_LONG)
+#define OBJECT_IS_FLOAT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FLOAT)
+#define OBJECT_IS_DOUBLE(x) (OBJECT_TYPE((x))==OBJECT_TYPE_DOUBLE)
+#define OBJECT_IS_STR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_STR)
+#define OBJECT_IS_VEC(x) (OBJECT_TYPE((x))==OBJECT_TYPE_VEC)
+#define OBJECT_IS_DICT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_DICT)
+#define OBJECT_IS_FRAME(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FRAME)
+#define OBJECT_IS_BLOCK(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BLOCK)
 
 typedef enum object_type_e
 {

@@ -66,6 +66,6 @@ message (const char *error, ...)
 		va_list args;
 
 		va_start (args, error);
-		fprintf (stderr, error, args);
+		fprintf (stdout, error, args);
 	}
 }

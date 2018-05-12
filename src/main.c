@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	int c = 0;
 
 	while (1) {
-		object_t *str = vecobject_new (100, NULL);
+		object_t *str = vecobject_new (10, NULL);
 
 		object_free (str);
 		c++;

@@ -354,6 +354,15 @@ lex_save_char (reader_t *reader, token_t *token, char c, int next)
 	}
 }
 
+static token_t *
+lex_token_error (reader_t *reader, token_t *token, const char *err)
+{
+	error ("%s:%d: %s", reader->path, reader->line, err);
+	lex_token_free (token);
+
+	return NULL;
+}
+
 static char
 lex_hex_2_char (char c)
 {
@@ -502,11 +511,7 @@ lex_read_char (reader_t *reader, token_t *token)
 	}
 
 	if (reader->current != '\'') {
-		error ("%s:%d: multiple chars in char literal.",
-			reader->path, reader->line);
-		lex_token_free (token);
-
-		return NULL;
+		return lex_token_error (reader, token, "multiple chars in char literal.");
 	}
 
 	lex_next_char (reader);
@@ -530,11 +535,7 @@ lex_read_str (reader_t *reader, token_t *token)
 			break;
 		}
 		else if (reader->current == EOF) {
-			error ("%s:%d: missing matching '\"'.",
-				reader->path, reader->line);
-			lex_token_free (token);
-
-			return NULL;
+			return lex_token_error (reader, token, "missing matching '\"'.");
 		}
 	}
 
@@ -544,49 +545,236 @@ lex_read_str (reader_t *reader, token_t *token)
 }
 
 static token_t *
-lex_read_numberical (reader_t *reader, token_t *token)
+lex_read_decimal_floating (reader_t *reader, token_t *token)
 {
-	if (reader->current == '.') {
-		reader->type = TOKEN_FLOATING;
-		lex_save_char (reader, token, -1, 1);
+	if (reader->current == 'e' || reader->current == 'E') {
+		token->type = TOKEN_EXPO;
 	}
-	
-	for (;;) {
-		switch (reader->current) {
-			case '0':
-				lex_save_char (reader, token, -1, 1);
-				if (token->type == TOKEN_UNKNOWN &&
-					(reader->current == 'x' || reader->current == 'X')) {
-					reader->type = TOKEN_HEX;
-					lex_save_char (reader, token, -1, 1);
-				}
-				break;
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				lex_save_char (reader, token, -1, 1);
-				break;
-			case '.':
-				if (token->type == TOKEN_UNKNOWN) {
-					reader->type = TOKEN_FLOATING;
-					lex_save_char (reader, token, -1, 1);
-				}
-				else {
-					error ("%s:%d: invalid floating literal sequence.",
-						reader->path, reader->line);
-					lex_token_free (token);
+	else {
+		token->type = TOKEN_FLOATING;
+	}
 
-					return NULL;
-				}
-				break;
+	lex_save_char (reader, token, -1, 1);
+	for (;;) {
+		if (LEX_IS_DIGIT (reader->current)) {
+			lex_save_char (reader, token, -1, 1);
+		}
+		else if (reader->current == 'e' || reader->current == 'E') {
+			/* Multiple exponent parts? */
+			if (token->type == TOKEN_EXPO) {
+				return lex_token_error (reader, token, "multiple exponent parts.");
+			}
+
+			lex_save_char (reader, token, -1, 1);
+			token->type = TOKEN_EXPO;
+			/* Read optional sign. */
+			if (reader->current == '+' || reader->current == '-') {
+				lex_save_char (reader, token, -1, 1);
+			}
+			/* Test next for digits. */
+			if (!LEX_IS_DIGIT (reader->current)) {
+				return lex_token_error (reader, token,
+					"invalid floating literal sequence.");
+			}
+		}
+		else if (reader->current == 'f' || reader->current == 'F') {
+			lex_save_char (reader, token, -1, 1);
+			break;
+		}
+		else if (!LEX_IS_SPACE (reader->current) && reader->current != EOF) {
+			return lex_token_error (reader, token, "invalid floating literal postfix.");
+		}
+		else {
+			break;
 		}
 	}
+
+	return token;
+}
+
+static token_t *
+lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
+{
+	int p;
+
+	if (reader->current == '.') {
+		lex_save_char (reader, token, -1, 1);
+		if (reader->current == '0') {
+			lex_save_char (reader, token, -1, 1);
+			if (reader->current == 'x' || reader->current == 'X') {
+				token->type = TOKEN_HEXINT;
+				lex_save_char (reader, token, -1, 1);
+			}
+		}
+		if (token->type != TOKEN_HEXINT && hex_part == 0) {
+			return lex_token_error (reader, token,
+				"invalid hexadecimal floating sequence.");
+		}
+	}
+
+	p = 0;
+	for (;;) {
+		if (LEX_IS_DIGIT (reader->current)) {
+			lex_save_char (reader, token, -1, 1);
+		}
+		else if (LEX_IS_XDIGIT (reader->current)) {
+			if (token->type != TOKEN_HEXINT || p) {
+				return lex_token_error (reader, token,
+					"invalid hexadecimal floating sequence.");
+			}
+			lex_save_char (reader, token, -1, 1);
+		}
+		else if (reader->current == 'p' || reader->current == 'P') {
+			lex_save_char (reader, token, -1, 1);
+			p = 1;
+			/* Read optional sign. */
+			if (reader->current == '+' || reader->current == '-') {
+				lex_save_char (reader, token, -1, 1);
+			}
+			/* Test next for digits. */
+			if (!LEX_IS_DIGIT (reader->current)) {
+				return lex_token_error (reader, token,
+					"invalid floating literal sequence.");
+			}
+		}
+		else if (reader->current == 'f' || reader->current == 'F') {
+			lex_save_char (reader, token, -1, 1);
+			break;
+		}
+		else if (!LEX_IS_SPACE (reader->current) && reader->current != EOF) {
+			return lex_token_error (reader, token, "invalid floating literal postfix.");
+		}
+		else {
+			break;
+		}
+	}
+
+	token->type = TOKEN_FLOATING;
+
+	return token;
+}
+
+static token_t *
+lex_read_numberical (reader_t *reader, token_t *token)
+{
+	int hex_part;
+
+	hex_part = 0;
+	if (reader->current == '.') {
+		/* Test next for digits. */
+		if (!LEX_IS_DIGIT (reader->current)) {
+			return lex_token_error (reader, token, "invalid floating sequence.");
+		}
+
+		return lex_read_decimal_floating (reader, token);
+	}
+	else if (reader->current == '0') {
+		token->type = TOKEN_INTEGER;
+		lex_save_char (reader, token, -1, 1);
+		/* Hexadecimal? */
+		if (reader->current == 'x' || reader->current == 'X') {
+			token->type = TOKEN_HEXINT;
+			lex_save_char (reader, token, -1, 1);
+			/* Test next for xdigits. */
+			if (!LEX_IS_XDIGIT (reader->current) && reader->current != '.') {
+				return lex_token_error (reader, token, "invalid hexadecimal sequence.");
+			}
+			else if (LEX_IS_XDIGIT (reader->current)) {
+				hex_part = 1;
+			}
+		}
+	}
+
+	for (;;) {
+		if (LEX_IS_DIGIT (reader->current)) {
+			lex_save_char (reader, token, -1, 1);
+		}
+		else if (reader->current == 'e' || reader->current == 'E') {
+			if (token->type == TOKEN_UNKNOWN) {
+				return lex_read_decimal_floating (reader, token);
+			}
+			else if (token->type == TOKEN_HEXINT){
+				lex_save_char (reader, token, -1, 1);
+			}
+			else {
+				return lex_token_error (reader, token, "invalid floating exponent.");
+			}
+		}
+		else if (LEX_IS_XDIGIT (reader->current)) {
+			if (token->type != TOKEN_HEXINT) {
+				return lex_token_error (reader, token, "invalid decimal sequence.");
+			}
+			lex_save_char (reader, token, -1, 1);
+		}
+		else if (reader->current == '.') {
+			if (token->type == TOKEN_HEXINT) {
+				return lex_read_hexadecimal_floating (reader, token, hex_part);
+			}
+			else {
+				return lex_read_decimal_floating (reader, token);
+			}
+		}
+		else if (reader->current == 'p' || reader->current == 'P') {
+			if (token->type == TOKEN_HEXINT) {
+				return lex_read_hexadecimal_floating (reader, token, hex_part);
+			}
+			else {
+				return lex_token_error (reader, token,
+					"invalid hexadecimal floating sequence.");
+			}
+		}
+		else if (reader->current == 'l' || reader->current == 'L') {
+			lex_save_char (reader, token, -1, 1);
+			break;
+		}
+		else if (!LEX_IS_SPACE (reader->current) && reader->current != EOF) {
+			return lex_token_error (reader, token, "invalid integer literal postfix.");
+		}
+		else {
+			break;
+		}
+	}
+	
+	return token;
+}
+
+static token_t *
+lex_end_of_stream (reader_t *reader, token_t *token)
+{
+	token->type = TOKEN_END;
+
+	return token;
+}
+
+static token_t *
+lex_read_identifier (reader_t *reader, token_t *token)
+{
+	object_t *word;
+	object_t *res;
+
+	lex_save_char (reader, token, -1, 1);
+	
+	for (;;) {
+		if (LEX_IS_ALNUM (reader->current)) {
+			lex_save_char (reader, token, -1, 1);
+		}
+		else {
+			break;
+		}
+	}
+
+	/* Check whether this token is a reserved word. */
+	word = strobject_new (token->token, NULL);
+	res = object_index (g_reserved_tokens, word);
+	if (OBJECT_IS_INT (res)) {
+		/* Ok, a reserved word. */
+		token->type = (token_type_t) object_get_integer (res);
+	}
+	else {
+		token->type = TOKEN_IDENTIFIER;
+	}
+
+	return token;
 }
 
 token_t *
@@ -631,8 +819,19 @@ lex_next (reader_t *reader)
 			case '9':
 			case '.':
 				return lex_read_numberical (reader, token);
+			case EOF:
+				return lex_end_of_stream (reader, token);
 			default:
-				break;
+				if (LEX_IS_ALPHA (reader->current)) {
+					return lex_read_identifier (reader, token);
+				}
+				else if (LEX_IS_SPACE (reader->current)) {
+					lex_next_char (reader);
+				}
+				else {
+					return lex_token_error (reader, token,
+						"uknown character.");
+				}
 		}
 	}
 
