@@ -365,8 +365,8 @@ lex_token_error (reader_t *reader, token_t *token, const char *err)
 	return NULL;
 }
 
-static char
-lex_hex_2_char (char c)
+static int
+lex_char_to_dec (char c)
 {
 	if (!LEX_IS_XDIGIT (c)) {
 		return '\0';
@@ -375,22 +375,22 @@ lex_hex_2_char (char c)
 	switch (c) {
 		case 'a':
 		case 'A':
-			return '\xa';
+			return 0xa;
 		case 'b':
 		case 'B':
-			return '\xb';
+			return 0xb;
 		case 'c':
 		case 'C':
-			return '\xc';
+			return 0xc;
 		case 'd':
 		case 'D':
-			return '\xd';
+			return 0xd;
 		case 'e':
 		case 'E':
-			return '\xe';
+			return 0xe;
 		case 'f':
 		case 'F':
-			return '\xf';
+			return 0xf;
 		default:
 			return c - '0';
 	}
@@ -406,14 +406,14 @@ lex_read_hexadecimal_char (reader_t *reader, token_t *token)
 		return 0;
 	}
 
-	c = lex_hex_2_char (reader->current);
+	c = lex_char_to_dec (reader->current);
 	lex_next_char (reader);
 	if (!LEX_IS_XDIGIT (reader->current)) {
 		lex_save_char (reader, token, c, 0);
 
 		return 1;
 	}
-	c = (c << 4) + lex_hex_2_char (reader->current);
+	c = (c << 4) + lex_char_to_dec (reader->current);
 	lex_save_char (reader, token, c, 1);
 
 	return 1;
@@ -547,16 +547,17 @@ lex_read_str (reader_t *reader, token_t *token)
 }
 
 static token_t *
-lex_read_decimal_floating (reader_t *reader, token_t *token)
+lex_read_decimal_floating (reader_t *reader, token_t *token, int digit_part)
 {
-	if (reader->current == 'e' || reader->current == 'E') {
-		token->type = TOKEN_EXPO;
-	}
-	else {
+	if (reader->current == '.') {
 		token->type = TOKEN_FLOATING;
+		lex_save_char (reader, token, -1, 1);
+		/* Test next for digits. */
+		if (!digit_part && !LEX_IS_DIGIT (reader->current)) {
+			return lex_token_error (reader, token, "invalid floating sequence.");
+		}
 	}
 
-	lex_save_char (reader, token, -1, 1);
 	for (;;) {
 		if (LEX_IS_DIGIT (reader->current)) {
 			lex_save_char (reader, token, -1, 1);
@@ -583,7 +584,11 @@ lex_read_decimal_floating (reader_t *reader, token_t *token)
 			lex_save_char (reader, token, -1, 1);
 			break;
 		}
-		else if (!LEX_IS_SPACE (reader->current) && reader->current != EOF) {
+		else if (reader->current == '.') {
+			return lex_token_error (reader, token,
+				"invalid decimal point in floating sequence.");
+		}
+		else if (LEX_IS_ALPHA (reader->current)) {
 			return lex_token_error (reader, token, "invalid floating literal postfix.");
 		}
 		else {
@@ -601,16 +606,9 @@ lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
 
 	if (reader->current == '.') {
 		lex_save_char (reader, token, -1, 1);
-		if (reader->current == '0') {
-			lex_save_char (reader, token, -1, 1);
-			if (reader->current == 'x' || reader->current == 'X') {
-				token->type = TOKEN_HEXINT;
-				lex_save_char (reader, token, -1, 1);
-			}
-		}
-		if (token->type != TOKEN_HEXINT && hex_part == 0) {
-			return lex_token_error (reader, token,
-				"invalid hexadecimal floating sequence.");
+		/* Test next for xdigits. */
+		if (!hex_part && !LEX_IS_XDIGIT (reader->current)) {
+			return lex_token_error (reader, token, "invalid hexadecimal floating sequence.");
 		}
 	}
 
@@ -643,7 +641,11 @@ lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
 			lex_save_char (reader, token, -1, 1);
 			break;
 		}
-		else if (!LEX_IS_SPACE (reader->current) && reader->current != EOF) {
+		else if (reader->current == '.') {
+			return lex_token_error (reader, token,
+				"invalid decimal point in floating sequence.");
+		}
+		else if (LEX_IS_ALPHA (reader->current)) {
 			return lex_token_error (reader, token, "invalid floating literal postfix.");
 		}
 		else {
@@ -663,12 +665,7 @@ lex_read_numberical (reader_t *reader, token_t *token)
 
 	hex_part = 0;
 	if (reader->current == '.') {
-		/* Test next for digits. */
-		if (!LEX_IS_DIGIT (reader->current)) {
-			return lex_token_error (reader, token, "invalid floating sequence.");
-		}
-
-		return lex_read_decimal_floating (reader, token);
+		return lex_read_decimal_floating (reader, token, 0);
 	}
 	else if (reader->current == '0') {
 		token->type = TOKEN_INTEGER;
@@ -686,14 +683,17 @@ lex_read_numberical (reader_t *reader, token_t *token)
 			}
 		}
 	}
+	else {
+		token->type = TOKEN_INTEGER;
+	}
 
 	for (;;) {
 		if (LEX_IS_DIGIT (reader->current)) {
 			lex_save_char (reader, token, -1, 1);
 		}
 		else if (reader->current == 'e' || reader->current == 'E') {
-			if (token->type == TOKEN_UNKNOWN) {
-				return lex_read_decimal_floating (reader, token);
+			if (token->type == TOKEN_INTEGER) {
+				return lex_read_decimal_floating (reader, token, 1);
 			}
 			else if (token->type == TOKEN_HEXINT){
 				lex_save_char (reader, token, -1, 1);
@@ -713,7 +713,7 @@ lex_read_numberical (reader_t *reader, token_t *token)
 				return lex_read_hexadecimal_floating (reader, token, hex_part);
 			}
 			else {
-				return lex_read_decimal_floating (reader, token);
+				return lex_read_decimal_floating (reader, token, 1);
 			}
 		}
 		else if (reader->current == 'p' || reader->current == 'P') {
@@ -729,7 +729,7 @@ lex_read_numberical (reader_t *reader, token_t *token)
 			lex_save_char (reader, token, -1, 1);
 			break;
 		}
-		else if (!LEX_IS_SPACE (reader->current) && reader->current != EOF) {
+		else if (LEX_IS_ALPHA (reader->current)) {
 			return lex_token_error (reader, token, "invalid integer literal postfix.");
 		}
 		else {
@@ -833,8 +833,9 @@ lex_next (reader_t *reader)
 					lex_next_char (reader);
 				}
 				else {
-					return lex_token_error (reader, token,
-						"uknown character.");
+					lex_set_type_and_next (reader, token, (token_type_t) reader->current);
+
+					return token;
 				}
 		}
 	}
@@ -855,10 +856,18 @@ lex_init()
 
 	re = &g_reserved_list[0];
 	while (re->word != NULL) {
+		object_t *word;
 		object_t *suc;
 
-		suc = object_ipindex (g_reserved_tokens,
-			strobject_new (re->word, NULL),
+		word = strobject_new (re->word, NULL);
+		if (word == NULL) {
+			fatal_error ("failed to generate the reserved word dict.");
+		}
+
+		/* These words shall never be freed. */
+		object_ref (word);
+
+		suc = object_ipindex (g_reserved_tokens, word,
 			intobject_new ((int) re->type, NULL));
 		if (suc == NULL) {
 			fatal_error ("failed to generate the reserved word dict.");

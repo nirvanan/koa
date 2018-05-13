@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	lex_init ();
 	int c = 0;
 
-	while (1) {
+	while (0) {
 		object_t *str = vecobject_new (10, NULL);
 		object_t *idx = intobject_new (4, NULL);
 		object_t *val = strobject_new ("fuck", NULL);
@@ -51,6 +51,18 @@ int main(int argc, char *argv[])
 		c++;
 		if (c % 6000000 == 0)
 			printf ("%d\n", c);
+	}
+
+	const char *path = "/home/nirvanan/sam/stage_8/valid/for_variable_shadow.c";
+	reader_t *reader = lex_reader_new (path);
+	token_t *token;
+
+	while (1) {
+		token = lex_next (reader);
+		printf ("%d \"%s\"\n", token->type, token->token);
+		if (token->type == TOKEN_END) {
+			break;
+		}
 	}
 
 	return 0;

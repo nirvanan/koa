@@ -116,6 +116,9 @@ lex_reader_free (reader_t *reader);
 void
 lex_token_free (token_t *token);
 
+token_t *
+lex_next (reader_t *reader);
+
 void
 lex_init ();
 

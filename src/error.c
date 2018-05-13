@@ -31,7 +31,8 @@ fatal_error (const char *error, ...)
 		va_list args;
 
 		va_start (args, error);
-		fprintf (stderr, error, args);
+		vfprintf (stderr, error, args);
+		fprintf (stderr, "\n");
 	}
 
 	exit (EXIT_FAILURE);
@@ -44,7 +45,8 @@ error (const char *error, ...)
 		va_list args;
 
 		va_start (args, error);
-		fprintf (stderr, error, args);
+		vfprintf (stderr, error, args);
+		fprintf (stderr, "\n");
 	}
 }
 
@@ -55,7 +57,8 @@ warning (const char *error, ...)
 		va_list args;
 
 		va_start (args, error);
-		fprintf (stderr, error, args);
+		vfprintf (stderr, error, args);
+		fprintf (stderr, "\n");
 	}
 }
 
@@ -66,6 +69,7 @@ message (const char *error, ...)
 		va_list args;
 
 		va_start (args, error);
-		fprintf (stdout, error, args);
+		vfprintf (stdout, error, args);
+		fprintf (stdout, "\n");
 	}
 }
