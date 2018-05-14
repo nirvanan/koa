@@ -409,8 +409,6 @@ lex_read_hexadecimal_char (reader_t *reader, token_t *token)
 	c = lex_char_to_dec (reader->current);
 	lex_next_char (reader);
 	if (!LEX_IS_XDIGIT (reader->current)) {
-		lex_save_char (reader, token, c, 0);
-
 		return 1;
 	}
 	c = (c << 4) + lex_char_to_dec (reader->current);
@@ -419,24 +417,29 @@ lex_read_hexadecimal_char (reader_t *reader, token_t *token)
 	return 1;
 }
 
-static void
+static int
 lex_read_octal_char (reader_t *reader, token_t *token)
 {
-	char c;
+	int c;
 
 	c = reader->current - '0';
 	/* The digits in an octal sequence is up to 3. */
 	lex_next_char (reader);
 	for (int i = 0; i < 2; i++) {
 		if (!LEX_IS_ODIGIT (reader->current)) {
-			lex_save_char (reader, token, c, 0);
-
-			return;
+			break;
 		}
 		c = c * 8 + reader->current - '0';
 		lex_next_char (reader);
 	}
-	lex_save_char (reader, token, c, 1);
+
+	if (c > 127) {
+		return 0;
+	}
+
+	lex_save_char (reader, token, (char) c, 1);
+
+	return 1;
 }
 
 static int 
@@ -486,7 +489,12 @@ lex_read_escaped_char (reader_t *reader, token_t *token)
 		default:
 			/* Octal char? */
 			if (LEX_IS_ODIGIT (reader->current)) {
-				lex_read_octal_char (reader, token);
+				if (!lex_read_octal_char (reader, token)) {
+					error ("%s:%d: invalid octal char sequence.",
+						reader->path, reader->line);
+
+					return 0;
+				}
 				break;
 			}
 

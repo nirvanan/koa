@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	lex_init ();
 	int c = 0;
 
-	while (0) {
+	while (1) {
 		object_t *str = vecobject_new (10, NULL);
 		object_t *idx = intobject_new (4, NULL);
 		object_t *val = strobject_new ("fuck", NULL);
