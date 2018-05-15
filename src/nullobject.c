@@ -45,6 +45,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Multiplication. */
 	NULL, /* Division. */
 	NULL, /* Mod. */
+	NULL, /* Bitwise not. */
 	NULL, /* Bitwise and. */
 	NULL, /* Bitwise or. */
 	NULL, /* Bitwise xor. */

@@ -33,8 +33,26 @@
 #include "doubleobject.h"
 #include "strobject.h"
 
+#define TYPE_NAME(x) (g_type_name[(x)->head.type])
+
 #define FLOATING_INT_TO_HASH_NEG -271828
 #define FLOATING_INT_TO_HASH_POS 314159
+
+static const char *g_type_name[] =
+{
+	"null",
+	"bool",
+	"char",
+	"int",
+	"long",
+	"float",
+	"double",
+	"str",
+	"vec",
+	"dict",
+	"function",
+	"frame"
+};
 
 void
 object_ref (object_t *obj)
@@ -65,7 +83,7 @@ object_get_integer (object_t *obj)
 			return (integer_value_t) longobject_get_value (obj);
 		/* Never reachable. */
 		default:
-			error ("try to get integer value from wrong type.");
+			error ("try to get integer value from %s.", TYPE_NAME (obj));
 			return 0;
 	}
 
@@ -82,7 +100,7 @@ object_get_floating (object_t *obj)
 			return (floating_value_t) doubleobject_get_value (obj);
 		/* Never reachable. */
 		default:
-			error ("try to get floating value from wrong type.");
+			error ("try to get floating value from %s.", TYPE_NAME (obj));
 			return 0;
 	}
 
@@ -116,7 +134,8 @@ object_cast (object_t *obj, object_type_t type)
 			case OBJECT_TYPE_DOUBLE:
 				return doubleobject_new ((double) val, NULL);
 			default:
-				error ("try to cast numberical object to other types.");
+				error ("try to cast numberical object to %s.", TYPE_NAME (obj));
+
 				return NULL;
 		}
 	}
@@ -138,7 +157,8 @@ object_cast (object_t *obj, object_type_t type)
 			case OBJECT_TYPE_DOUBLE:
 				return doubleobject_new ((double) val, NULL);
 			default:
-				error ("try to cast numberical object to other types.");
+				error ("try to cast numberical object to %s.", TYPE_NAME (obj));
+
 				return NULL;
 		}
 	}
@@ -179,18 +199,18 @@ object_bin_cleanup (object_t *obj1, object_t *t1, object_t *obj2, object_t *t2)
 }
 
 object_t *
-object_not (object_t *obj)
+object_logic_not (object_t *obj)
 {
-	una_op_f not_fun;
+	una_op_f lnot_fun;
 
 	if (!NUMBERICAL_TYPE (obj)) {
-		error ("invalid operand type for '!'.");
+		error ("invalid operand type %s for '!'.", TYPE_NAME (obj));
 
 		return NULL;
 	}
-	not_fun = (OBJECT_OPSET (obj))->not;
+	lnot_fun = (OBJECT_OPSET (obj))->lnot;
 
-	return not_fun (obj);
+	return lnot_fun (obj);
 }
 
 void
@@ -219,7 +239,7 @@ object_dump (object_t *obj)
 
 	dump_fun = (OBJECT_OPSET (obj))->dump;
 	if (dump_fun == NULL) {
-		error ("this type has no dump routine.");
+		error ("%s has no dump routine.", TYPE_NAME (obj));
 
 		return NULL;
 	}
@@ -235,7 +255,7 @@ object_neg (object_t *obj)
 	una_op_f neg_fun;
 
 	if (!NUMBERICAL_TYPE (obj)) {
-		error ("invalid operand type for '!'.");
+		error ("invalid operand type %s for '-'.", TYPE_NAME (obj));
 
 		return NULL;
 	}
@@ -265,7 +285,7 @@ object_add (object_t *obj1, object_t *obj2)
 
 	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_STR) {
 		if (OBJECT_TYPE (obj2) != OBJECT_TYPE_STR && !NUMBERICAL_TYPE (obj2)) {
-			error ("invalid right operand type for '+'.");
+			error ("invalid right operand type %s for '+'.", TYPE_NAME (obj2));
 		
 			return NULL;
 		}
@@ -274,9 +294,9 @@ object_add (object_t *obj1, object_t *obj2)
 		
 		return add_fun (obj1, obj2);
 	}
-	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_VEC) {
+	else if (OBJECT_TYPE (obj1) == OBJECT_TYPE_VEC) {
 		if (OBJECT_TYPE (obj1) != OBJECT_TYPE (obj2)) {
-			error ("invalid right operand type for '+'.");
+			error ("invalid right operand type %s for '+'.", TYPE_NAME (obj2));
 		
 			return NULL;
 		}
@@ -287,12 +307,12 @@ object_add (object_t *obj1, object_t *obj2)
 	}
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '+'.");
+		error ("invalid left operand type %s for '+'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '+'.");
+		error ("invalid right operand type %s for '+'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -335,12 +355,12 @@ object_sub (object_t *obj1, object_t *obj2)
 	bin_op_f sub_fun;
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '-'.");
+		error ("invalid left operand type %s for '-'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '-'.");
+		error ("invalid right operand type %s for '-'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -383,12 +403,12 @@ object_mul (object_t *obj1, object_t *obj2)
 	bin_op_f mul_fun;
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '*'.");
+		error ("invalid left operand type %s for '*'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '*'.");
+		error ("invalid right operand type %s for '*'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -431,12 +451,12 @@ object_div (object_t *obj1, object_t *obj2)
 	bin_op_f div_fun;
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '/'.");
+		error ("invalid left operand type %s for '/'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '/'.");
+		error ("invalid right operand type %s for '/'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -484,12 +504,12 @@ object_mod (object_t *obj1, object_t *obj2)
 	bin_op_f mod_fun;
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '%'.");
+		error ("invalid left operand type %s for '%'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '%'.");
+		error ("invalid right operand type %s for '%'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -529,7 +549,35 @@ object_mod (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_and (object_t *obj1, object_t *obj2)
+object_bit_not (object_t *obj)
+{
+	object_t *temp;
+	object_t *res;
+	una_op_f not_fun;
+
+	if (!INTEGER_TYPE (obj)) {
+		error ("invalid operand type %s for '~'.", TYPE_NAME (obj));
+
+		return NULL;
+	}
+
+	temp = obj;
+	if (OBJECT_TYPE (obj) < OBJECT_TYPE_INT) {
+		temp = object_cast (obj, OBJECT_TYPE_INT);
+		if (temp == NULL) {
+			return NULL;
+		}
+	}
+
+	not_fun = (OBJECT_OPSET (obj))->not;
+	res = not_fun (temp);
+	object_una_cleanup (obj, temp);
+
+	return res;
+}
+
+object_t *
+object_bit_and (object_t *obj1, object_t *obj2)
 {
 	object_t *left;
 	object_t *right;
@@ -537,12 +585,12 @@ object_and (object_t *obj1, object_t *obj2)
 	bin_op_f and_fun;
 
 	if (!INTEGER_TYPE (obj1)) {
-		error ("invalid left operand type for '&'.");
+		error ("invalid left operand type %s for '&'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!INTEGER_TYPE (obj2)) {
-		error ("invalid right operand type for '&'.");
+		error ("invalid right operand type %s for '&'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -577,7 +625,7 @@ object_and (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_or (object_t *obj1, object_t *obj2)
+object_bit_or (object_t *obj1, object_t *obj2)
 {
 	object_t *left;
 	object_t *right;
@@ -585,12 +633,12 @@ object_or (object_t *obj1, object_t *obj2)
 	bin_op_f or_fun;
 
 	if (!INTEGER_TYPE (obj1)) {
-		error ("invalid left operand type for '|'.");
+		error ("invalid left operand type %s for '|'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!INTEGER_TYPE (obj2)) {
-		error ("invalid right operand type for '|'.");
+		error ("invalid right operand type %s for '|'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -625,7 +673,7 @@ object_or (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_xor (object_t *obj1, object_t *obj2)
+object_bit_xor (object_t *obj1, object_t *obj2)
 {
 	object_t *left;
 	object_t *right;
@@ -633,12 +681,12 @@ object_xor (object_t *obj1, object_t *obj2)
 	bin_op_f xor_fun;
 
 	if (!INTEGER_TYPE (obj1)) {
-		error ("invalid left operand type for '^'.");
+		error ("invalid left operand type %s for '^'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!INTEGER_TYPE (obj2)) {
-		error ("invalid right operand type for '^'.");
+		error ("invalid right operand type %s for '^'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -673,17 +721,17 @@ object_xor (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_land (object_t *obj1, object_t *obj2)
+object_logic_and (object_t *obj1, object_t *obj2)
 {
 	bin_op_f land_fun;
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '&&'.");
+		error ("invalid left operand type %s for '&&'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '&&'.");
+		error ("invalid right operand type %s for '&&'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -694,17 +742,17 @@ object_land (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_lor (object_t *obj1, object_t *obj2)
+object_logic_or (object_t *obj1, object_t *obj2)
 {
 	bin_op_f lor_fun;
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for '||'.");
+		error ("invalid left operand type %s for '||'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for '||'.");
+		error ("invalid right operand type %s for '||'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -715,19 +763,19 @@ object_lor (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_lshift (object_t *obj1, object_t *obj2)
+object_left_shift (object_t *obj1, object_t *obj2)
 {
 	object_t *left;
 	object_t *res;
 	bin_op_f lshift_fun;
 
 	if (!INTEGER_TYPE (obj1)) {
-		error ("invalid left operand type for '<<'.");
+		error ("invalid left operand type %s for '<<'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!INTEGER_TYPE (obj2)) {
-		error ("invalid right operand type for '<<'.");
+		error ("invalid right operand type %s for '<<'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -748,19 +796,19 @@ object_lshift (object_t *obj1, object_t *obj2)
 }
 
 object_t *
-object_rshift (object_t *obj1, object_t *obj2)
+object_right_shift (object_t *obj1, object_t *obj2)
 {
 	object_t *left;
 	object_t *res;
 	bin_op_f rshift_fun;
 
 	if (!INTEGER_TYPE (obj1)) {
-		error ("invalid left operand type for '>>'.");
+		error ("invalid left operand type %s for '>>'.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!INTEGER_TYPE (obj2)) {
-		error ("invalid right operand type for '>>'.");
+		error ("invalid right operand type %s for '>>'.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -785,10 +833,17 @@ object_equal (object_t *obj1, object_t *obj2)
 {
 	bin_op_f eq_fun;
 
+	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_STR
+		&& OBJECT_TYPE (obj2) == OBJECT_TYPE_STR) {
+		eq_fun = (OBJECT_OPSET (obj1))->eq;
+
+		return eq_fun (obj1, obj2);
+	}
+
 	eq_fun = (OBJECT_OPSET (obj1))->eq;
 	if (eq_fun == NULL) {
 		/* Actually all types have equality routine. */
-		error ("on equality routine for left operand.");
+		error ("no equality routine for left operand.");
 
 		return NULL;
 	}
@@ -809,12 +864,12 @@ object_compare (object_t *obj1, object_t *obj2)
 	}
 
 	if (!NUMBERICAL_TYPE (obj1)) {
-		error ("invalid left operand type for comparation.");
+		error ("invalid left operand type %s for comparation.", TYPE_NAME (obj1));
 
 		return NULL;
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
-		error ("invalid right operand type for comparation.");
+		error ("invalid right operand type %s for comparation.", TYPE_NAME (obj2));
 		
 		return NULL;
 	}
@@ -831,7 +886,7 @@ object_index (object_t *obj1, object_t *obj2)
 
 	index_fun = (OBJECT_OPSET (obj1))->index;
 	if (index_fun == NULL) {
-		error ("left operand has no index routine.");
+		error ("left operand %s has no index routine.", TYPE_NAME (obj1));
 		
 		return NULL;
 	}
@@ -846,7 +901,7 @@ object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 
 	ipindex_fun = (OBJECT_OPSET (obj1))->ipindex;
 	if (ipindex_fun == NULL) {
-		error ("left operand has no inplace index routine.");
+		error ("left operand %s has no inplace index routine.", TYPE_NAME (obj1));
 		
 		return NULL;
 	}
@@ -911,7 +966,7 @@ object_hash (object_t *obj)
 	hash_fun = (OBJECT_OPSET (obj))->hash;
 	/* At this stage, this is impossible, =_=. */
 	if (hash_fun == NULL) {
-		error ("this type has no hash routine.");
+		error ("type %s has no hash routine.", TYPE_NAME (obj));
 		
 		return NULL;
 	}

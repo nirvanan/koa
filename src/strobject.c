@@ -62,6 +62,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Multiplication. */
 	NULL, /* Division. */
 	NULL, /* Mod. */
+	NULL, /* Bitwise not. */
 	NULL, /* Bitwise and. */
 	NULL, /* Bitwise or. */
 	NULL, /* Bitwise xor. */
@@ -135,9 +136,13 @@ strobject_op_eq (object_t *obj1, object_t *obj2)
 	}
 
 	s1 = strobject_get_value (obj1);
-	s2 = strobject_get_value (obj2);
+	if (OBJECT_TYPE (obj2) == OBJECT_TYPE_STR) {
+		s2 = strobject_get_value (obj2);
 
-	return boolobject_new (str_cmp (s1, s2) == 0, NULL);
+		return boolobject_new (str_cmp (s1, s2) == 0, NULL);
+	}
+
+	return boolobject_new (false, NULL);
 }
 
 /* Comparation. */

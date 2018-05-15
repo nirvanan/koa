@@ -44,8 +44,6 @@
 	||(x)->head.type==OBJECT_TYPE_FLOAT\
 	||(x)->head.type==OBJECT_TYPE_DOUBLE)
 
-#define TYPE_NAME(x) (g_type_name[(x)->head.type])
-
 #define OBJECT_REF(x) ((x)->head.ref)
 
 #define OBJECT_TYPE(x) ((x)->head.type)
@@ -99,8 +97,8 @@ typedef enum object_type_e
 	OBJECT_TYPE_STR = 0x07,
 	OBJECT_TYPE_VEC = 0x08,
 	OBJECT_TYPE_DICT = 0x09,
-	OBJECT_TYPE_FRAME = 0x0a,
-	OBJECT_TYPE_BLOCK = 0x0b,
+	OBJECT_TYPE_FUNCTION = 0x0a,
+	OBJECT_TYPE_FRAME = 0x0b,
 } object_type_t;
 
 typedef struct object_head_s
@@ -127,7 +125,7 @@ typedef object_t *(*ter_op_f) (object_t *obj1, object_t *obj2, object_t *ob3);
 
 typedef struct object_opset_s
 {
-	una_op_f not;
+	una_op_f lnot;
 	void_una_op_f free;
 	una_op_f dump;
 	una_op_f neg;
@@ -137,6 +135,7 @@ typedef struct object_opset_s
 	bin_op_f mul;
 	bin_op_f div;
 	bin_op_f mod;
+	una_op_f not;
 	bin_op_f and;
 	bin_op_f or;
 	bin_op_f xor;
@@ -150,22 +149,6 @@ typedef struct object_opset_s
 	ter_op_f ipindex;
 	una_op_f hash;
 } object_opset_t;
-
-/*
-static const char *g_type_name[] =
-{
-	"null",
-	"bool",
-	"char",
-	"int",
-	"long",
-	"float",
-	"double",
-	"str",
-	"vec",
-	"dict"
-};
-*/
 
 void
 object_ref (object_t *obj);
@@ -189,7 +172,7 @@ int
 object_numberical_compare (object_t *obj1, object_t *obj2);
 
 object_t *
-object_not (object_t *obj1);
+object_logic_not (object_t *obj1);
 
 void
 object_free (object_t *obj);
@@ -214,6 +197,9 @@ object_div (object_t *obj1, object_t *obj2);
 
 object_t *
 object_mod (object_t *obj1, object_t *obj2);
+
+object_t *
+object_bit_not (object_t *obj);
 
 object_t *
 object_bit_and (object_t *obj1, object_t *obj2);

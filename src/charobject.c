@@ -40,7 +40,7 @@
 static object_t *g_char_cache[CHAR_CACHE_SIZE];
 
 /* Object ops. */
-static object_t *charobject_op_not (object_t *obj);
+static object_t *charobject_op_lnot (object_t *obj);
 static object_t *charobject_op_land (object_t *obj1, object_t *obj2);
 static object_t *charobject_op_lor (object_t *obj1, object_t *obj2);
 static object_t *charobject_op_eq (object_t *obj1, object_t *obj2);
@@ -49,7 +49,7 @@ static object_t *charobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
-	charobject_op_not, /* Logic Not. */
+	charobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
 	NULL, /* Negative. */
@@ -59,6 +59,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Multiplication. */
 	NULL, /* Division. */
 	NULL, /* Mod. */
+	NULL, /* Bitwise not. */
 	NULL, /* Bitwise and. */
 	NULL, /* Bitwise or. */
 	NULL, /* Bitwise xor. */
@@ -75,7 +76,7 @@ static object_opset_t g_object_ops =
 
 /* Logic Not. */
 static object_t *
-charobject_op_not (object_t *obj)
+charobject_op_lnot (object_t *obj)
 {
 	char val;
 

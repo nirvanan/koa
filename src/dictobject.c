@@ -23,9 +23,11 @@
 #include "hash.h"
 #include "error.h"
 #include "nullobject.h"
+#include "boolobject.h"
 
 /* Object ops. */
 static void dictobject_op_free (object_t *obj);
+static object_t *dictobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_ipindex (object_t *obj1,
 	object_t *obj2, object_t *obj3);
@@ -42,6 +44,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Multiplication. */
 	NULL, /* Division. */
 	NULL, /* Mod. */
+	NULL, /* Bitwise not. */
 	NULL, /* Bitwise and. */
 	NULL, /* Bitwise or. */
 	NULL, /* Bitwise xor. */
@@ -49,7 +52,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Logic or. */
 	NULL, /* Left shift. */
 	NULL, /* Right shift. */
-	NULL, /* Equality. */
+	dictobject_op_eq, /* Equality. */
 	NULL, /* Comparation. */
 	dictobject_op_index, /* Index. */
 	dictobject_op_ipindex, /* Inplace index. */
@@ -81,6 +84,13 @@ dictobject_op_free (object_t *obj)
 
 	vec_free (pairs);
 	dict_free (dict);
+}
+
+/* Equality. */
+static object_t *
+dictobject_op_eq (object_t *obj1, object_t *obj2)
+{
+	return boolobject_new (obj1 == obj2, NULL);
 }
 
 /* Index. */

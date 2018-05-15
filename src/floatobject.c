@@ -50,6 +50,7 @@ static object_opset_t g_object_ops =
 	floatobject_op_mul, /* Multiplication. */
 	floatobject_op_div, /* Division. */
 	NULL, /* Mod. */
+	NULL, /* Bitwise not. */
 	NULL, /* Bitwise and. */
 	NULL, /* Bitwise or. */
 	NULL, /* Bitwise xor. */

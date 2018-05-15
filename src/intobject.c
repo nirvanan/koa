@@ -36,13 +36,14 @@
 static object_t *g_int_cache[INT_CACHE_SIZE];
 
 /* Object ops. */
-static object_t *intobject_op_not (object_t *obj);
+static object_t *intobject_op_lnot (object_t *obj);
 static object_t *intobject_op_neg (object_t *obj);
 static object_t *intobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_sub (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_mul (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_mod (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_div (object_t *obj1, object_t *obj2);
+static object_t *intobject_op_not (object_t *obj);
 static object_t *intobject_op_and (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_or (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_xor (object_t *obj1, object_t *obj2);
@@ -56,7 +57,7 @@ static object_t *intobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
-	intobject_op_not, /* Logic Not. */
+	intobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
 	NULL, /* Dump. */
 	intobject_op_neg, /* Negative. */
@@ -66,6 +67,7 @@ static object_opset_t g_object_ops =
 	intobject_op_mul, /* Multiplication. */
 	intobject_op_div, /* Division. */
 	intobject_op_mod, /* Mod. */
+	intobject_op_not, /* Bitwise not. */
 	intobject_op_and, /* Bitwise and. */
 	intobject_op_or, /* Bitwise or. */
 	intobject_op_xor, /* Bitwise xor. */
@@ -82,7 +84,7 @@ static object_opset_t g_object_ops =
 
 /* Logic Not. */
 static object_t *
-intobject_op_not (object_t *obj)
+intobject_op_lnot (object_t *obj)
 {
 	int val;
 
@@ -169,6 +171,17 @@ intobject_op_mod (object_t *obj1, object_t *obj2)
 	val2 = intobject_get_value (obj2);
 
 	return intobject_new (val1 % val2, NULL);
+}
+
+/* Bitwise not. */
+static object_t *
+intobject_op_not (object_t *obj)
+{
+	int val;
+
+	val = intobject_get_value (obj);
+
+	return intobject_new (~val, NULL);
 }
 
 /* Bitwise and. */
