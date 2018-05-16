@@ -6,3 +6,5 @@ A toy script language.
 - Simple and clean builtin functions.
 - SP-based stack.
 - Simple object system and gc.
+## Standard
+Koa is implemented as a subset of [ISO/IEC 9899:1999](https://www.iso.org/standard/29237.html) standard.
