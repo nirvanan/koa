@@ -96,11 +96,17 @@ typedef struct token_s
 	char *token;
 } token_t;
 
+typedef char (*get_char_f) (void *udata);
+
+typedef void (*reader_clear_f) (void *udata);
+
 typedef struct reader_s
 {
 	char current;
 	const char *path;
-	FILE *f;
+	get_char_f rf;
+	reader_clear_f cf;
+	void *rd;
 	int line;
 	int loaded_len;
 	int next_loaded;
@@ -108,7 +114,7 @@ typedef struct reader_s
 } reader_t;
 
 reader_t *
-lex_reader_new (const char *path);
+lex_reader_new (const char *path, get_char_f rf, reader_clear_f cf, void *udata);
 
 void
 lex_reader_free (reader_t *reader);

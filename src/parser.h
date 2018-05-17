@@ -1,5 +1,5 @@
 /*
- * main.c
+ * parser.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,41 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include "pool.h"
-#include "object.h"
-#include "intobject.h"
-#include "strobject.h"
-#include "vecobject.h"
-#include "str.h"
-#include "lex.h"
-#include <time.h>
+#ifndef PARSER_H
+#define PARSER_H
 
-int main(int argc, char *argv[])
-{
-	/* Init pool utility. */
-	pool_init ();
-	/* Init object caches. */
-	object_init ();
-	/* Init lex module. */
-	lex_init ();
-	int c = 0;
+#include "koa.h"
 
-	while (1) {
-		object_t *str = vecobject_new (10, NULL);
-		object_t *idx = intobject_new (4, NULL);
-		object_t *val = strobject_new ("fuck", NULL);
-
-		object_add (str, idx);
-		object_ipindex (str, idx, val);
-		object_ref (val);
-
-		object_free (str);
-		object_free (idx);
-		c++;
-		if (c % 6000000 == 0)
-			printf ("%d\n", c);
-	}
-
-	return 0;
-}
+#endif /* PARSER_H */

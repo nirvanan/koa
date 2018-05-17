@@ -34,6 +34,8 @@ nullobject.c \
 nullobject.h \
 object.c \
 object.h \
+parser.c \
+parser.h \
 pool.c \
 pool.h \
 str.c \

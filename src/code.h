@@ -25,8 +25,7 @@
 #include "vec.h"
 #include "str.h"
 
-/* Code is a static structure, it can represent a function, a code block,
- * or a module. */
+/* Code is a static structure, it can represent a function, or a module. */
 typedef struct code_s {
 	vec_t *opcodes; /* All op codes in this block. */
 	vec_t *lineinfo; /* Line numbers of all codes. */
@@ -38,10 +37,12 @@ typedef struct code_s {
 	int args; /* Number of arguments. */
 	int fun; /* Is this code representing a function? */
 	int lineno; /* The first line number of this block. */
-	int depth; /* The depth of current block. */
 } code_t;
 
 code_t *
 code_new (const char *filename, const char *name);
+
+void
+code_free (code_t *code);
 
 #endif /* CODE_H */

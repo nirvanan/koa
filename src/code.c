@@ -23,6 +23,7 @@
 #include "code.h"
 #include "error.h"
 #include "pool.h"
+#include "object.h"
 
 code_t *
 code_new (const char *filename, const char *name)
@@ -53,6 +54,56 @@ code_new (const char *filename, const char *name)
 		return NULL;
 	}
 
+	/* Allocate all data segments. */
+	code->opcodes = vec_new (0);
+	code->lineinfo = vec_new (0);
+	code->consts = vec_new (0);
+	code->varnames = vec_new (0);
+	code->blocks = vec_new (0);
+	if (code->opcodes == NULL || code->lineinfo == NULL ||
+		code->consts == NULL || code->varnames == NULL ||
+		code->blocks == NULL) {
+		code_free (code);
+		error ("out of memory.");
+
+		return NULL;
+	}
+
 	return code;
 }
 
+void
+code_free (code_t *code)
+{
+	size_t size;
+
+	if (code->opcodes != NULL) {
+		vec_free (code->opcodes);
+	}
+	if (code->lineinfo != NULL) {
+		vec_free (code->lineinfo);
+	}
+	if (code->consts != NULL) {
+		size = vec_size (code->consts);
+		for (size_t i = 0; i < size; i++) {
+			object_unref ((object_t *) vec_pos (code->consts, i));
+		}
+		vec_free (code->consts);
+	}
+	if (code->varnames != NULL) {
+		size = vec_size (code->varnames);
+		for (size_t i = 0; i < size; i++) {
+			object_unref ((object_t *) vec_pos (code->varnames, i));
+		}
+		vec_free (code->varnames);
+	}
+	if (code->blocks != NULL) {
+		size = vec_size (code->blocks);
+		for (size_t i = 0; i < size; i++) {
+			code_free ((code_t *) vec_pos (code->blocks, i));
+		}
+		vec_free (code->blocks);
+	}
+
+	pool_free ((void *) code);
+}

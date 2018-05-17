@@ -1,6 +1,6 @@
 translation-unit:
 	external-declaration
-	translation-unit external-declaration
+	external-declaration translation-unit
 
 external-declaration:
 	function-definition
@@ -64,7 +64,7 @@ logical-OR-expression:
 
 logical-AND-expression:
 	inclusive-OR-expression
-	inclusive-OR-expression && logical-AND-expression 
+	inclusive-OR-expression && logical-AND-expression
 
 inclusive-OR-expression:
 	exclusive-OR-expression

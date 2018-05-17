@@ -98,7 +98,7 @@ lex_next_char (reader_t *reader)
 	}
 
 	errno = 0;
-	reader->current = fgetc (reader->f);
+	reader->current = reader->rf (reader->rd);
 	if (reader->current == EOF && errno > 0) {
 		error ("failed to read source file.");
 	}
@@ -114,7 +114,7 @@ lex_skip_utf8_bom (reader_t *reader)
 	bom_len = strlen (bom);
 	for (size_t i = 0; i < bom_len && i < LOADED_BUF_SIZE; i++) {
 		errno = 0;
-		reader->loaded[reader->loaded_len++] = fgetc (reader->f);
+		reader->loaded[reader->loaded_len++] = reader->rf (reader->rd);
 		if (reader->loaded[reader->loaded_len - 1] == EOF && errno > 0) {
 			error ("failed to read source file.");
 
@@ -131,7 +131,7 @@ lex_skip_utf8_bom (reader_t *reader)
 }
 
 reader_t *
-lex_reader_new (const char *path)
+lex_reader_new (const char *path, get_char_f rf, reader_clear_f cf, void *udata)
 {
 	reader_t *reader;
 
@@ -143,14 +143,9 @@ lex_reader_new (const char *path)
 	}
 
 	reader->path = path;
-	reader->f = fopen (path, "r");
-	if (reader->f == NULL) {
-		pool_free ((void *) reader);
-		error ("can not open source file.");
-
-		return NULL;
-	}
-
+	reader->rf = rf;
+	reader->cf = cf;
+	reader->rd = udata;
 	reader->current = 0;
 	reader->line = 1;
 
@@ -168,7 +163,8 @@ lex_reader_new (const char *path)
 void
 lex_reader_free (reader_t *reader)
 {
-	UNUSED (fclose (reader->f));
+	/* Call users clear rountine. */
+	reader->cf (reader->rd);
 
 	pool_free ((void *) reader);
 }
