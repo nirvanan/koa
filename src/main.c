@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 		object_t *idx = intobject_new (4, NULL);
 		object_t *val = strobject_new ("fuck", NULL);
 
+		object_add (str, idx);
 		object_ipindex (str, idx, val);
 		object_ref (val);
 
