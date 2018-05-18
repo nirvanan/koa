@@ -22,5 +22,12 @@
 #define PARSER_H
 
 #include "koa.h"
+#include "code.h"
+
+code_t *
+parser_load_file (const char *path);
+
+code_t *
+parser_load_buf (const char *path, str_t *buf);
 
 #endif /* PARSER_H */

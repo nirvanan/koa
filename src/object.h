@@ -82,8 +82,8 @@
 #define OBJECT_IS_STR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_STR)
 #define OBJECT_IS_VEC(x) (OBJECT_TYPE((x))==OBJECT_TYPE_VEC)
 #define OBJECT_IS_DICT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_DICT)
+#define OBJECT_IS_FUNC(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FUNC)
 #define OBJECT_IS_FRAME(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FRAME)
-#define OBJECT_IS_BLOCK(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BLOCK)
 
 typedef enum object_type_e
 {
@@ -97,7 +97,7 @@ typedef enum object_type_e
 	OBJECT_TYPE_STR = 0x07,
 	OBJECT_TYPE_VEC = 0x08,
 	OBJECT_TYPE_DICT = 0x09,
-	OBJECT_TYPE_FUNCTION = 0x0a,
+	OBJECT_TYPE_FUNC = 0x0a,
 	OBJECT_TYPE_FRAME = 0x0b,
 } object_type_t;
 

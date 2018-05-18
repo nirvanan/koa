@@ -131,11 +131,11 @@ lex_skip_utf8_bom (reader_t *reader)
 }
 
 reader_t *
-lex_reader_new (const char *path, get_char_f rf, reader_clear_f cf, void *udata)
+lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata)
 {
 	reader_t *reader;
 
-	reader = (reader_t *) pool_calloc ((size_t) 1, sizeof (reader_t));
+	reader = (reader_t *) pool_calloc (1, sizeof (reader_t));
 	if (reader == NULL) {
 		error ("out of memory.");
 
@@ -174,7 +174,7 @@ lex_token_new ()
 {
 	token_t *token;
 
-	token = (token_t *) pool_calloc ((size_t) 1, sizeof (token_t));
+	token = (token_t *) pool_calloc (1, sizeof (token_t));
 	if (token == NULL) {
 		fatal_error ("out of memory.");
 	}
@@ -355,7 +355,7 @@ lex_save_char (reader_t *reader, token_t *token, char c, int next)
 static token_t *
 lex_token_error (reader_t *reader, token_t *token, const char *err)
 {
-	error ("%s:%d: %s", reader->path, reader->line, err);
+	error ("lex error: %s:%d: %s", reader->path, reader->line, err);
 	lex_token_free (token);
 
 	return NULL;
@@ -747,6 +747,13 @@ lex_read_numberical (reader_t *reader, token_t *token)
 static token_t *
 lex_end_of_stream (reader_t *reader, token_t *token)
 {
+	/* Check whether error occurred. */
+	if (errno > 0) {
+		lex_token_free (token);
+
+		return NULL;
+	}
+	
 	token->type = TOKEN_END;
 
 	return token;

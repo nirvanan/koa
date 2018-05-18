@@ -29,6 +29,10 @@
 
 #define LOADED_BUF_SIZE 20
 
+#define TOKEN_TYPE(x) ((x)->type)
+
+#define TOKEN_ID(x) ((x)->token)
+
 /* Reserved single-char tokens stand for themselves, such as '+', '^', '?'.
  * Those are not listed here. */
 typedef enum token_type_e
@@ -45,6 +49,7 @@ typedef enum token_type_e
 	TOKEN_STR, /* Type-specifier: str. */
 	TOKEN_VEC, /* Type-specifier: vec. */
 	TOKEN_DICT, /* Type-specifier: dict. */
+	TOKEN_FUNC, /* Type-specifier: func. */
 	TOKEN_LOR, /* Logic-or-expression: ||. */
 	TOKEN_LAND, /* Logic-and-expression: &&. */
 	TOKEN_EQ, /* Equality-expression: ==. */
@@ -98,14 +103,14 @@ typedef struct token_s
 
 typedef char (*get_char_f) (void *udata);
 
-typedef void (*reader_clear_f) (void *udata);
+typedef void (*clear_f) (void *udata);
 
 typedef struct reader_s
 {
 	char current;
 	const char *path;
 	get_char_f rf;
-	reader_clear_f cf;
+	clear_f cf;
 	void *rd;
 	int line;
 	int loaded_len;
@@ -114,7 +119,7 @@ typedef struct reader_s
 } reader_t;
 
 reader_t *
-lex_reader_new (const char *path, get_char_f rf, reader_clear_f cf, void *udata);
+lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata);
 
 void
 lex_reader_free (reader_t *reader);
