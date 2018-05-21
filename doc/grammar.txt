@@ -7,7 +7,7 @@ external-declaration:
 	declaration
 
 function-definition:
-	type-specifier ( parameter-listopt ) compound-statement
+	type-specifier identifier ( parameter-listopt ) compound-statement
 
 type-specifier:
 	bool

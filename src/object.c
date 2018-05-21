@@ -50,7 +50,7 @@ static const char *g_type_name[] =
 	"str",
 	"vec",
 	"dict",
-	"function",
+	"func",
 	"frame"
 };
 

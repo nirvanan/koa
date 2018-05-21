@@ -50,6 +50,7 @@ typedef struct reserved_word_s
 /* Pretty simple ^_^, rigit? */
 static reserved_word_t g_reserved_list[] =
 {
+	{"null", TOKEN_NULL},
 	{"bool", TOKEN_BOOL},
 	{"char", TOKEN_CHAR},
 	{"int", TOKEN_INT},
@@ -59,6 +60,7 @@ static reserved_word_t g_reserved_list[] =
 	{"str", TOKEN_STR},
 	{"vec", TOKEN_VEC},
 	{"dict", TOKEN_DICT},
+	{"func", TOKEN_FUNC},
 	{"case", TOKEN_CASE},
 	{"default", TOKEN_DEFAULT},
 	{"if", TOKEN_IF},

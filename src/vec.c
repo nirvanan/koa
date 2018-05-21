@@ -225,12 +225,19 @@ vec_last (vec_t *vec)
 }
 
 /* Int is enough. */
-int
-vec_find (vec_t *vec, void *data)
+size_t
+vec_find (vec_t *vec, void *data, vec_find_f ff)
 {
 	for (size_t i = 0; i < vec->size; i++) {
-		if (vec->v[i] == data) {
-			return i;
+		if (ff == NULL) {
+			if (vec->v[i] == data) {
+				return i;
+			}
+		}
+		else {
+			if (ff (vec->v[i], data)) {
+				return i;
+			}
 		}
 	}
 
@@ -290,4 +297,14 @@ vec_remove (vec_t *vec, integer_value_t pos)
 	vec->size--;
 
 	return 1;
+}
+
+void
+vec_foreach (vec_t *vec, vec_foreach_f ff)
+{
+	for (size_t i = 0; i < vec->size; i++) {
+		if (ff (vec->v[i]) > 0) {
+			return;
+		}
+	}
 }

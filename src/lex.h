@@ -21,6 +21,8 @@
 #ifndef LEX_H
 #define LEX_H
 
+#include <stdint.h>
+
 #include "koa.h"
 
 #define TOKEN_MIN 257
@@ -33,6 +35,8 @@
 
 #define TOKEN_ID(x) ((x)->token)
 
+#define TOKEN(x) ((token_type_t)(x))
+
 /* Reserved single-char tokens stand for themselves, such as '+', '^', '?'.
  * Those are not listed here. */
 typedef enum token_type_e
@@ -40,6 +44,7 @@ typedef enum token_type_e
 	TOKEN_END = -1, /* End mark of token stream. */
 	TOKEN_UNKNOWN = 0, /* Unknown token. */
 	TOKEN_STATIC = TOKEN_MIN, /* Storage-class-specifier: static. */
+	TOKEN_NULL, /* Type-specifier: null. */
 	TOKEN_BOOL, /* Type-specifier: bool. */
 	TOKEN_CHAR, /* Type-specifier: char. */
 	TOKEN_INT, /* Type-specifier: int. */
@@ -95,7 +100,7 @@ typedef enum token_type_e
 typedef struct token_s
 {
 	token_type_t type;
-	int lineno;
+	uint32_t lineno;
 	size_t len;
 	size_t allocated;
 	char *token;
@@ -112,9 +117,9 @@ typedef struct reader_s
 	get_char_f rf;
 	clear_f cf;
 	void *rd;
-	int line;
-	int loaded_len;
-	int next_loaded;
+	uint32_t line;
+	size_t loaded_len;
+	size_t next_loaded;
 	char loaded[LOADED_BUF_SIZE + 1];
 } reader_t;
 
