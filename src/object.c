@@ -46,6 +46,7 @@
 
 static const char *g_type_name[] =
 {
+	"void",
 	"null",
 	"bool",
 	"char",
@@ -57,6 +58,7 @@ static const char *g_type_name[] =
 	"vec",
 	"dict",
 	"func",
+	"mod",
 	"frame"
 };
 

@@ -99,7 +99,8 @@ typedef enum object_type_e
 	OBJECT_TYPE_VEC = 0x09,
 	OBJECT_TYPE_DICT = 0x0a,
 	OBJECT_TYPE_FUNC = 0x0b,
-	OBJECT_TYPE_FRAME = 0x0c,
+	OBJECT_TYPE_MOD = 0x0c,
+	OBJECT_TYPE_FRAME = 0x0d,
 } object_type_t;
 
 typedef struct object_head_s
