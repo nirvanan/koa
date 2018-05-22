@@ -29,6 +29,8 @@
 #include "vec.h"
 #include "error.h"
 
+#define TOP_LEVEL_TAG "#"
+
 typedef struct parser_s
 {
 	reader_t *reader; /* Token stream source. */
@@ -101,6 +103,13 @@ parser_free (parser_t *parser)
 }
 
 static void
+parser_syntax_error (parser_t *parser, const char *err)
+{
+	error ("syntax error: %s:%d: %s",
+		parser->path, TOKEN_LINE (parser->token), err);
+}
+
+static void
 parser_next_token (parser_t * parser)
 {
 	token_t *prev;
@@ -132,6 +141,8 @@ parser_token_object_type (parser_t *parser)
 	}
 
 	switch (TOKEN_TYPE (parser->token)) {
+		case TOKEN_VOID:
+			return OBJECT_TYPE_VOID;
 		case TOKEN_NULL:
 			return OBJECT_TYPE_NULL;
 		case TOKEN_BOOL:
@@ -161,6 +172,124 @@ parser_token_object_type (parser_t *parser)
 	return (object_type_t) -1;
 }
 
+/* parameter-declaration:
+ * type-specifier identifier */
+static int
+parser_parameter_declaration (parser_t *parser, code_t *code)
+{
+	object_type_t type;
+	object_t *const_obj;
+	int const_exist;
+	para_offset_t var_pos;
+	para_offset_t const_pos;
+	uint32_t line;
+
+	type = parser_token_object_type (parser);
+	if (type == -1) {
+		parser_syntax_error (parser, "unknown parameter type.");
+
+		return 0;
+	}
+	else if (type == OBJECT_TYPE_VOID) {
+		parser_syntax_error (parser, "parameter can not be a void.");
+
+		return 0;
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+		parser_syntax_error (parser, "missing identifier name.");
+
+		return 0;
+	}
+	
+	/* Insert parameter local var and const. */
+	var_pos = code_push_varname (code, TOKEN_ID (parser->token), 1);
+	if (var_pos == -1) {
+		return 0;
+	}
+	const_exist = 0;
+	const_obj = object_get_default (type);
+	if (const_obj == NULL ||
+		(const_pos = code_push_const (code, const_obj, &const_exist)) == -1) {
+		return 0;
+	}
+
+	/* Make opcodes and insert them. */
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) ||
+		!code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line)) {
+		return 0;
+	}
+
+	if (const_exist) {
+		object_free (const_obj);
+	}
+	else {
+		object_ref (const_obj);
+	}
+
+	return 1;
+}
+
+/* parameter-list:
+ * parameter-declaration
+ * parameter-declaration, parameter-list */
+static int
+parser_parameter_list (parser_t *parser, code_t *code)
+{
+	/* First parameter. */
+	if (!parser_parameter_declaration (parser, code)) {
+		return 0;
+	}
+
+	while (parser_check (parser, TOKEN (','))) {
+		parser_next_token (parser);
+		if (!parser_parameter_declaration (parser, code)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* function-definition:
+ * type-specifier(*) identifier(*) ( parameter-listopt ) */
+static int
+parser_function_definition (parser_t *parser, code_t *code,
+	object_type_t ret_type, para_offset_t id_pos, const char *fun)
+{
+	code_t *fun_code;
+
+	/* Make a new code for this function. */
+	fun_code = code_new (parser->path, fun);
+	if (fun_code == NULL) {
+		return 0;
+	}
+
+	/* Skip '('. */
+	parser_next_token (parser);
+
+	/* Has parameter? */
+	if (!parser_check (parser, TOKEN (')'))) {
+		if (!parser_parameter_list (parser, fun_code)) {
+			return 0;
+		}
+	}
+
+	if (!parser_check (parser, TOKEN (')'))) {
+		parser_syntax_error (parser, "missing matching ')'.");
+
+		return 0;
+	}
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN ('{'))) {
+		parser_syntax_error (parser, "missing '{' in function definition.");
+
+		return 0;
+	}
+}
+
 /* external-declaration:
  * function-definition
  * declaration */
@@ -170,21 +299,37 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	/* Need to look ahead 3 tokens: type id '('*/
 	object_type_t type;
 	para_offset_t pos;
+	const char *fun;
 
 	type = parser_token_object_type (parser);
 	if (type == -1) {
+		parser_syntax_error (parser, "unknown variable type or return value type.");
+
 		return 0;
 	}
 
 	parser_next_token (parser);
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
-		error ("missing identifier name.");
+		parser_syntax_error (parser, "missing identifier name.");
 
+		return 0;
+	}
+
+	fun = TOKEN_ID (parser->token);
+	pos = code_push_varname (code, fun, 0);
+	if (pos == -1) {
 		return 0;
 	}
 
 	parser_next_token (parser);
 	if (parser_check (parser, TOKEN ('('))) {
+		return parser_function_definition (parser, code, type, pos, fun);
+	}
+
+	if (type == OBJECT_TYPE_VOID) {
+		parser_syntax_error (parser, "variable can not be a void.");
+
+		return 0;
 	}
 
 	return 1;
@@ -212,7 +357,7 @@ parser_load_file (const char *path)
 	parser_t *parser;
 	FILE *f;
 
-	code = code_new (path, "@global");
+	code = code_new (path, TOP_LEVEL_TAG);
 	if (code == NULL) {
 		return NULL;
 	}
@@ -270,7 +415,7 @@ parser_load_buf (const char *path, str_t *buf)
 	parser_t *parser;
 	buf_read_t *b;
 
-	code = code_new (path, "@global");
+	code = code_new (path, TOP_LEVEL_TAG);
 	if (code == NULL) {
 		return NULL;
 	}

@@ -32,11 +32,17 @@
 #include "floatobject.h"
 #include "doubleobject.h"
 #include "strobject.h"
+#include "vecobject.h"
+#include "dictobject.h"
 
 #define TYPE_NAME(x) (g_type_name[(x)->head.type])
 
 #define FLOATING_INT_TO_HASH_NEG -271828
 #define FLOATING_INT_TO_HASH_POS 314159
+
+#define MURMUR3_CONST_A 33
+#define MURMUR3_CONST_B 0xff51afd7ed558ccd
+#define MURMUR3_CONST_C 0xc4ceb9fe1a85ec53
 
 static const char *g_type_name[] =
 {
@@ -909,10 +915,20 @@ object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	return ipindex_fun (obj1, obj2, obj3);
 }
 
+/* 64-bit Murmurhash3 finalizer. */
 uint64_t
 object_integer_hash (integer_value_t val)
 {
-	return val;
+	uint64_t h;
+
+	h = (uint64_t) val;
+	h ^= h >> MURMUR3_CONST_A;
+	h *= MURMUR3_CONST_B;
+	h ^= h >> MURMUR3_CONST_A;
+	h *= MURMUR3_CONST_C;
+	h ^= h >> MURMUR3_CONST_A;
+
+	return h;
 }
 
 uint64_t
@@ -956,7 +972,7 @@ object_floating_hash (floating_value_t val)
 
 /* We use a long object to represent hash digest of objects.
  * Although it may be down casted when a long is presented
- * as 32 bits integer, it will still works well if our 64-bit
+ * as 32 bits integer, it will still works fine if our 64-bit
  * hash algorithm is solid enough. */
 object_t *
 object_hash (object_t *obj)
@@ -972,6 +988,37 @@ object_hash (object_t *obj)
 	}
 
 	return hash_fun (obj);
+}
+
+object_t *
+object_get_default (object_type_t type)
+{
+	switch (type) {
+		case OBJECT_TYPE_NULL:
+			return nullobject_new (NULL);
+		case OBJECT_TYPE_BOOL:
+			return boolobject_new (false, NULL);
+		case OBJECT_TYPE_CHAR:
+			return charobject_new ((char) 0, NULL);
+		case OBJECT_TYPE_INT:
+			return intobject_new (0, NULL);
+		case OBJECT_TYPE_LONG:
+			return longobject_new ((long) 0, NULL);
+		case OBJECT_TYPE_FLOAT:
+			return floatobject_new ((float) 0.0, NULL);
+		case OBJECT_TYPE_DOUBLE:
+			return doubleobject_new ((double) 0.0, NULL);
+		case OBJECT_TYPE_STR:
+			return strobject_new ("", NULL);
+		case OBJECT_TYPE_VEC:
+			return vecobject_new ((size_t) 0, NULL);
+		case OBJECT_TYPE_DICT:
+			return dictobject_new (NULL);
+		default:
+			break;
+	}
+
+	return NULL;
 }
 
 void

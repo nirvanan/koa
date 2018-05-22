@@ -71,6 +71,21 @@ code_new (const char *filename, const char *name)
 	return code;
 }
 
+void
+code_set_fun (code_t *code, object_type_t ret_type)
+{
+	code->fun = 1;
+	code->ret_type = ret_type;
+}
+
+static int
+code_vec_free_fun (void *data)
+{
+	pool_free (data);
+
+	return 0;
+}
+
 static int
 code_vec_unref_fun (void *data)
 {
@@ -83,11 +98,11 @@ void
 code_free (code_t *code)
 {
 	if (code->opcodes != NULL) {
-		vec_foreach (code->opcodes, code_vec_unref_fun);
+		vec_foreach (code->opcodes, code_vec_free_fun);
 		vec_free (code->opcodes);
 	}
 	if (code->lineinfo != NULL) {
-		vec_foreach (code->lineinfo, code_vec_unref_fun);
+		vec_foreach (code->lineinfo, code_vec_free_fun);
 		vec_free (code->lineinfo);
 	}
 	if (code->consts != NULL) {
@@ -105,36 +120,38 @@ code_free (code_t *code)
 int
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
 {
-	object_t *op;
-	object_t *li;
+	opcode_t *op;
+	uint32_t *li;
 
-	op = longobject_new ((long) opcode, NULL);
+	op = (opcode_t *) pool_alloc (sizeof (opcode_t));
 	if (op == NULL) {
-		return 0;
-	}
-	li = longobject_new ((long) line, NULL);
-	if (li == NULL) {
-		object_free (op);
+		error ("out of memory.");
 
 		return 0;
 	}
+	*op = opcode;
+
+	li = pool_alloc (sizeof (uint32_t));
+	if (li == NULL) {
+		pool_free ((void *) op);
+		error ("out of memory.");
+
+		return 0;
+	}
+	*li = line;
 
 	if (!vec_push_back (code->opcodes, (void *) op)) {
-		object_free (op);
-		object_free (li);
+		pool_free ((void *) op);
 
 		return 0;
 	}
 	if (!vec_push_back (code->lineinfo, (void *) li)) {
 		UNUSED (vec_pop_back (code->opcodes));
-		object_free (op);
-		object_free (li);
+		pool_free ((void *) op);
+		pool_free ((void *) li);
 
 		return 0;
 	}
-
-	object_ref (op);
-	object_ref (li);
 
 	return 1;
 }
@@ -157,7 +174,7 @@ code_var_find_fun (void *a, void *b)
 }
 
 para_offset_t
-code_push_const (code_t *code, object_t **var)
+code_push_const (code_t *code, object_t *var, int *exist)
 {
 	size_t pos;
 
@@ -169,26 +186,24 @@ code_push_const (code_t *code, object_t **var)
 	}
 
 	/* Check whether there is already a var. */
-	if ((pos = vec_find (code->consts, (void *) *var, code_var_find_fun)) != -1) {
-		/* Free it. */
-		object_free (*var);
-		*var = NULL;
+	if ((pos = vec_find (code->consts, (void *) var, code_var_find_fun)) != -1) {
+		*exist = 1;
 
 		return pos;
 	}
 
-	if (!vec_push_back (code->consts, (void *) *var)) {
+	if (!vec_push_back (code->consts, (void *) var)) {
 		return -1;
 	}
 
-	object_ref (*var);
+	*exist = 0;
 
 	/* Return the index of this new var. */
 	return vec_size (code->consts) - 1;
 }
 
 para_offset_t
-code_push_varname (code_t *code, const char *var)
+code_push_varname (code_t *code, const char *var, int para)
 {
 	object_t *name;
 	size_t pos;
@@ -216,6 +231,11 @@ code_push_varname (code_t *code, const char *var)
 		object_free (name);
 
 		return -1;
+	}
+
+	/* Is this var a parameter? */
+	if (para) {
+		code->args++;
 	}
 
 	object_ref (name);

@@ -35,6 +35,8 @@
 
 #define TOKEN_ID(x) ((x)->token)
 
+#define TOKEN_LINE(x) ((x)->lineno)
+
 #define TOKEN(x) ((token_type_t)(x))
 
 /* Reserved single-char tokens stand for themselves, such as '+', '^', '?'.
@@ -44,6 +46,7 @@ typedef enum token_type_e
 	TOKEN_END = -1, /* End mark of token stream. */
 	TOKEN_UNKNOWN = 0, /* Unknown token. */
 	TOKEN_STATIC = TOKEN_MIN, /* Storage-class-specifier: static. */
+	TOKEN_VOID, /* Type-specifier: void. */
 	TOKEN_NULL, /* Type-specifier: null. */
 	TOKEN_BOOL, /* Type-specifier: bool. */
 	TOKEN_CHAR, /* Type-specifier: char. */

@@ -87,18 +87,19 @@
 
 typedef enum object_type_e
 {
-	OBJECT_TYPE_NULL = 0x00,
-	OBJECT_TYPE_BOOL = 0x01,
-	OBJECT_TYPE_CHAR = 0x02,
-	OBJECT_TYPE_INT = 0x03,
-	OBJECT_TYPE_LONG = 0x04,
-	OBJECT_TYPE_FLOAT = 0x05,
-	OBJECT_TYPE_DOUBLE = 0x06,
-	OBJECT_TYPE_STR = 0x07,
-	OBJECT_TYPE_VEC = 0x08,
-	OBJECT_TYPE_DICT = 0x09,
-	OBJECT_TYPE_FUNC = 0x0a,
-	OBJECT_TYPE_FRAME = 0x0b,
+	OBJECT_TYPE_VOID = 0x00, /* ONLY for function return type. */
+	OBJECT_TYPE_NULL = 0x01,
+	OBJECT_TYPE_BOOL = 0x02,
+	OBJECT_TYPE_CHAR = 0x03,
+	OBJECT_TYPE_INT = 0x04,
+	OBJECT_TYPE_LONG = 0x05,
+	OBJECT_TYPE_FLOAT = 0x06,
+	OBJECT_TYPE_DOUBLE = 0x07,
+	OBJECT_TYPE_STR = 0x08,
+	OBJECT_TYPE_VEC = 0x09,
+	OBJECT_TYPE_DICT = 0x0a,
+	OBJECT_TYPE_FUNC = 0x0b,
+	OBJECT_TYPE_FRAME = 0x0c,
 } object_type_t;
 
 typedef struct object_head_s
@@ -242,6 +243,9 @@ object_floating_hash (floating_value_t val);
 
 object_t *
 object_hash (object_t *obj);
+
+object_t *
+object_get_default (object_type_t type);
 
 void
 object_init ();

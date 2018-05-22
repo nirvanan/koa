@@ -30,11 +30,20 @@
 
 #define MAX_PARA (0x00ffffff)
 
-#define MAKE_OPCODE(c,p) (((c)<<24)&p)
+#define OPCODE(o,p) (((o)<<24)&(p))
 
 typedef int32_t para_offset_t;
 
 typedef uint32_t opcode_t;
+
+typedef enum op_e {
+	OP_LOAD_CONST = 0x01,
+	OP_STORE_LOCAL,
+	OP_LOAD_LOCAL,
+	OP_STORE_VAR,
+	OP_LOAD_VAR,
+	OP_FUNC_RETURN,
+} op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */
 typedef struct code_s {
@@ -47,10 +56,14 @@ typedef struct code_s {
 	int args; /* Number of arguments. */
 	int fun; /* Is this code representing a function? */
 	int lineno; /* The first line number of this block. */
+	object_type_t ret_type;
 } code_t;
 
 code_t *
 code_new (const char *filename, const char *name);
+
+void
+code_set_fun (code_t *code, object_type_t ret_type);
 
 void
 code_free (code_t *code);
@@ -59,9 +72,9 @@ int
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line);
 
 para_offset_t
-code_push_const (code_t *code, object_t **var);
+code_push_const (code_t *code, object_t *var, int *exist);
 
 para_offset_t
-code_push_varname (code_t *code, const char *var);
+code_push_varname (code_t *code, const char *var, int para);
 
 #endif /* CODE_H */
