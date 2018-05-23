@@ -31,6 +31,19 @@
 
 #define TOP_LEVEL_TAG "#"
 
+#define TOKEN_IS_TYPE(x) (TOKEN_TYPE((x))==TOKEN_VOID||\
+	TOKEN_TYPE((x))==TOKEN_NULL||\
+	TOKEN_TYPE((x))==TOKEN_BOOL||\
+	TOKEN_TYPE((x))==TOKEN_CHAR||\
+	TOKEN_TYPE((x))==TOKEN_INT||\
+	TOKEN_TYPE((x))==TOKEN_LONG||\
+	TOKEN_TYPE((x))==TOKEN_FLOAT||\
+	TOKEN_TYPE((x))==TOKEN_DOUBLE||\
+	TOKEN_TYPE((x))==TOKEN_STR||\
+	TOKEN_TYPE((x))==TOKEN_VEC||\
+	TOKEN_TYPE((x))==TOKEN_DICT||\
+	TOKEN_TYPE((x))==TOKEN_FUNC)
+
 typedef struct parser_s
 {
 	reader_t *reader; /* Token stream source. */
@@ -172,6 +185,154 @@ parser_token_object_type (parser_t *parser)
 	return (object_type_t) -1;
 }
 
+/* init-declarator:
+ * identifier
+ * identifier = assignment-expression */
+static int
+parser_init_declarator (parser_t *parser, code_t *code,
+						object_type_t type, const char *id)
+{
+	para_offset_t pos;
+	const char *var;
+
+	var = id;
+	if (var == NULL) {
+		if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+			parser_syntax_error (parser, "missing identifier name.");
+
+			return 0;
+		}
+
+		var = TOKEN_ID (parser->token);
+		parser_next_token (parser);
+	}
+
+	pos = code_push_varname (code, var, 0);
+	if (pos == -1) {
+		return 0;
+	}
+
+	if (parser_check (parser, TOKEN ('='))) {
+		
+	}
+
+	return 1;
+}
+
+/* init-declarator-list:
+ * init-declarator
+ * init-declarator , init-declarator-list */
+static int
+parser_init_declarator_list (parser_t *parser, code_t *code,
+							 object_type_t type, const char *first_id)
+{
+	if (!parser_init_declarator (parser, code, type, first_id)) {
+		return 0;
+	}
+
+	while (parser_check (parser, TOKEN (','))) {
+		parser_next_token (parser);
+		if (!parser_init_declarator (parser, code, type, NULL)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* declaration:
+ * type-specifier init-declarator-list ; */
+static int
+parser_declaration (parser_t *parser, code_t *code,
+					object_type_t type, const char *first_id)
+{
+	/* Skip type-specifier. */
+	parser_next_token (parser);
+
+	if (!parser_init_declarator_list (parser, code, type, first_id)) {
+		return 0;
+	}
+
+	if (!parser_check (parser, TOKEN (';'))) {
+		parser_syntax_error (parser, "missing ';'.");
+
+		return 0;
+	}
+
+	return 1;
+}
+
+/* block-item:
+ * declaration
+ * statement */
+static int
+parser_block_item (parser_t *parser, code_t *code)
+{
+	if (TOKEN_IS_TYPE (parser->token)) {
+		/* declaration. */
+		object_type_t type;
+
+		type = parser_token_object_type (parser);
+		if (type == OBJECT_TYPE_VOID) {
+			parser_syntax_error (parser, "variable can not be void.");
+
+			return 0;
+		}
+
+		if (!parser_declaration (parser, code, type, NULL)) {
+			return 0;
+		}
+	}
+	else {
+	}
+
+	return 1;
+}
+
+/* block-item-list:
+ * block-item
+ * block-item block-item-list */
+static int
+parser_block_item_list (parser_t *parser, code_t *code)
+{
+	while (!parser_check (parser, TOKEN_END) &&
+		   !parser_check (parser, TOKEN ('}'))) {
+		if (!parser_block_item (parser, code)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* compound-statement:
+ * { block-item-listopt } */
+static int
+parser_compound_statement (parser_t *parser, code_t *code)
+{
+	/* Skip '{'. */
+	parser_next_token (parser);
+	
+	/* Check empty function body. */
+	if (!parser_check (parser, TOKEN ('}'))) {
+		if (!parser_block_item_list (parser, code)) {
+			return 0;
+		}
+	}
+
+	if (!parser_check (parser, TOKEN ('}'))) {
+		parser_syntax_error (parser,
+			"missing matching '}' for function body.");
+
+		return 0;
+	}
+
+	/* Skip '}'. */
+	parser_next_token (parser);
+
+	return 1;
+}
+
 /* parameter-declaration:
  * type-specifier identifier */
 static int
@@ -288,6 +449,12 @@ parser_function_definition (parser_t *parser, code_t *code,
 
 		return 0;
 	}
+	if (!parser_compound_statement (parser, fun_code))
+	{
+		return 0;
+	}
+
+	return 1;
 }
 
 /* external-declaration:
