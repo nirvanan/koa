@@ -185,6 +185,39 @@ parser_token_object_type (parser_t *parser)
 	return (object_type_t) -1;
 }
 
+static int
+parser_push_default_const (code_t *code, object_type_t type)
+{
+	object_t *const_obj;
+	int const_exist;
+	para_offset_t const_pos;
+
+	const_exist = 0;
+	const_obj = object_get_default (type);
+	if (const_obj == NULL ||
+		(const_pos = code_push_const (code, const_obj, &const_exist)) == -1) {
+		return (para_offset_t) -1;
+	}
+
+	if (const_exist) {
+		object_free (const_obj);
+	}
+	else {
+		object_ref (const_obj);
+	}
+
+	return const_pos;
+}
+
+/* assignment-expression:
+ * conditional-expression
+ * unary-expression assignment-operator assignment-expression */
+static int
+parser_assignment_expression (parser_t *parser, code_t *code)
+{
+	return 1;
+}
+
 /* init-declarator:
  * identifier
  * identifier = assignment-expression */
@@ -192,9 +225,11 @@ static int
 parser_init_declarator (parser_t *parser, code_t *code,
 						object_type_t type, const char *id)
 {
-	para_offset_t pos;
+	para_offset_t var_pos;
 	const char *var;
+	uint32_t line;
 
+	line = TOKEN_LINE (parser->token);
 	var = id;
 	if (var == NULL) {
 		if (!parser_check (parser, TOKEN_IDENTIFIER)) {
@@ -207,13 +242,33 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		parser_next_token (parser);
 	}
 
-	pos = code_push_varname (code, var, 0);
-	if (pos == -1) {
+	var_pos = code_push_varname (code, var, 0);
+	if (var_pos == -1) {
 		return 0;
 	}
 
 	if (parser_check (parser, TOKEN ('='))) {
-		
+		if (!parser_assignment_expression (parser, code)) {
+			return 0;
+		}
+	}
+	else {
+		para_offset_t const_pos;
+
+		const_pos = parser_push_default_const (code, type);
+		if (const_pos == -1) {
+			return 0;
+		}
+
+		/* Emit a LOAD_CONST opcpde. */
+		if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line)) {
+			return 0;
+		}
+	}
+
+	/* Emit a STORE_LOCAL opcode. */
+	if (!code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line)) {
+		return 0;
 	}
 
 	return 1;
@@ -339,8 +394,6 @@ static int
 parser_parameter_declaration (parser_t *parser, code_t *code)
 {
 	object_type_t type;
-	object_t *const_obj;
-	int const_exist;
 	para_offset_t var_pos;
 	para_offset_t const_pos;
 	uint32_t line;
@@ -369,10 +422,8 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	if (var_pos == -1) {
 		return 0;
 	}
-	const_exist = 0;
-	const_obj = object_get_default (type);
-	if (const_obj == NULL ||
-		(const_pos = code_push_const (code, const_obj, &const_exist)) == -1) {
+	const_pos = parser_push_default_const (code, type);
+	if (const_pos == -1) {
 		return 0;
 	}
 
@@ -381,13 +432,6 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) ||
 		!code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line)) {
 		return 0;
-	}
-
-	if (const_exist) {
-		object_free (const_obj);
-	}
-	else {
-		object_ref (const_obj);
 	}
 
 	return 1;
