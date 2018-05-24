@@ -108,7 +108,7 @@ multiplicative-expression:
 
 cast-expression:
 	unary-expression
-	( type-name ) cast-expression
+	( type-specifier ) cast-expression
 
 unary-expression:
 	postfix-expression
