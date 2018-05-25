@@ -29,10 +29,16 @@
 #include "object.h"
 
 #define MAX_PARA (0x00ffffff)
+#define PARA_BITS 24
+#define PARA_MASK MAX_PARA
 
-#define OPCODE(o,p) (((o)<<24)&(p))
+#define OPCODE(o,p) (((o)<<PARA_BITS)&(p))
 
-typedef int32_t para_offset_t;
+#define OPCODE_OP(x) ((x)>>PARA_BITS)
+
+#define OPCODE_PARA(x) ((x)&PARA_MASK)
+
+typedef int32_t para_t;
 
 typedef uint32_t opcode_t;
 
@@ -43,6 +49,14 @@ typedef enum op_e {
 	OP_STORE_VAR,
 	OP_LOAD_VAR,
 	OP_FUNC_RETURN,
+	OP_TYPE_CAST,
+	OP_VAR_INC,
+	OP_VAR_DEC,
+	OP_LOCAL_INC,
+	OP_LOCAL_DEC,
+	OP_VALUE_NEG,
+	OP_BIT_NOT,
+	OP_LOGIC_NOT
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */
@@ -71,10 +85,13 @@ code_free (code_t *code);
 int
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line);
 
-para_offset_t
+para_t
 code_push_const (code_t *code, object_t *var, int *exist);
 
-para_offset_t
+para_t
 code_push_varname (code_t *code, const char *var, int para);
+
+int
+code_last_var_modify (code_t *code, int add, uint32_t line);
 
 #endif /* CODE_H */

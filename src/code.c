@@ -173,7 +173,7 @@ code_var_find_fun (void *a, void *b)
 	return eq != 0;
 }
 
-para_offset_t
+para_t
 code_push_const (code_t *code, object_t *var, int *exist)
 {
 	size_t pos;
@@ -202,7 +202,7 @@ code_push_const (code_t *code, object_t *var, int *exist)
 	return vec_size (code->consts) - 1;
 }
 
-para_offset_t
+para_t
 code_push_varname (code_t *code, const char *var, int para)
 {
 	object_t *name;
@@ -244,3 +244,36 @@ code_push_varname (code_t *code, const char *var, int para)
 	return vec_size (code->varnames) - 1;
 }
 
+int
+code_last_var_modify (code_t *code, int add, uint32_t line)
+{
+	opcode_t *data;
+
+	if (vec_size (code->opcodes)) {
+		return (opcode_t) 0;
+	}
+	
+	data = (opcode_t *) vec_last (code->opcodes);
+	if (OPCODE_OP (*data) == OP_LOAD_VAR) {
+		if (add) {
+			return code_push_opcode (code,
+				OPCODE (OP_VAR_INC, OPCODE_PARA (*data)), line);
+		}
+		else {
+			return code_push_opcode (code,
+				OPCODE (OP_VAR_DEC, OPCODE_PARA (*data)), line);
+		}
+	}
+	else if (OPCODE_OP (*data) == OP_LOAD_LOCAL) {
+		if (add) {
+			return code_push_opcode (code,
+				OPCODE (OP_LOCAL_INC, OPCODE_PARA (*data)), line);
+		}
+		else {
+			return code_push_opcode (code,
+				OPCODE (OP_LOCAL_DEC, OPCODE_PARA (*data)), line);
+		}
+	}
+
+	return 0;
+}

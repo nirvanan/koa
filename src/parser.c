@@ -58,6 +58,8 @@ typedef struct buf_read_s
 	size_t p;
 } buf_read_t;
 
+static int parser_cast_expression (parser_t *parser, code_t *code);
+
 static char
 parser_file_reader (void *udata)
 {
@@ -190,13 +192,13 @@ parser_push_default_const (code_t *code, object_type_t type)
 {
 	object_t *const_obj;
 	int const_exist;
-	para_offset_t const_pos;
+	para_t const_pos;
 
 	const_exist = 0;
 	const_obj = object_get_default (type);
 	if (const_obj == NULL ||
 		(const_pos = code_push_const (code, const_obj, &const_exist)) == -1) {
-		return (para_offset_t) -1;
+		return (para_t) -1;
 	}
 
 	if (const_exist) {
@@ -209,12 +211,150 @@ parser_push_default_const (code_t *code, object_type_t type)
 	return const_pos;
 }
 
+static op_t
+parser_get_unary_op (parser_t *parser)
+{
+	token_type_t type;
+
+	type = TOKEN_TYPE (parser->token);
+	if (type == TOKEN ('-')) {
+		return OP_VALUE_NEG;
+	}
+	else if (type == TOKEN ('~')) {
+		return OP_BIT_NOT;
+	}
+	else if (type == TOKEN ('!')) {
+		return OP_LOGIC_NOT;
+	}
+
+	return (op_t) 0;
+}
+/* primary-expression:
+ * identifier
+ * constant
+ * string-literal
+ * ( expression ) */
+static int
+parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
+{
+	return 1;
+}
+
+/* postfix-expression:
+ * primary-expression
+ * primary-expression expression-postfix-list */
+static int
+parser_postfix_expression (parser_t *parser, code_t *code, int leading_par)
+{
+	if (!parser_primary_expression (parser, code, leading_par)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+/* unary-expression:
+ * postfix-expression
+ * ++ unary-expression
+ * -- unary-expression
+ * unary-operator cast-expression */
+static int
+parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
+{
+	token_type_t type;
+
+	uint32_t line;
+
+	if (leading_par) {
+		/* Just fall into a postfix-expression. */
+		return parser_postfix_expression (parser, code, leading_par);
+	}
+
+	type = TOKEN_TYPE (parser->token);
+	line = TOKEN_LINE (parser->token);
+	switch (TOKEN_TYPE (parser->token)) {
+		case TOKEN_SADD:
+		case TOKEN_SSUB:
+			parser_next_token (parser);
+			if (!parser_unary_expression (parser, code, 0)) {
+				return 0;
+			}
+			/* The last opcode must be a var loading code. */
+			return code_last_var_modify (code,
+				TOKEN_TYPE (parser->token) == TOKEN_SADD, line);
+		default:
+			if (type == TOKEN ('+')) {
+				/* Just skip '+'. */
+				parser_next_token (parser);
+
+				return parser_cast_expression (parser, code);
+			}
+			if (type == TOKEN ('-') || type == TOKEN ('~') || type == TOKEN ('!')) {
+				parser_next_token (parser);
+				if (!parser_cast_expression (parser, code)) {
+					return 0;
+				}
+
+				/* Emit an unary operation. */
+				return code_push_opcode (code,
+					OPCODE (parser_get_unary_op (parser), 0), line);	
+			}
+			break;
+	}
+
+	return parser_postfix_expression (parser, code, 0);
+}
+
+/* cast-expression:
+ * unary-expression
+ * ( type-specifier ) cast-expression */
+static int
+parser_cast_expression (parser_t *parser, code_t *code)
+{
+	if (parser_check (parser, TOKEN ('('))) {
+		object_type_t type;
+		uint32_t line;
+
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		type = parser_token_object_type (parser);
+		/* Oops, it's an unary-expression, and we skipped its leading parenthese. */
+		if (type == -1) {
+			return parser_unary_expression (parser, code, 1);
+		}
+		else if (type == OBJECT_TYPE_VOID) {
+			parser_syntax_error (parser, "can not cast any type to void.");
+
+			return 0;
+		}
+		
+		/* Skip ')'. */
+		parser_next_token (parser);
+
+		/* Recursion needed. */
+		if (!parser_cast_expression (parser, code)) {
+			return 0;
+		}
+
+		/* Emit a TYPE_CAST opcode. */
+		if (!code_push_opcode (code, OPCODE (OP_TYPE_CAST, (para_t) type), line)) {
+			return 0;
+		}
+	}
+
+	return parser_unary_expression (parser, code, 0);
+}
+
 /* assignment-expression:
  * conditional-expression
  * unary-expression assignment-operator assignment-expression */
 static int
 parser_assignment_expression (parser_t *parser, code_t *code)
 {
+	/* The first part is always a cast-expression. */
+	if (!parser_cast_expression (parser, code)) {
+		return 0;
+	}
 	return 1;
 }
 
@@ -225,7 +365,7 @@ static int
 parser_init_declarator (parser_t *parser, code_t *code,
 						object_type_t type, const char *id)
 {
-	para_offset_t var_pos;
+	para_t var_pos;
 	const char *var;
 	uint32_t line;
 
@@ -253,7 +393,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		}
 	}
 	else {
-		para_offset_t const_pos;
+		para_t const_pos;
 
 		const_pos = parser_push_default_const (code, type);
 		if (const_pos == -1) {
@@ -394,8 +534,8 @@ static int
 parser_parameter_declaration (parser_t *parser, code_t *code)
 {
 	object_type_t type;
-	para_offset_t var_pos;
-	para_offset_t const_pos;
+	para_t var_pos;
+	para_t const_pos;
 	uint32_t line;
 
 	type = parser_token_object_type (parser);
@@ -462,7 +602,7 @@ parser_parameter_list (parser_t *parser, code_t *code)
  * type-specifier(*) identifier(*) ( parameter-listopt ) */
 static int
 parser_function_definition (parser_t *parser, code_t *code,
-	object_type_t ret_type, para_offset_t id_pos, const char *fun)
+	object_type_t ret_type, para_t id_pos, const char *fun)
 {
 	code_t *fun_code;
 
@@ -509,7 +649,7 @@ parser_external_declaration (parser_t *parser, code_t *code)
 {
 	/* Need to look ahead 3 tokens: type id '('*/
 	object_type_t type;
-	para_offset_t pos;
+	para_t pos;
 	const char *fun;
 
 	type = parser_token_object_type (parser);
