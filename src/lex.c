@@ -733,6 +733,7 @@ lex_read_numberical (reader_t *reader, token_t *token)
 			}
 		}
 		else if (reader->current == 'l' || reader->current == 'L') {
+			token->type = TOKEN_LINTEGER;
 			lex_save_char (reader, token, -1, 1);
 			break;
 		}

@@ -45,7 +45,6 @@ typedef uint32_t opcode_t;
 typedef enum op_e {
 	OP_LOAD_CONST = 0x01,
 	OP_STORE_LOCAL,
-	OP_LOAD_LOCAL,
 	OP_STORE_VAR,
 	OP_LOAD_VAR,
 	OP_FUNC_RETURN,
@@ -56,7 +55,8 @@ typedef enum op_e {
 	OP_LOCAL_DEC,
 	OP_VALUE_NEG,
 	OP_BIT_NOT,
-	OP_LOGIC_NOT
+	OP_LOGIC_NOT,
+	OP_POP_STACK
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */

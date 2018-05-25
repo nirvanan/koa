@@ -19,6 +19,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #include "parser.h"
 #include "pool.h"
@@ -28,6 +30,13 @@
 #include "str.h"
 #include "vec.h"
 #include "error.h"
+#include "nullobject.h"
+#include "boolobject.h"
+#include "charobject.h"
+#include "intobject.h"
+#include "longobject.h"
+#include "doubleobject.h"
+#include "strobject.h"
 
 #define TOP_LEVEL_TAG "#"
 
@@ -59,6 +68,7 @@ typedef struct buf_read_s
 } buf_read_t;
 
 static int parser_cast_expression (parser_t *parser, code_t *code);
+static int parser_assignment_expression (parser_t *parser, code_t *code);
 
 static char
 parser_file_reader (void *udata)
@@ -188,14 +198,17 @@ parser_token_object_type (parser_t *parser)
 }
 
 static int
-parser_push_default_const (code_t *code, object_type_t type)
+parser_push_const (code_t *code, object_type_t type, object_t *obj)
 {
 	object_t *const_obj;
 	int const_exist;
 	para_t const_pos;
 
 	const_exist = 0;
-	const_obj = object_get_default (type);
+	const_obj = obj;
+	if (const_obj == NULL) {
+		const_obj = object_get_default (type);
+	}
 	if (const_obj == NULL ||
 		(const_pos = code_push_const (code, const_obj, &const_exist)) == -1) {
 		return (para_t) -1;
@@ -229,6 +242,42 @@ parser_get_unary_op (parser_t *parser)
 
 	return (op_t) 0;
 }
+
+/* expression-postfix-list:
+ * expression-postfix expression-postfix-list. */
+static int
+parser_expression_postfix_list (parser_t *parser, code_t *code)
+{
+	return 1;
+}
+
+/* expression:
+ * assignment-expression
+ * assignment-expression , expression */
+static int 
+parser_expression (parser_t *parser, code_t *code)
+{
+	if (!parser_assignment_expression (parser, code)) {
+		return 0;
+	}
+
+	while (parser_check (parser, TOKEN (','))) {
+		uint32_t line;
+
+		line = TOKEN_LINE (parser->token);
+		/* Emit a POP_STACK to ignore left part. */
+		if (!code_push_opcode (code, OPCODE (OP_POP_STACK, 0), line)) {
+			return 0;
+		}
+
+		if (!parser_assignment_expression (parser, code)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 /* primary-expression:
  * identifier
  * constant
@@ -237,7 +286,112 @@ parser_get_unary_op (parser_t *parser)
 static int
 parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 {
-	return 1;
+	para_t pos;
+	uint32_t line;
+	
+	if (leading_par) {
+		if (!parser_expression (parser, code)) {
+			return 0;
+		}
+		/* Skip ')'. */
+		if (!parser_check (parser, TOKEN (')'))) {
+			parser_syntax_error (parser, "missing matching ')'.");
+
+			return 0;
+		}
+		parser_next_token (parser);
+
+		return 1;
+	}
+
+	line = TOKEN_LINE (parser->token);
+	switch (TOKEN_TYPE (parser->token)) {
+		case TOKEN_IDENTIFIER:
+			pos = code_push_varname (code,TOKEN_ID (parser->token), 0);	
+			if (pos == -1) {
+				return 0;
+			}
+			/* Emit a LOAD_VAR. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_VAR, pos), line);
+		case TOKEN_NULL:
+			pos = parser_push_const (code,
+				OBJECT_TYPE_CHAR, nullobject_new (NULL));
+			/* Emit a LOAD_CONST. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+		case TOKEN_TRUE:
+		case TOKEN_FALSE:
+			pos = parser_push_const (code,
+				OBJECT_TYPE_CHAR,
+				boolobject_new (TOKEN_TYPE (parser->token) == TOKEN_TRUE, NULL));
+			/* Emit a LOAD_CONST. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+		case TOKEN_INTEGER:
+		case TOKEN_HEXINT:
+		case TOKEN_LINTEGER: {
+			long val;
+
+			val = strtol (TOKEN_ID (parser->token), NULL, 0);
+			if (val < INT_MAX || val < INT_MIN ||
+				parser_check (parser, TOKEN_LINTEGER)) {
+				pos = parser_push_const (code,
+					OBJECT_TYPE_LONG, longobject_new (val, NULL));
+			}
+			else {
+				pos = parser_push_const (code,
+					OBJECT_TYPE_INT, intobject_new ((int) val, NULL));
+			}
+			if (pos == -1) {
+				return 0;
+			}
+
+			/* Emit a LOAD_CONST. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+		}
+		case TOKEN_FLOATING:
+		case TOKEN_EXPO: {
+			double val;
+
+			val = strtod (TOKEN_ID (parser->token), NULL);
+			pos = parser_push_const (code,
+				OBJECT_TYPE_DOUBLE, doubleobject_new (val, NULL));
+
+			/* Emit a LOAD_CONST. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+		}
+		case TOKEN_CHARACTER: {
+			char val;
+
+			val = (char) *TOKEN_ID (parser->token);
+			pos = parser_push_const (code,
+				OBJECT_TYPE_CHAR, charobject_new (val, NULL));
+
+			/* Emit a LOAD_CONST. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+		}
+		case TOKEN_STRING:
+			pos = parser_push_const (code,
+				OBJECT_TYPE_CHAR, strobject_new (TOKEN_ID (parser->token), NULL));
+			/* Emit a LOAD_CONST. */
+			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+		default:
+			if (parser_check (parser, TOKEN ('('))) {
+				parser_next_token (parser);
+				if (!parser_expression (parser, code)) {
+					return 0;
+				}
+				/* Skip ')'. */
+				if (!parser_check (parser, TOKEN (')'))) {
+					parser_syntax_error (parser, "missing matching ')'.");
+
+					return 0;
+				}
+
+				return 1;
+			}
+			break;
+	}
+
+	return 0;
 }
 
 /* postfix-expression:
@@ -247,6 +401,9 @@ static int
 parser_postfix_expression (parser_t *parser, code_t *code, int leading_par)
 {
 	if (!parser_primary_expression (parser, code, leading_par)) {
+		return 0;
+	}
+	if (!parser_expression_postfix_list (parser, code)) {
 		return 0;
 	}
 
@@ -329,6 +486,11 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		}
 		
 		/* Skip ')'. */
+		if (parser_check (parser, TOKEN (')'))) {
+			parser_syntax_error (parser, "missing matching ')'.");
+
+			return 0;
+		}
 		parser_next_token (parser);
 
 		/* Recursion needed. */
@@ -395,7 +557,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 	else {
 		para_t const_pos;
 
-		const_pos = parser_push_default_const (code, type);
+		const_pos = parser_push_const (code, type, NULL);
 		if (const_pos == -1) {
 			return 0;
 		}
@@ -515,14 +677,13 @@ parser_compound_statement (parser_t *parser, code_t *code)
 		}
 	}
 
+	/* Skip '}'. */
 	if (!parser_check (parser, TOKEN ('}'))) {
 		parser_syntax_error (parser,
 			"missing matching '}' for function body.");
 
 		return 0;
 	}
-
-	/* Skip '}'. */
 	parser_next_token (parser);
 
 	return 1;
@@ -562,7 +723,7 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	if (var_pos == -1) {
 		return 0;
 	}
-	const_pos = parser_push_default_const (code, type);
+	const_pos = parser_push_const (code, type, NULL);
 	if (const_pos == -1) {
 		return 0;
 	}
@@ -628,6 +789,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 		return 0;
 	}
 	parser_next_token (parser);
+
 	if (!parser_check (parser, TOKEN ('{'))) {
 		parser_syntax_error (parser, "missing '{' in function definition.");
 
