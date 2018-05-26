@@ -57,7 +57,6 @@ typedef struct parser_s
 {
 	reader_t *reader; /* Token stream source. */
 	const char *path; /* Source file path. */
-	vec_t *seq; /* The parsed token sequence. */
 	token_t *token; /* Current token. */
 } parser_t;
 
@@ -69,6 +68,7 @@ typedef struct buf_read_s
 
 static int parser_cast_expression (parser_t *parser, code_t *code);
 static int parser_assignment_expression (parser_t *parser, code_t *code);
+static int parser_expression (parser_t *parser, code_t *code);
 
 static char
 parser_file_reader (void *udata)
@@ -119,9 +119,6 @@ parser_free (parser_t *parser)
 {
 	if (parser->reader != NULL) {
 		lex_reader_free (parser->reader);
-	}
-	if (parser->seq != NULL) {
-		vec_free (parser->seq);
 	}
 
 	pool_free ((void *) parser);
@@ -225,11 +222,8 @@ parser_push_const (code_t *code, object_type_t type, object_t *obj)
 }
 
 static op_t
-parser_get_unary_op (parser_t *parser)
+parser_get_unary_op (token_type_t type)
 {
-	token_type_t type;
-
-	type = TOKEN_TYPE (parser->token);
 	if (type == TOKEN ('-')) {
 		return OP_VALUE_NEG;
 	}
@@ -243,11 +237,138 @@ parser_get_unary_op (parser_t *parser)
 	return (op_t) 0;
 }
 
+/* argument-expression-list:
+ * assignment-expression
+ * assignment-expression , argument-expression-list */
+static int 
+parser_argument_expression_list (parser_t *parser, code_t *code)
+{
+	para_t size;
+	uint32_t line;
+
+
+	size = 1;
+	line = TOKEN_LINE (parser->token);
+	if (!parser_assignment_expression (parser, code)) {
+		return 0;
+	}
+
+	while (parser_check (parser, TOKEN (','))) {
+		size++;
+		parser_next_token (parser);
+		if (!parser_assignment_expression (parser, code)) {
+			return 0;
+		}
+	}
+	
+	/* Emit a MAKE_VEC. */
+	return code_push_opcode (code, OPCODE (OP_MAKE_VEC, size), line);
+}
+
+/* expression-postfix:
+ * [ expression ]
+ * ( argument-expression-listopt )
+ * ++
+ * -- */
+static int
+parser_expression_postfix (parser_t *parser, code_t *code)
+{
+	uint32_t line;
+
+	line = TOKEN_LINE (parser->token);
+	if (parser_check (parser, TOKEN ('['))) {
+		parser_next_token (parser);
+		if (!parser_expression (parser, code)) {
+			return 0;
+		}
+		if (!parser_check (parser, TOKEN (']'))) {
+			parser_syntax_error (parser,
+				"missing matching ']' for indexing.");
+
+			return 0;
+		}
+		parser_next_token (parser);
+
+		/* Emit a LOAD_INDEX. */
+		return code_push_opcode (code, OPCODE (OP_LOAD_INDEX, 0), line);
+	}
+	else if (parser_check (parser, TOKEN ('('))) {
+		parser_next_token (parser);
+		if (parser_check (parser, TOKEN (')'))) {
+			/* Empty argument list, emit a zero MAKE_VEC and CALL_FUNC. */
+			parser_next_token (parser);
+
+			return code_push_opcode (code, OPCODE (OP_MAKE_VEC, 0), line) &&
+				code_push_opcode (code, OPCODE (OP_CALL_FUNC, 0), line);
+		}
+
+		if (!parser_argument_expression_list (parser, code)) {
+			return 0;
+		}
+
+		if (!parser_check (parser, TOKEN (')'))) {
+			parser_syntax_error (parser,
+				"missing matching ')'.");
+
+			return 0;
+		}
+		parser_next_token (parser);
+
+		/* Emit a CALL_FUNC code. */
+		return code_push_opcode (code, OPCODE (OP_CALL_FUNC, 0), line);
+	}
+	else if (parser_check (parser, TOKEN_INC)){
+		parser_next_token (parser);
+		if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_VAR) {
+			return code_modify_opcode (code, -1, OPCODE (OP_VAR_INC, 1), line);
+		}
+		else if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_INDEX) {
+			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_INC, 1), line);
+		}
+		else {
+			parser_syntax_error (parser, "lvalue requierd.");
+
+			return 0;
+		}
+	}
+	else if (parser_check (parser, TOKEN_DEC)){
+		parser_next_token (parser);
+		if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_VAR) {
+			return code_modify_opcode (code, -1, OPCODE (OP_VAR_DEC, 1), line);
+		}
+		else if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_INDEX) {
+			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_DEC, 1), line);
+		}
+		else {
+			parser_syntax_error (parser, "lvalue requierd.");
+
+			return 0;
+		}
+	}
+
+	return 0;
+}
+
 /* expression-postfix-list:
  * expression-postfix expression-postfix-list. */
 static int
 parser_expression_postfix_list (parser_t *parser, code_t *code)
 {
+	for (;;) {
+		if (parser_check (parser, TOKEN ('[')) ||
+			parser_check (parser, TOKEN ('(')) ||
+			parser_check (parser, TOKEN_INC) ||
+			parser_check (parser, TOKEN_DEC)) {
+			if (!parser_expression_postfix (parser, code)) {
+				return 0;
+			}
+
+		}
+		else {
+			break;
+		}
+	}
+
 	return 1;
 }
 
@@ -270,6 +391,7 @@ parser_expression (parser_t *parser, code_t *code)
 			return 0;
 		}
 
+		parser_next_token (parser);
 		if (!parser_assignment_expression (parser, code)) {
 			return 0;
 		}
@@ -307,6 +429,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 	line = TOKEN_LINE (parser->token);
 	switch (TOKEN_TYPE (parser->token)) {
 		case TOKEN_IDENTIFIER:
+			parser_next_token (parser);
 			pos = code_push_varname (code,TOKEN_ID (parser->token), 0);	
 			if (pos == -1) {
 				return 0;
@@ -314,12 +437,14 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			/* Emit a LOAD_VAR. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_VAR, pos), line);
 		case TOKEN_NULL:
+			parser_next_token (parser);
 			pos = parser_push_const (code,
 				OBJECT_TYPE_CHAR, nullobject_new (NULL));
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
 		case TOKEN_TRUE:
 		case TOKEN_FALSE:
+			parser_next_token (parser);
 			pos = parser_push_const (code,
 				OBJECT_TYPE_CHAR,
 				boolobject_new (TOKEN_TYPE (parser->token) == TOKEN_TRUE, NULL));
@@ -343,6 +468,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			if (pos == -1) {
 				return 0;
 			}
+			parser_next_token (parser);
 
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
@@ -352,6 +478,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			double val;
 
 			val = strtod (TOKEN_ID (parser->token), NULL);
+			parser_next_token (parser);
 			pos = parser_push_const (code,
 				OBJECT_TYPE_DOUBLE, doubleobject_new (val, NULL));
 
@@ -362,6 +489,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			char val;
 
 			val = (char) *TOKEN_ID (parser->token);
+			parser_next_token (parser);
 			pos = parser_push_const (code,
 				OBJECT_TYPE_CHAR, charobject_new (val, NULL));
 
@@ -371,6 +499,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 		case TOKEN_STRING:
 			pos = parser_push_const (code,
 				OBJECT_TYPE_CHAR, strobject_new (TOKEN_ID (parser->token), NULL));
+			parser_next_token (parser);
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
 		default:
@@ -385,6 +514,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 
 					return 0;
 				}
+				parser_next_token (parser);
 
 				return 1;
 			}
@@ -429,16 +559,30 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 
 	type = TOKEN_TYPE (parser->token);
 	line = TOKEN_LINE (parser->token);
-	switch (TOKEN_TYPE (parser->token)) {
-		case TOKEN_SADD:
-		case TOKEN_SSUB:
+	switch (type) {
+		case TOKEN_INC:
+		case TOKEN_DEC:
 			parser_next_token (parser);
 			if (!parser_unary_expression (parser, code, 0)) {
 				return 0;
 			}
-			/* The last opcode must be a var loading code. */
-			return code_last_var_modify (code,
-				TOKEN_TYPE (parser->token) == TOKEN_SADD, line);
+			/* The last opcode must be a LOAD_VAR or LOAD_INDEX,
+			 * otherwise it's not a lvalue. */
+			if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_VAR) {
+				return type == TOKEN_INC?
+					code_modify_opcode (code, -1, OPCODE (OP_VAR_INC, 0), line):
+					code_modify_opcode (code, -1, OPCODE (OP_VAR_DEC, 0), line);
+			}
+			else if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_INDEX){
+				return type == TOKEN_INC?
+					code_modify_opcode (code, -1, OPCODE (OP_INDEX_INC, 0), line):
+					code_modify_opcode (code, -1, OPCODE (OP_INDEX_DEC, 0), line);
+			}
+			else {
+				parser_syntax_error (parser, "lvalue required.");
+
+				return 0;
+			}
 		default:
 			if (type == TOKEN ('+')) {
 				/* Just skip '+'. */
@@ -454,7 +598,7 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 
 				/* Emit an unary operation. */
 				return code_push_opcode (code,
-					OPCODE (parser_get_unary_op (parser), 0), line);	
+					OPCODE (parser_get_unary_op (type), 0), line);	
 			}
 			break;
 	}
@@ -485,6 +629,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 			return 0;
 		}
 		
+		parser_next_token (parser);
 		/* Skip ')'. */
 		if (parser_check (parser, TOKEN (')'))) {
 			parser_syntax_error (parser, "missing matching ')'.");
@@ -499,9 +644,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		}
 
 		/* Emit a TYPE_CAST opcode. */
-		if (!code_push_opcode (code, OPCODE (OP_TYPE_CAST, (para_t) type), line)) {
-			return 0;
-		}
+		return code_push_opcode (code, OPCODE (OP_TYPE_CAST, (para_t) type), line);
 	}
 
 	return parser_unary_expression (parser, code, 0);
@@ -550,6 +693,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 	}
 
 	if (parser_check (parser, TOKEN ('='))) {
+		parser_next_token (parser);
 		if (!parser_assignment_expression (parser, code)) {
 			return 0;
 		}
@@ -569,11 +713,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 	}
 
 	/* Emit a STORE_LOCAL opcode. */
-	if (!code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line)) {
-		return 0;
-	}
-
-	return 1;
+	return code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line);
 }
 
 /* init-declarator-list:
@@ -611,10 +751,11 @@ parser_declaration (parser_t *parser, code_t *code,
 	}
 
 	if (!parser_check (parser, TOKEN (';'))) {
-		parser_syntax_error (parser, "missing ';'.");
+		parser_syntax_error (parser, "missing ';' in declaration.");
 
 		return 0;
 	}
+	parser_next_token (parser);
 
 	return 1;
 }
@@ -760,7 +901,7 @@ parser_parameter_list (parser_t *parser, code_t *code)
 }
 
 /* function-definition:
- * type-specifier(*) identifier(*) ( parameter-listopt ) */
+ * type-specifier(*) identifier(*) ( parameter-listopt ) compound-statement */
 static int
 parser_function_definition (parser_t *parser, code_t *code,
 	object_type_t ret_type, para_t id_pos, const char *fun)
@@ -795,12 +936,8 @@ parser_function_definition (parser_t *parser, code_t *code,
 
 		return 0;
 	}
-	if (!parser_compound_statement (parser, fun_code))
-	{
-		return 0;
-	}
 
-	return 1;
+	return parser_compound_statement (parser, fun_code);
 }
 
 /* external-declaration:
@@ -900,14 +1037,6 @@ parser_load_file (const char *path)
 		return NULL;
 	}
 
-	parser->seq = vec_new (0);
-	if (parser->seq == NULL) {
-		code_free (code);
-		parser_free (parser);
-
-		return NULL;
-	}
-
 	parser->path = path;
 
 	parser_next_token (parser);
@@ -957,14 +1086,15 @@ parser_load_buf (const char *path, str_t *buf)
 		return NULL;
 	}
 
-	parser->seq = vec_new (0);
-	if (parser->seq == NULL) {
+	parser->path = path;
+
+	parser_next_token (parser);
+	if (!parser_translation_unit (parser, code)) {
+		code_free (code);
 		parser_free (parser);
 
 		return NULL;
 	}
-
-	parser->path = path;
 
 	return code;
 }

@@ -278,7 +278,7 @@ lex_check_one_ahead (reader_t *reader, token_t *token)
 			break;
 		case '+':
 			if (reader->current == '+') {
-				lex_set_type_and_next (reader, token, TOKEN_SADD);
+				lex_set_type_and_next (reader, token, TOKEN_INC);
 			}
 			else if (reader->current == '=') {
 				lex_set_type_and_next (reader, token, TOKEN_IPADD);
@@ -286,7 +286,7 @@ lex_check_one_ahead (reader_t *reader, token_t *token)
 			break;
 		case '-':
 			if (reader->current == '-') {
-				lex_set_type_and_next (reader, token, TOKEN_SSUB);
+				lex_set_type_and_next (reader, token, TOKEN_DEC);
 			}
 			else if (reader->current == '=') {
 				lex_set_type_and_next (reader, token, TOKEN_IPADD);

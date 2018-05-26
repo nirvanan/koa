@@ -66,8 +66,8 @@ typedef enum token_type_e
 	TOKEN_LAEQ, /* Relatioal-expression: >=. */
 	TOKEN_LSHFT, /* Shift-expression: <<. */
 	TOKEN_RSHFT, /* Shift-expression: >>. */
-	TOKEN_SADD, /* Unary-expression: ++. */
-	TOKEN_SSUB, /* Unary-expression: --. */
+	TOKEN_INC, /* Unary-expression: ++. */
+	TOKEN_DEC, /* Unary-expression: --. */
 	TOKEN_IPMUL, /* Assignment-operator: *=. */
 	TOKEN_IPDIV, /* Assignment-operator: /=. */
 	TOKEN_IPMOD, /* Assignment-operator: %=. */

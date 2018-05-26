@@ -51,12 +51,15 @@ typedef enum op_e {
 	OP_TYPE_CAST,
 	OP_VAR_INC,
 	OP_VAR_DEC,
-	OP_LOCAL_INC,
-	OP_LOCAL_DEC,
 	OP_VALUE_NEG,
 	OP_BIT_NOT,
 	OP_LOGIC_NOT,
-	OP_POP_STACK
+	OP_POP_STACK,
+	OP_LOAD_INDEX,
+	OP_INDEX_INC,
+	OP_INDEX_DEC,
+	OP_MAKE_VEC,
+	OP_CALL_FUNC
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */
@@ -82,7 +85,7 @@ code_set_fun (code_t *code, object_type_t ret_type);
 void
 code_free (code_t *code);
 
-int
+integer_value_t
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line);
 
 para_t
@@ -91,7 +94,11 @@ code_push_const (code_t *code, object_t *var, int *exist);
 para_t
 code_push_varname (code_t *code, const char *var, int para);
 
+opcode_t
+code_last_opcode (code_t *code);
+
 int
-code_last_var_modify (code_t *code, int add, uint32_t line);
+code_modify_opcode (code_t *code, integer_value_t pos,
+					opcode_t opcode, uint32_t line);
 
 #endif /* CODE_H */

@@ -117,7 +117,7 @@ code_free (code_t *code)
 	pool_free ((void *) code);
 }
 
-int
+integer_value_t
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
 {
 	opcode_t *op;
@@ -153,7 +153,7 @@ code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
 		return 0;
 	}
 
-	return 1;
+	return (integer_value_t) vec_size (code->opcodes);
 }
 
 static int
@@ -244,26 +244,38 @@ code_push_varname (code_t *code, const char *var, int para)
 	return vec_size (code->varnames) - 1;
 }
 
-int
-code_last_var_modify (code_t *code, int add, uint32_t line)
+opcode_t
+code_last_opcode (code_t *code)
 {
-	opcode_t *data;
-
-	if (vec_size (code->opcodes)) {
+	if (!vec_size (code->opcodes)) {
 		return (opcode_t) 0;
 	}
-	
-	data = (opcode_t *) vec_last (code->opcodes);
-	if (OPCODE_OP (*data) == OP_LOAD_VAR) {
-		if (add) {
-			return code_push_opcode (code,
-				OPCODE (OP_VAR_INC, OPCODE_PARA (*data)), line);
-		}
-		else {
-			return code_push_opcode (code,
-				OPCODE (OP_VAR_DEC, OPCODE_PARA (*data)), line);
-		}
+
+	return *((opcode_t *) vec_last (code->opcodes));
+}
+
+int
+code_modify_opcode (code_t *code, integer_value_t pos,
+					opcode_t opcode, uint32_t line)
+{
+	size_t size;
+	integer_value_t p;
+	opcode_t *prev_opcode;
+	uint32_t *prev_line;
+
+	if (!(size = vec_size (code->opcodes))) {
+		return 0;
 	}
 
-	return 0;
+	p = pos;
+	if (p == -1) {
+		p = size;
+	}
+
+	prev_opcode = (opcode_t *) vec_pos (code->opcodes, p);
+	*prev_opcode = opcode;
+	prev_line = (opcode_t *) vec_pos (code->lineinfo, p);
+	*prev_line = line;
+	
+	return 1;
 }
