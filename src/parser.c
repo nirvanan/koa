@@ -1201,7 +1201,6 @@ static int
 parser_block_item (parser_t *parser, code_t *code)
 {
 	if (TOKEN_IS_TYPE (parser->token)) {
-		/* declaration. */
 		object_type_t type;
 
 		type = parser_token_object_type (parser);
@@ -1380,7 +1379,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 static int
 parser_external_declaration (parser_t *parser, code_t *code)
 {
-	/* Need to look ahead 3 tokens: type id '('*/
+	/* Need to look ahead 3 tokens: type id '('. */
 	object_type_t type;
 	para_t pos;
 	const char *fun;
