@@ -59,7 +59,26 @@ typedef enum op_e {
 	OP_INDEX_INC,
 	OP_INDEX_DEC,
 	OP_MAKE_VEC,
-	OP_CALL_FUNC
+	OP_CALL_FUNC,
+	OP_CON_SEL,
+	OP_LOGIC_OR,
+	OP_LOGIC_AND,
+	OP_BIT_OR,
+	OP_BIT_XOR,
+	OP_BIT_AND,
+	OP_EQUAL,
+	OP_NOT_EQUAL,
+	OP_LESS_THAN,
+	OP_LARGE_THAN,
+	OP_LESS_EQUAL,
+	OP_LARGE_EQUAL,
+	OP_LEFT_SHIFT,
+	OP_RIGHT_SHIFT,
+	OP_ADD,
+	OP_SUB,
+	OP_MUL,
+	OP_DIV,
+	OP_MOD
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */

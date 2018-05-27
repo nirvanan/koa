@@ -237,6 +237,435 @@ parser_get_unary_op (token_type_t type)
 	return (op_t) 0;
 }
 
+static op_t
+parser_get_equality_op (parser_t *parser)
+{
+	if (parser_check (parser, TOKEN_EQ)) {
+		return OP_EQUAL;
+	}
+	else if (parser_check (parser, TOKEN_NEQ)) {
+		return OP_NOT_EQUAL;
+	}
+
+	return (op_t) 0;
+}
+
+static op_t
+parser_get_relational_op (parser_t *parser)
+{
+	if (parser_check (parser, TOKEN ('<'))) {
+		return OP_LESS_THAN;
+	}
+	else if (parser_check (parser, TOKEN ('>'))) {
+		return OP_LARGE_THAN;
+	}
+	else if (parser_check (parser, TOKEN_LEEQ)) {
+		return OP_LESS_EQUAL;
+	}
+	else if (parser_check (parser, TOKEN_LAEQ)) {
+		return OP_LARGE_EQUAL;
+	}
+
+	return (op_t) 0;
+}
+
+static op_t
+parser_get_shift_op (parser_t *parser)
+{
+	if (parser_check (parser, TOKEN_LSHFT)) {
+		return OP_LEFT_SHIFT;
+	}
+	else if (parser_check (parser, TOKEN_RSHFT)) {
+		return OP_RIGHT_SHIFT;
+	}
+
+	return (op_t) 0;
+}
+
+static op_t
+parser_get_additive_op (parser_t *parser)
+{
+	if (parser_check (parser, TOKEN ('+'))) {
+		return OP_ADD;
+	}
+	else if (parser_check (parser, TOKEN ('-'))) {
+		return OP_SUB;
+	}
+
+	return (op_t) 0;
+}
+
+static op_t
+parser_get_multiplicative_op (parser_t *parser)
+{
+	if (parser_check (parser, TOKEN ('*'))) {
+		return OP_MUL;
+	}
+	else if (parser_check (parser, TOKEN ('/'))) {
+		return OP_DIV;
+	}
+	else if (parser_check (parser, TOKEN ('%'))) {
+		return OP_MOD;
+	}
+
+	return (op_t) 0;
+}
+
+/* multiplicative-expression:
+ * cast-expression
+ * cast-expression * multiplicative-expression
+ * cast-expression / multiplicative-expression
+ * cast-expression % multiplicative-expression */
+static int
+parser_multiplicative_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+	op_t op;
+
+	if (!skip) {
+		if (!parser_cast_expression (parser, code)) {
+			return 0;
+		}
+	}
+
+	while ((op = parser_get_multiplicative_op (parser))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_cast_expression (parser, code)) {
+			return 0;
+		}
+
+		/* Emit a multiplicative opcode. */
+		if (!code_push_opcode (code, OPCODE (op, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* additive-expression:
+ * multiplicative-expression
+ * multiplicative-expression + additive-expression
+ * multiplicative-expression - additive-expression */
+static int
+parser_additive_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+	op_t op;
+
+	if (!skip) {
+		if (!parser_multiplicative_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while ((op = parser_get_additive_op (parser))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_multiplicative_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a additive opcode. */
+		if (!code_push_opcode (code, OPCODE (op, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* shift-expression:
+ * additive-expression
+ * additive-expression << shift-expression
+ * additive-expression >> shift-expression */
+static int
+parser_shift_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+	op_t op;
+
+	if (!skip) {
+		if (!parser_additive_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while ((op = parser_get_shift_op (parser))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_additive_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a shift opcode. */
+		if (!code_push_opcode (code, OPCODE (op, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* relational-expression:
+ * shift-expression
+ * shift-expression < relational-expression
+ * shift-expression > relational-expression
+ * shift-expression <= relational-expression
+ * shift-expression >= relational-expression */
+static int
+parser_relational_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+	op_t op;
+
+	if (!skip) {
+		if (!parser_shift_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while ((op = parser_get_relational_op (parser))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_shift_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a relational opcode. */
+		if (!code_push_opcode (code, OPCODE (op, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* equality-expression:
+ * relational-expression
+ * relational-expression == equality-expression
+ * relational-expression != equality-expression */
+static int
+parser_equality_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+	op_t op;
+
+	if (!skip) {
+		if (!parser_relational_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while ((op = parser_get_equality_op (parser))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_equality_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a equality opcode. */
+		if (!code_push_opcode (code, OPCODE (op, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* AND-expression:
+ * equality-expression
+ * equality-expression & AND-expression */
+static int
+parser_and_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+
+	if (!skip) {
+		if (!parser_equality_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while (parser_check (parser, TOKEN ('&'))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_equality_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a BIT_AND. */
+		if (!code_push_opcode (code, OPCODE (OP_BIT_AND, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* exclusive-OR-expression:
+ * AND-expression
+ * AND-expression ˆ exclusive-OR-expression */
+static int
+parser_exclusive_or_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+
+	if (!skip) {
+		if (!parser_and_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while (parser_check (parser, TOKEN ('^'))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_and_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a BIT_XOR. */
+		if (!code_push_opcode (code, OPCODE (OP_BIT_XOR, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* inclusive-OR-expression:
+ * exclusive-OR-expression
+ * exclusive-OR-expression | inclusive-OR-expression */
+static int
+parser_inclusive_or_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+
+	if (!skip) {
+		if (!parser_exclusive_or_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while (parser_check (parser, TOKEN ('|'))) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_exclusive_or_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a BIT_OR. */
+		if (!code_push_opcode (code, OPCODE (OP_BIT_OR, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* logical-AND-expression:
+ * inclusive-OR-expression
+ * inclusive-OR-expression && logical-AND-expression */
+static int
+parser_logical_and_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+
+	if (!skip) {
+		if (!parser_inclusive_or_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while (parser_check (parser, TOKEN_LAND)) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_inclusive_or_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a LOGIC_AND. */
+		if (!code_push_opcode (code, OPCODE (OP_LOGIC_AND, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* logical-OR-expression:
+ * logical-AND-expression
+ * logical-AND-expression || logical-OR-expression */
+static int
+parser_logical_or_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+
+	if (!skip) {
+		if (!parser_logical_and_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	while (parser_check (parser, TOKEN_LOR)) {
+		line = TOKEN_LINE (parser->token);
+		parser_next_token (parser);
+		if (!parser_logical_and_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a LOGIC_OR. */
+		if (!code_push_opcode (code, OPCODE (OP_LOGIC_OR, 0), line)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/* conditional-expression:
+ * logical-OR-expression
+ * logical-OR-expression ? expression : conditional-expression */
+static int
+parser_conditional_expression (parser_t *parser, code_t *code, int skip)
+{
+	uint32_t line;
+
+	if (!skip) {
+		if (!parser_logical_or_expression (parser, code, 0)) {
+			return 0;
+		}
+	}
+
+	line = TOKEN_LINE (parser->token);
+	if (parser_check (parser, TOKEN ('?'))) {
+		parser_next_token (parser);
+		if (!parser_expression (parser, code)) {
+			return 0;
+		}
+
+		/* Check ':'. */
+		if (!parser_check (parser, TOKEN (':'))) {
+			parser_syntax_error (parser,
+				"missing ':' in conditional expression.");
+
+			return 0;
+		}
+		parser_next_token (parser);
+
+		/* Recursion needed. */
+		if (!parser_conditional_expression (parser, code, 0)) {
+			return 0;
+		}
+
+		/* Emit a CON_SEL. */
+		return code_push_opcode (code, OPCODE (OP_CON_SEL, 0), line);
+	}
+
+	return 1;
+}
+
 /* argument-expression-list:
  * assignment-expression
  * assignment-expression , argument-expression-list */
@@ -660,6 +1089,11 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 	if (!parser_cast_expression (parser, code)) {
 		return 0;
 	}
+
+	if (parser_check (parser, TOKEN ('?'))) {
+		return parser_conditional_expression (parser, code, 1);
+	}
+
 	return 1;
 }
 
