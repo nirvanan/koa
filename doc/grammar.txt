@@ -171,7 +171,7 @@ statement:
 	jump-statement
 
 labeled-statement:
-	case constant-expression : statement
+	case conditional-expression : statement
 	default : statement
 
 expression-statement:

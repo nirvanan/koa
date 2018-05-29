@@ -103,7 +103,8 @@ typedef enum op_e {
 	OP_INDEX_IPRS,
 	OP_INDEX_IPAND,
 	OP_INDEX_IPXOR,
-	OP_INDEX_IPOR
+	OP_INDEX_IPOR,
+	OP_JUMP_FALSE
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */

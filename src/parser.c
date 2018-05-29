@@ -187,6 +187,20 @@ parser_check (parser_t * parser, token_type_t need)
 	return TOKEN_TYPE (parser->token) == need;
 }
 
+static int
+parser_test_and_next (parser_t *parser, token_type_t need, const char *err)
+{
+	if (!parser_check (parser, need)) {
+		parser_syntax_error (parser, err);
+
+		return 0;
+	}
+
+	parser_next_token (parser);
+
+	return 1;
+}
+
 static object_type_t
 parser_token_object_type (parser_t *parser)
 {
@@ -412,6 +426,149 @@ parser_get_index_assign_op (token_type_t type)
 	}
 
 	return (op_t) 0;
+}
+
+/* labeled-statement:
+ * case conditional-expression : statement
+ * default : statement */
+static int
+parser_labeled_statement (parser_t *parser, code_t *code)
+{
+	return 1;
+}
+
+/* expression-statement:
+ * expressionopt ; */
+static int
+parser_expression_statement (parser_t *parser, code_t *code)
+{
+	if (parser_check (parser, TOKEN (';'))) {
+		/* Empty statement, do nothing. */
+		parser_next_token (parser);
+
+		return 1;
+	}
+
+	if (!parser_expression (parser, code)) {
+		return 0;
+	}
+
+	/* Skip ';'. */
+	return parser_test_and_next (parser, TOKEN (';'),
+		"missing ';' in the end of the statement.");
+}
+
+/* selection-statement:
+ * if ( expression ) statement
+ * if ( expression ) statement else statement
+ * switch ( expression ) statement */
+static int
+parser_selection_statement (parser_t *parser, code_t *code)
+{
+	uint32_t line;
+
+	line = TOKEN_LINE (parser->token);
+	if (parser_check (parser, TOKEN_IF)) {
+		integer_value_t false_pos;
+		integer_value_t out_pos;
+
+		parser_next_token (parser);
+		/* Check '('. */
+		if (!parser_test_and_next (parser, TOKEN ('('),
+			"expected '(' after if.")) {
+			return 0;
+		}
+
+		/* Emit a JUMP_FALSE, the para is pending. */
+		if (!(false_pos = code_push_opcode (code,
+			OPCODE (OP_JUMP_FALSE, 0), line) - 1)) {
+			return 0;
+		}
+
+		if (!parser_expression (parser, code)) {
+			return 0;
+		}
+
+		/* Check ')'. */
+		if (!parser_test_and_next (parser, TOKEN (')'),
+			"missing matching ')'.")) {
+			return 0;
+		}
+
+		if (!parser_statement (parser, code)) {
+			return 0;
+		}
+
+		if (parser_check (parser, TOKEN_ELSE)) {
+			integer_value_t force_pos;
+
+			parser_next_token (parser);
+			/* Emit a JUMP_FORCE, the para is pending. */
+			if (!(force_pos = code_push_opcode (code,
+				OPCODE (OP_JUMP_FORCE, 0), line) - 1)) {
+				return 0;
+			}
+
+			/* Modify last JUMP_FALSE. */
+			if (!code_modify_opcode (code, false_pos,
+				OPCODE (OP_JUMP_FALSE, force_pos + 1), line)) {
+				return 0;
+			}
+
+			line = TOKEN_LINE (parser->token);
+			if (!parser_statement (parser, code)) {
+				return 0;
+			}
+
+			/* Modify last JUMP_FORCE. */
+			out_pos = code_current_pos (code) + 1;
+
+			return code_modify_opcode (code, force_pos,
+				OPCODE (OP_JUMP_FORCE, out_pos), line);
+		}
+		else {
+			out_pos = code_current_pos (code) + 1;
+			
+			return code_modify_opcode (code, false_pos,
+				OPCODE (OP_JUMP_FALSE, out_pos), line);
+		}
+	}
+	else {
+	}
+
+	return 1;
+}
+
+/* statement:
+ * labeled-statement
+ * compound-statement
+ * expression-statement
+ * selection-statement
+ * iteration-statement
+ * jump-statement */
+static int
+parser_statement (parser_t *parser, code_t *code)
+{
+	switch (TOKEN_TYPE (parser->token)) {
+		case TOKEN_CASE:
+		case TOKEN_DEFAULT:
+			return parser_labeled_statement (parser, code);
+		case TOKEN_IF:
+		case TOKEN_SWITCH:
+			return parser_selection_statement (parser, code);
+		case TOKEN_WHILE:
+		case TOKEN_DO:
+		case TOKEN_FOR:
+			return parser_iteration_statement (parser, code);
+		case TOKEN_CONTINUE:
+		case TOKEN_BREAK:
+		case TOKEN_RETURN:
+			return parser_jump_statement (parser, code);
+		default:
+			break;
+	}
+
+	return parser_expression_statement (parser, code);
 }
 
 /* multiplicative-expression:
@@ -749,13 +906,10 @@ parser_conditional_expression (parser_t *parser, code_t *code, int skip)
 		}
 
 		/* Check ':'. */
-		if (!parser_check (parser, TOKEN (':'))) {
-			parser_syntax_error (parser,
-				"missing ':' in conditional expression.");
-
+		if (!parser_test_and_next (parser, TOKEN (':'),
+			"missing ':' in conditional expression.")) {
 			return 0;
 		}
-		parser_next_token (parser);
 
 		/* Recursion needed. */
 		if (!parser_conditional_expression (parser, code, 0)) {
@@ -777,7 +931,6 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 {
 	para_t size;
 	uint32_t line;
-
 
 	size = 1;
 	line = TOKEN_LINE (parser->token);
@@ -824,13 +977,13 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 		if (!parser_expression (parser, code)) {
 			return 0;
 		}
-		if (!parser_check (parser, TOKEN (']'))) {
-			parser_syntax_error (parser,
-				"missing matching ']' for indexing.");
+		
+		/* Skip ']'. */
+		if (!parser_test_and_next (parser, TOKEN (']'),
+			"missing matching ']' for indexing."))
 
 			return 0;
 		}
-		parser_next_token (parser);
 
 		/* Emit a LOAD_INDEX. */
 		return code_push_opcode (code, OPCODE (OP_LOAD_INDEX, 0), line);
@@ -849,13 +1002,11 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 			return 0;
 		}
 
-		if (!parser_check (parser, TOKEN (')'))) {
-			parser_syntax_error (parser,
-				"missing matching ')'.");
-
+		/* Skip ')'. */
+		if (!parser_test_and_next (parser, TOKEN (')'),
+			"missing matching ')'.")) {
 			return 0;
 		}
-		parser_next_token (parser);
 
 		/* Emit a CALL_FUNC code. */
 		return code_push_opcode (code, OPCODE (OP_CALL_FUNC, 0), line);
@@ -960,15 +1111,10 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 		if (!parser_expression (parser, code)) {
 			return 0;
 		}
+
 		/* Skip ')'. */
-		if (!parser_check (parser, TOKEN (')'))) {
-			parser_syntax_error (parser, "missing matching ')'.");
-
-			return 0;
-		}
-		parser_next_token (parser);
-
-		return 1;
+		return parser_test_and_next (parser, TOKEN (')'),
+			"missing matching ')'.");
 	}
 
 	line = TOKEN_LINE (parser->token);
@@ -1053,15 +1199,10 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 				if (!parser_expression (parser, code)) {
 					return 0;
 				}
+
 				/* Skip ')'. */
-				if (!parser_check (parser, TOKEN (')'))) {
-					parser_syntax_error (parser, "missing matching ')'.");
-
-					return 0;
-				}
-				parser_next_token (parser);
-
-				return 1;
+				return parser_test_and_next (parser, TOKEN (')'),
+					"missing matching ')'.");
 			}
 			break;
 	}
@@ -1175,12 +1316,10 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		
 		parser_next_token (parser);
 		/* Skip ')'. */
-		if (parser_check (parser, TOKEN (')'))) {
-			parser_syntax_error (parser, "missing matching ')'.");
-
+		if (!parser_test_and_next (parser, TOKEN (')'),
+			"missing matching ')'.")) {
 			return 0;
 		}
-		parser_next_token (parser);
 
 		/* Recursion needed. */
 		if (!parser_cast_expression (parser, code)) {
@@ -1217,9 +1356,9 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 
 		/* The last opcode must be a LOAD_VAR or LOAD_INDEX,
 		 * otherwise it's not a lvalue. */
+		line = TOKEN_LINE (parser->token);
 		type = TOKEN_TYPE (parser->token);
 		pos = code_current_pos (code);
-		line = TOKEN_LINE (parser->token);
 		if (pos == -1) {
 			return 0;
 		}
@@ -1346,22 +1485,18 @@ parser_declaration (parser_t *parser, code_t *code,
 			return 0;
 		}
 	}
-
-	/* Skip type-specifier. */
-	parser_next_token (parser);
+	else {
+		/* Skip type-specifier. */
+		parser_next_token (parser);
+	}
 
 	if (!parser_init_declarator_list (parser, code, t, first_id)) {
 		return 0;
 	}
 
-	if (!parser_check (parser, TOKEN (';'))) {
-		parser_syntax_error (parser, "missing ';' in declaration.");
-
-		return 0;
-	}
-	parser_next_token (parser);
-
-	return 1;
+	/* Skip ';'. */
+	return parser_test_and_next (parser, TOKEN (';'),
+		"missing ';' in declaration.");
 }
 
 /* block-item:
@@ -1373,10 +1508,8 @@ parser_block_item (parser_t *parser, code_t *code)
 	if (TOKEN_IS_TYPE (parser->token)) {
 		return parser_declaration (parser, code, -1, NULL);
 	}
-	else {
-	}
 
-	return 1;
+	return parser_statement (parser, code);
 }
 
 /* block-item-list:
@@ -1411,15 +1544,8 @@ parser_compound_statement (parser_t *parser, code_t *code)
 	}
 
 	/* Skip '}'. */
-	if (!parser_check (parser, TOKEN ('}'))) {
-		parser_syntax_error (parser,
-			"missing matching '}' for function body.");
-
-		return 0;
-	}
-	parser_next_token (parser);
-
-	return 1;
+	return parser_test_and_next (parser, TOKEN ('}'),
+		"missing matching '}' for function body.");
 }
 
 /* parameter-declaration:
