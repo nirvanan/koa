@@ -20,10 +20,10 @@
 
 #include "vecobject.h"
 #include "pool.h"
-#include "hash.h"
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
+#include "longobject.h"
 
 /* Object ops. */
 static void vecobject_op_free (object_t *obj);
@@ -31,7 +31,8 @@ static object_t *vecobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_ipindex (object_t *obj1,
-	object_t *obj2, object_t *obj3);
+									   object_t *obj2, object_t *obj3);
+static object_t *vecobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -57,7 +58,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	vecobject_op_index, /* Index. */
 	vecobject_op_ipindex, /* Inplace index. */
-	NULL
+	vecobject_op_hash /* Hash. */
 };
 
 /* Free. */
@@ -148,6 +149,17 @@ vecobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	}
 
 	return (object_t *) vec_set (v, pos, obj3);
+}
+
+/* Hash. */
+static object_t *
+vecobject_op_hash(object_t *obj)
+{
+	if (OBJECT_DIGEST (obj) == 0) {
+		OBJECT_DIGEST (obj) = object_address_hash ((void *) obj);
+	}
+
+	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
 static int

@@ -242,6 +242,9 @@ object_integer_hash (integer_value_t val);
 uint64_t
 object_floating_hash (floating_value_t val);
 
+uint64_t
+object_address_hash (void *val);
+
 object_t *
 object_hash (object_t *obj);
 

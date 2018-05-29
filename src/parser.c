@@ -37,6 +37,7 @@
 #include "longobject.h"
 #include "doubleobject.h"
 #include "strobject.h"
+#include "funcobject.h"
 
 #define TOP_LEVEL_TAG "#"
 
@@ -52,6 +53,38 @@
 	TOKEN_TYPE((x))==TOKEN_VEC||\
 	TOKEN_TYPE((x))==TOKEN_DICT||\
 	TOKEN_TYPE((x))==TOKEN_FUNC)
+
+#define TOKEN_IS_CON(x) (TOKEN_TYPE((x))==TOKEN('?')||\
+	TOKEN_TYPE((x))==TOKEN_LOR||\
+	TOKEN_TYPE((x))==TOKEN_LAND||\
+	TOKEN_TYPE((x))==TOKEN('|')||\
+	TOKEN_TYPE((x))==TOKEN('^')||\
+	TOKEN_TYPE((x))==TOKEN('&')||\
+	TOKEN_TYPE((x))==TOKEN_EQ||\
+	TOKEN_TYPE((x))==TOKEN_NEQ||\
+	TOKEN_TYPE((x))==TOKEN('<')||\
+	TOKEN_TYPE((x))==TOKEN('>')||\
+	TOKEN_TYPE((x))==TOKEN_LEEQ||\
+	TOKEN_TYPE((x))==TOKEN_LAEQ||\
+	TOKEN_TYPE((x))==TOKEN_LSHFT||\
+	TOKEN_TYPE((x))==TOKEN_RSHFT||\
+	TOKEN_TYPE((x))==TOKEN('+')||\
+	TOKEN_TYPE((x))==TOKEN('-')||\
+	TOKEN_TYPE((x))==TOKEN('*')||\
+	TOKEN_TYPE((x))==TOKEN('/')||\
+	TOKEN_TYPE((x))==TOKEN('%'))
+
+#define TOKEN_IS_ASSIGN(x) (TOKEN_TYPE((x))==TOKEN('=')||\
+	TOKEN_TYPE((x))==TOKEN_IPMUL||\
+	TOKEN_TYPE((x))==TOKEN_IPDIV||\
+	TOKEN_TYPE((x))==TOKEN_IPMOD||\
+	TOKEN_TYPE((x))==TOKEN_IPADD||\
+	TOKEN_TYPE((x))==TOKEN_IPSUB||\
+	TOKEN_TYPE((x))==TOKEN_IPLS||\
+	TOKEN_TYPE((x))==TOKEN_IPRS||\
+	TOKEN_TYPE((x))==TOKEN_IPAND||\
+	TOKEN_TYPE((x))==TOKEN_IPXOR||\
+	TOKEN_TYPE((x))==TOKEN_IPOR)
 
 typedef struct parser_s
 {
@@ -311,6 +344,76 @@ parser_get_multiplicative_op (parser_t *parser)
 	return (op_t) 0;
 }
 
+static op_t
+parser_get_var_assign_op (token_type_t type)
+{
+	if (type == TOKEN ('=')) {
+		return OP_STORE_VAR;
+	}
+
+	switch (type) {
+		case TOKEN_IPMUL:
+			return OP_VAR_IPMUL;
+		case TOKEN_IPDIV:
+			return OP_VAR_IPDIV;
+		case TOKEN_IPMOD:
+			return OP_VAR_IPMOD;
+		case TOKEN_IPADD:
+			return OP_VAR_IPADD;
+		case TOKEN_IPSUB:
+			return OP_VAR_IPSUB;
+		case TOKEN_IPLS:
+			return OP_VAR_IPLS;
+		case TOKEN_IPRS:
+			return OP_VAR_IPRS;
+		case TOKEN_IPAND:
+			return OP_VAR_IPAND;
+		case TOKEN_IPXOR:
+			return OP_VAR_IPXOR;
+		case TOKEN_IPOR:
+			return OP_VAR_IPOR;
+		default:
+			break;
+	}
+
+	return (op_t) 0;
+}
+
+static op_t
+parser_get_index_assign_op (token_type_t type)
+{
+	if (type == TOKEN ('=')) {
+		return OP_STORE_INDEX;
+	}
+
+	switch (type) {
+		case TOKEN_IPMUL:
+			return OP_INDEX_IPMUL;
+		case TOKEN_IPDIV:
+			return OP_INDEX_IPDIV;
+		case TOKEN_IPMOD:
+			return OP_INDEX_IPMOD;
+		case TOKEN_IPADD:
+			return OP_INDEX_IPADD;
+		case TOKEN_IPSUB:
+			return OP_INDEX_IPSUB;
+		case TOKEN_IPLS:
+			return OP_INDEX_IPLS;
+		case TOKEN_IPRS:
+			return OP_INDEX_IPRS;
+		case TOKEN_IPAND:
+			return OP_INDEX_IPAND;
+		case TOKEN_IPXOR:
+			return OP_INDEX_IPXOR;
+		case TOKEN_IPOR:
+			return OP_INDEX_IPOR;
+		default:
+			break;
+	}
+
+	return (op_t) 0;
+}
+
 /* multiplicative-expression:
  * cast-expression
  * cast-expression * multiplicative-expression
@@ -461,7 +564,7 @@ parser_equality_expression (parser_t *parser, code_t *code, int skip)
 	while ((op = parser_get_equality_op (parser))) {
 		line = TOKEN_LINE (parser->token);
 		parser_next_token (parser);
-		if (!parser_equality_expression (parser, code, 0)) {
+		if (!parser_relational_expression (parser, code, 0)) {
 			return 0;
 		}
 
@@ -688,6 +791,16 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 		if (!parser_assignment_expression (parser, code)) {
 			return 0;
 		}
+		if (size > MAX_PARA) {
+			break;
+		}
+	}
+	
+	/* Check argument list size. */
+	if (size > MAX_PARA) {
+		parser_syntax_error (parser, "number of arguments exceeded.");
+
+		return 0;
 	}
 	
 	/* Emit a MAKE_VEC. */
@@ -703,6 +816,7 @@ static int
 parser_expression_postfix (parser_t *parser, code_t *code)
 {
 	uint32_t line;
+	opcode_t last;
 
 	line = TOKEN_LINE (parser->token);
 	if (parser_check (parser, TOKEN ('['))) {
@@ -748,11 +862,12 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 	}
 	else if (parser_check (parser, TOKEN_INC)){
 		parser_next_token (parser);
-		if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_VAR) {
-			return code_modify_opcode (code, -1, OPCODE (OP_VAR_INC, 1), line);
+		last = code_last_opcode (code);
+		if (OPCODE_OP (last) == OP_LOAD_VAR) {
+			return code_modify_opcode (code, -1, OPCODE (OP_VAR_POINC, OPCODE_PARA (last)), line);
 		}
-		else if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_INDEX) {
-			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_INC, 1), line);
+		else if (OPCODE_OP (last) == OP_LOAD_INDEX) {
+			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_POINC, OPCODE_PARA (last)), line);
 		}
 		else {
 			parser_syntax_error (parser, "lvalue requierd.");
@@ -762,11 +877,12 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 	}
 	else if (parser_check (parser, TOKEN_DEC)){
 		parser_next_token (parser);
-		if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_VAR) {
-			return code_modify_opcode (code, -1, OPCODE (OP_VAR_DEC, 1), line);
+		last = code_last_opcode (code);
+		if (OPCODE_OP (last) == OP_LOAD_VAR) {
+			return code_modify_opcode (code, -1, OPCODE (OP_VAR_PODEC, OPCODE_PARA (last)), line);
 		}
-		else if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_INDEX) {
-			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_DEC, 1), line);
+		else if (OPCODE_OP (last) == OP_LOAD_INDEX) {
+			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_PODEC, OPCODE_PARA (last)), line);
 		}
 		else {
 			parser_syntax_error (parser, "lvalue requierd.");
@@ -959,10 +1075,8 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 static int
 parser_postfix_expression (parser_t *parser, code_t *code, int leading_par)
 {
-	if (!parser_primary_expression (parser, code, leading_par)) {
-		return 0;
-	}
-	if (!parser_expression_postfix_list (parser, code)) {
+	if (!parser_primary_expression (parser, code, leading_par) ||
+		!parser_expression_postfix_list (parser, code)) {
 		return 0;
 	}
 
@@ -978,8 +1092,8 @@ static int
 parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 {
 	token_type_t type;
-
 	uint32_t line;
+	opcode_t last;
 
 	if (leading_par) {
 		/* Just fall into a postfix-expression. */
@@ -997,15 +1111,16 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 			}
 			/* The last opcode must be a LOAD_VAR or LOAD_INDEX,
 			 * otherwise it's not a lvalue. */
-			if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_VAR) {
+			last = code_last_opcode (code);
+			if (OPCODE_OP (last) == OP_LOAD_VAR) {
 				return type == TOKEN_INC?
-					code_modify_opcode (code, -1, OPCODE (OP_VAR_INC, 0), line):
-					code_modify_opcode (code, -1, OPCODE (OP_VAR_DEC, 0), line);
+					code_modify_opcode (code, -1, OPCODE (OP_VAR_INC, OPCODE_PARA (last)), line):
+					code_modify_opcode (code, -1, OPCODE (OP_VAR_DEC, OPCODE_PARA (last)), line);
 			}
-			else if (OPCODE_OP (code_last_opcode (code)) == OP_LOAD_INDEX){
+			else if (OPCODE_OP (last) == OP_LOAD_INDEX){
 				return type == TOKEN_INC?
-					code_modify_opcode (code, -1, OPCODE (OP_INDEX_INC, 0), line):
-					code_modify_opcode (code, -1, OPCODE (OP_INDEX_DEC, 0), line);
+					code_modify_opcode (code, -1, OPCODE (OP_INDEX_INC, OPCODE_PARA (last)), line):
+					code_modify_opcode (code, -1, OPCODE (OP_INDEX_DEC, OPCODE_PARA (last)), line);
 			}
 			else {
 				parser_syntax_error (parser, "lvalue required.");
@@ -1090,11 +1205,54 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		return 0;
 	}
 
-	if (parser_check (parser, TOKEN ('?'))) {
+	if (TOKEN_IS_CON (parser->token)) {
 		return parser_conditional_expression (parser, code, 1);
 	}
+	else if (TOKEN_IS_ASSIGN (parser->token)) {
+		integer_value_t pos;
+		opcode_t last;
+		token_type_t type;
+		op_t op;
+		uint32_t line;
 
-	return 1;
+		/* The last opcode must be a LOAD_VAR or LOAD_INDEX,
+		 * otherwise it's not a lvalue. */
+		type = TOKEN_TYPE (parser->token);
+		pos = code_current_pos (code);
+		line = TOKEN_LINE (parser->token);
+		if (pos == -1) {
+			return 0;
+		}
+		last = code_last_opcode (code);
+		if (OPCODE_OP (last) != OP_LOAD_VAR &&
+			OPCODE_OP (last) != OP_LOAD_INDEX) {
+			parser_syntax_error (parser, "lvalue required.");
+
+			return 0;
+		}
+
+		/* Recursion needed. */
+		if (!parser_assignment_expression (parser, code)) {
+			return 0;
+		}
+		
+		/* Need to remove that LOAD_* opcode and emit an assignment. */
+		if (!code_remove_pos (code, pos)) {
+			return 0;
+		}
+		op = OPCODE_OP (last) != OP_LOAD_VAR?
+			parser_get_var_assign_op (type):
+			parser_get_index_assign_op (type);
+		if (!op) {
+			parser_syntax_error (parser, "unknown assignment operation.");
+
+			return 0;
+		}
+
+		return code_push_opcode (code, OPCODE (op, OPCODE_PARA (last)), line);
+	}
+
+	return 0;
 }
 
 /* init-declarator:
@@ -1177,10 +1335,22 @@ static int
 parser_declaration (parser_t *parser, code_t *code,
 					object_type_t type, const char *first_id)
 {
+	object_type_t t;
+
+	t = type;
+	if (t == -1) {
+		t = parser_token_object_type (parser);
+		if (t == OBJECT_TYPE_VOID) {
+			parser_syntax_error (parser, "variable can not be void.");
+
+			return 0;
+		}
+	}
+
 	/* Skip type-specifier. */
 	parser_next_token (parser);
 
-	if (!parser_init_declarator_list (parser, code, type, first_id)) {
+	if (!parser_init_declarator_list (parser, code, t, first_id)) {
 		return 0;
 	}
 
@@ -1201,18 +1371,7 @@ static int
 parser_block_item (parser_t *parser, code_t *code)
 {
 	if (TOKEN_IS_TYPE (parser->token)) {
-		object_type_t type;
-
-		type = parser_token_object_type (parser);
-		if (type == OBJECT_TYPE_VOID) {
-			parser_syntax_error (parser, "variable can not be void.");
-
-			return 0;
-		}
-
-		if (!parser_declaration (parser, code, type, NULL)) {
-			return 0;
-		}
+		return parser_declaration (parser, code, -1, NULL);
 	}
 	else {
 	}
@@ -1273,6 +1432,7 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	para_t const_pos;
 	uint32_t line;
 
+	line = TOKEN_LINE (parser->token);
 	type = parser_token_object_type (parser);
 	if (type == -1) {
 		parser_syntax_error (parser, "unknown parameter type.");
@@ -1303,13 +1463,8 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	}
 
 	/* Make opcodes and insert them. */
-	line = TOKEN_LINE (parser->token);
-	if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) ||
-		!code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line)) {
-		return 0;
-	}
-
-	return 1;
+	return code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) &&
+		code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line);
 }
 
 /* parameter-list:
@@ -1337,13 +1492,23 @@ parser_parameter_list (parser_t *parser, code_t *code)
  * type-specifier(*) identifier(*) ( parameter-listopt ) compound-statement */
 static int
 parser_function_definition (parser_t *parser, code_t *code,
-	object_type_t ret_type, para_t id_pos, const char *fun)
+	object_type_t ret_type, const char *id)
 {
-	code_t *fun_code;
+	code_t *func_code;
+	para_t var_pos;
+	para_t const_pos;
+	object_t *func_obj;
+	uint32_t line;
 
 	/* Make a new code for this function. */
-	fun_code = code_new (parser->path, fun);
-	if (fun_code == NULL) {
+	func_code = code_new (parser->path, id);
+	if (func_code == NULL) {
+		return 0;
+	}
+
+	/* Push func name. */
+	var_pos = code_push_varname (code, id, 0);
+	if (var_pos == -1) {
 		return 0;
 	}
 
@@ -1352,7 +1517,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 
 	/* Has parameter? */
 	if (!parser_check (parser, TOKEN (')'))) {
-		if (!parser_parameter_list (parser, fun_code)) {
+		if (!parser_parameter_list (parser, func_code)) {
 			return 0;
 		}
 	}
@@ -1370,7 +1535,24 @@ parser_function_definition (parser_t *parser, code_t *code,
 		return 0;
 	}
 
-	return parser_compound_statement (parser, fun_code);
+	line = TOKEN_LINE (parser->token);
+	if (!parser_compound_statement (parser, func_code)) {
+		return 0;
+	}
+
+	/* Make a new funcobject and push this const. */
+	func_obj = funcobject_code_new (func_code, NULL);
+	if (func_obj == NULL) {
+		return 0;
+	}
+	const_pos = parser_push_const (code, OBJECT_TYPE_FUNC, func_obj);
+	if (const_pos == -1) {
+		return 0;
+	}
+
+	/* Make opcodes and insert them. */
+	return code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) &&
+		code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line);
 }
 
 /* external-declaration:
@@ -1381,8 +1563,7 @@ parser_external_declaration (parser_t *parser, code_t *code)
 {
 	/* Need to look ahead 3 tokens: type id '('. */
 	object_type_t type;
-	para_t pos;
-	const char *fun;
+	const char *id;
 
 	type = parser_token_object_type (parser);
 	if (type == -1) {
@@ -1398,24 +1579,21 @@ parser_external_declaration (parser_t *parser, code_t *code)
 		return 0;
 	}
 
-	fun = TOKEN_ID (parser->token);
-	pos = code_push_varname (code, fun, 0);
-	if (pos == -1) {
-		return 0;
-	}
-
+	id = TOKEN_ID (parser->token);
 	parser_next_token (parser);
 	if (parser_check (parser, TOKEN ('('))) {
-		return parser_function_definition (parser, code, type, pos, fun);
+		/* Goes to function-definition. */
+		return parser_function_definition (parser, code, type, id);
 	}
 
+	/* Goes to declaration. */
 	if (type == OBJECT_TYPE_VOID) {
 		parser_syntax_error (parser, "variable can not be a void.");
 
 		return 0;
 	}
 
-	return 1;
+	return parser_declaration (parser, code, type, id);
 }
 
 /* translation-unit:

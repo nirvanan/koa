@@ -24,13 +24,15 @@
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
+#include "longobject.h"
 
 /* Object ops. */
 static void dictobject_op_free (object_t *obj);
 static object_t *dictobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_ipindex (object_t *obj1,
-	object_t *obj2, object_t *obj3);
+										object_t *obj2, object_t *obj3);
+static object_t *dictobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -56,7 +58,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	dictobject_op_index, /* Index. */
 	dictobject_op_ipindex, /* Inplace index. */
-	NULL
+	dictobject_op_hash /* Hash. */
 };
 
 /* Free. */
@@ -129,6 +131,17 @@ dictobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 
 	/* obj3 is returned if successfully inserted. */
 	return (object_t *) dict_set (dict, (void *) obj2, (void *) obj3);
+}
+
+/* Hash. */
+static object_t *
+dictobject_op_hash(object_t *obj)
+{
+	if (OBJECT_DIGEST (obj) == 0) {
+		OBJECT_DIGEST (obj) = object_address_hash ((void *) obj);
+	}
+
+	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
 /* Hash function for dict. */

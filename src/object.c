@@ -34,6 +34,7 @@
 #include "strobject.h"
 #include "vecobject.h"
 #include "dictobject.h"
+#include "funcobject.h"
 
 #define TYPE_NAME(x) (g_type_name[(x)->head.type])
 
@@ -972,6 +973,12 @@ object_floating_hash (floating_value_t val)
 	return object_integer_hash (int_to_hash);	
 }
 
+uint64_t
+object_address_hash (void *obj)
+{
+	return object_integer_hash ((integer_value_t) obj);
+}
+
 /* We use a long object to represent hash digest of objects.
  * Although it may be down casted when a long is presented
  * as 32 bits integer, it will still works fine if our 64-bit
@@ -1016,6 +1023,8 @@ object_get_default (object_type_t type)
 			return vecobject_new ((size_t) 0, NULL);
 		case OBJECT_TYPE_DICT:
 			return dictobject_new (NULL);
+		case OBJECT_TYPE_FUNC:
+			return funcobject_new (NULL);
 		default:
 			break;
 	}

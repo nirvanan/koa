@@ -51,13 +51,18 @@ typedef enum op_e {
 	OP_TYPE_CAST,
 	OP_VAR_INC,
 	OP_VAR_DEC,
+	OP_VAR_POINC,
+	OP_VAR_PODEC,
 	OP_VALUE_NEG,
 	OP_BIT_NOT,
 	OP_LOGIC_NOT,
 	OP_POP_STACK,
 	OP_LOAD_INDEX,
+	OP_STORE_INDEX,
 	OP_INDEX_INC,
 	OP_INDEX_DEC,
+	OP_INDEX_POINC,
+	OP_INDEX_PODEC,
 	OP_MAKE_VEC,
 	OP_CALL_FUNC,
 	OP_CON_SEL,
@@ -78,7 +83,27 @@ typedef enum op_e {
 	OP_SUB,
 	OP_MUL,
 	OP_DIV,
-	OP_MOD
+	OP_MOD,
+	OP_VAR_IPMUL,
+	OP_VAR_IPDIV,
+	OP_VAR_IPMOD,
+	OP_VAR_IPADD,
+	OP_VAR_IPSUB,
+	OP_VAR_IPLS,
+	OP_VAR_IPRS,
+	OP_VAR_IPAND,
+	OP_VAR_IPXOR,
+	OP_VAR_IPOR,
+	OP_INDEX_IPMUL,
+	OP_INDEX_IPDIV,
+	OP_INDEX_IPMOD,
+	OP_INDEX_IPADD,
+	OP_INDEX_IPSUB,
+	OP_INDEX_IPLS,
+	OP_INDEX_IPRS,
+	OP_INDEX_IPAND,
+	OP_INDEX_IPXOR,
+	OP_INDEX_IPOR
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */
@@ -119,5 +144,11 @@ code_last_opcode (code_t *code);
 int
 code_modify_opcode (code_t *code, integer_value_t pos,
 					opcode_t opcode, uint32_t line);
+
+integer_value_t
+code_current_pos (code_t *code);
+
+int
+code_remove_pos (code_t *code, integer_value_t pos);
 
 #endif /* CODE_H */

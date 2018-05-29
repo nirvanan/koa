@@ -101,12 +101,12 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
 	code.$(OBJEXT) dict.$(OBJEXT) dictobject.$(OBJEXT) \
-	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) error.$(OBJEXT) \
-	hash.$(OBJEXT) intobject.$(OBJEXT) lex.$(OBJEXT) \
-	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
-	nullobject.$(OBJEXT) object.$(OBJEXT) parser.$(OBJEXT) \
-	pool.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT) \
-	vecobject.$(OBJEXT)
+	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) \
+	funcobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
+	intobject.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
+	longobject.$(OBJEXT) main.$(OBJEXT) nullobject.$(OBJEXT) \
+	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT) \
+	strobject.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -275,6 +275,8 @@ doubleobject.c \
 doubleobject.h \
 floatobject.c \
 floatobject.h \
+funcobject.c \
+funcobject.h \
 error.c \
 error.h \
 hash.c \
@@ -400,6 +402,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doubleobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/floatobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/funcobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lex.Po@am__quote@

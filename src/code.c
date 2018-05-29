@@ -279,3 +279,16 @@ code_modify_opcode (code_t *code, integer_value_t pos,
 	
 	return 1;
 }
+
+integer_value_t
+code_current_pos (code_t *code)
+{
+	return vec_size (code->opcodes) - 1;
+}
+
+int
+code_remove_pos (code_t *code,integer_value_t pos)
+{
+	return vec_remove (code->opcodes, pos);
+}
+

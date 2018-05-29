@@ -16,6 +16,8 @@ doubleobject.c \
 doubleobject.h \
 floatobject.c \
 floatobject.h \
+funcobject.c \
+funcobject.h \
 error.c \
 error.h \
 hash.c \
