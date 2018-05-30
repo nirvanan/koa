@@ -102,6 +102,8 @@ typedef struct buf_read_s
 static int parser_cast_expression (parser_t *parser, code_t *code);
 static int parser_assignment_expression (parser_t *parser, code_t *code);
 static int parser_expression (parser_t *parser, code_t *code);
+static int parser_statement (parser_t *parser, code_t *code);
+static int parser_compound_statement (parser_t *parser, code_t *code);
 
 static char
 parser_file_reader (void *udata)
@@ -157,11 +159,13 @@ parser_free (parser_t *parser)
 	pool_free ((void *) parser);
 }
 
-static void
+static int
 parser_syntax_error (parser_t *parser, const char *err)
 {
 	error ("syntax error: %s:%d: %s",
 		parser->path, TOKEN_LINE (parser->token), err);
+
+	return 0;
 }
 
 static void
@@ -191,9 +195,7 @@ static int
 parser_test_and_next (parser_t *parser, token_type_t need, const char *err)
 {
 	if (!parser_check (parser, need)) {
-		parser_syntax_error (parser, err);
-
-		return 0;
+		return parser_syntax_error (parser, err);
 	}
 
 	parser_next_token (parser);
@@ -428,34 +430,25 @@ parser_get_index_assign_op (token_type_t type)
 	return (op_t) 0;
 }
 
-/* labeled-statement:
- * case conditional-expression : statement
- * default : statement */
+/* jump-statement:
+ * continue ;
+ * break ;
+ * return expressionopt ; */
 static int
-parser_labeled_statement (parser_t *parser, code_t *code)
+parser_jump_statement (parser_t *parser, code_t *code)
 {
 	return 1;
 }
 
-/* expression-statement:
- * expressionopt ; */
+/* iteration-statement:
+ * while ( expression ) statement
+ * do statement while ( expression ) ;
+ * for ( expressionopt ; expressionopt ; expressionopt ) statement
+ * for ( declaration expressionopt ; expressionopt ) statement */
 static int
-parser_expression_statement (parser_t *parser, code_t *code)
+parser_iteration_statement (parser_t *parser, code_t *code)
 {
-	if (parser_check (parser, TOKEN (';'))) {
-		/* Empty statement, do nothing. */
-		parser_next_token (parser);
-
-		return 1;
-	}
-
-	if (!parser_expression (parser, code)) {
-		return 0;
-	}
-
-	/* Skip ';'. */
-	return parser_test_and_next (parser, TOKEN (';'),
-		"missing ';' in the end of the statement.");
+	return 1;
 }
 
 /* selection-statement:
@@ -480,8 +473,8 @@ parser_selection_statement (parser_t *parser, code_t *code)
 		}
 
 		/* Emit a JUMP_FALSE, the para is pending. */
-		if (!(false_pos = code_push_opcode (code,
-			OPCODE (OP_JUMP_FALSE, 0), line) - 1)) {
+		if ((false_pos = code_push_opcode (code,
+			OPCODE (OP_JUMP_FALSE, 0), line) - 1) == -1) {
 			return 0;
 		}
 
@@ -504,8 +497,8 @@ parser_selection_statement (parser_t *parser, code_t *code)
 
 			parser_next_token (parser);
 			/* Emit a JUMP_FORCE, the para is pending. */
-			if (!(force_pos = code_push_opcode (code,
-				OPCODE (OP_JUMP_FORCE, 0), line) - 1)) {
+			if ((force_pos = code_push_opcode (code,
+				OPCODE (OP_JUMP_FORCE, 0), line) - 1) == -1) {
 				return 0;
 			}
 
@@ -539,6 +532,44 @@ parser_selection_statement (parser_t *parser, code_t *code)
 	return 1;
 }
 
+/* expression-statement:
+ * expressionopt ; */
+static int
+parser_expression_statement (parser_t *parser, code_t *code)
+{
+	uint32_t line;
+
+	if (parser_check (parser, TOKEN (';'))) {
+		/* Empty statement, do nothing. */
+		parser_next_token (parser);
+
+		return 1;
+	}
+
+	if (!parser_expression (parser, code)) {
+		return 0;
+	}
+
+	/* Skip ';'. */
+	if (!parser_test_and_next (parser, TOKEN (';'),
+		"missing ';' in the end of the statement.")) {
+		return 0;
+	}
+
+	/* Emit a POP_STACK to ignore left part. */
+	line = TOKEN_LINE (parser->token);
+	return code_push_opcode (code, OPCODE (OP_POP_STACK, 0), line);
+}
+
+/* labeled-statement:
+ * case conditional-expression : statement
+ * default : statement */
+static int
+parser_labeled_statement (parser_t *parser, code_t *code)
+{
+	return 1;
+}
+
 /* statement:
  * labeled-statement
  * compound-statement
@@ -565,6 +596,18 @@ parser_statement (parser_t *parser, code_t *code)
 		case TOKEN_RETURN:
 			return parser_jump_statement (parser, code);
 		default:
+			if (parser_check (parser, TOKEN ('{'))) {
+				uint32_t line;
+
+				/* Emit an ENTER_BLOCK. */
+				line = TOKEN_LINE (parser->token);
+				if (!code_push_opcode (code,
+					OPCODE (OP_ENTER_BLOCK, 0), line)) {
+					return 0;
+				}
+
+				return parser_compound_statement (parser, code);
+			}
 			break;
 	}
 
@@ -951,9 +994,7 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 	
 	/* Check argument list size. */
 	if (size > MAX_PARA) {
-		parser_syntax_error (parser, "number of arguments exceeded.");
-
-		return 0;
+		return parser_syntax_error (parser, "number of arguments exceeded.");
 	}
 	
 	/* Emit a MAKE_VEC. */
@@ -980,7 +1021,7 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 		
 		/* Skip ']'. */
 		if (!parser_test_and_next (parser, TOKEN (']'),
-			"missing matching ']' for indexing."))
+			"missing matching ']' for indexing.")) { 
 
 			return 0;
 		}
@@ -1021,9 +1062,7 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_POINC, OPCODE_PARA (last)), line);
 		}
 		else {
-			parser_syntax_error (parser, "lvalue requierd.");
-
-			return 0;
+			return parser_syntax_error (parser, "lvalue requierd.");
 		}
 	}
 	else if (parser_check (parser, TOKEN_DEC)){
@@ -1036,9 +1075,7 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 			return code_modify_opcode (code, -1, OPCODE (OP_INDEX_PODEC, OPCODE_PARA (last)), line);
 		}
 		else {
-			parser_syntax_error (parser, "lvalue requierd.");
-
-			return 0;
+			return parser_syntax_error (parser, "lvalue requierd.");
 		}
 	}
 
@@ -1264,9 +1301,7 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 					code_modify_opcode (code, -1, OPCODE (OP_INDEX_DEC, OPCODE_PARA (last)), line);
 			}
 			else {
-				parser_syntax_error (parser, "lvalue required.");
-
-				return 0;
+				return parser_syntax_error (parser, "lvalue required.");
 			}
 		default:
 			if (type == TOKEN ('+')) {
@@ -1309,9 +1344,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 			return parser_unary_expression (parser, code, 1);
 		}
 		else if (type == OBJECT_TYPE_VOID) {
-			parser_syntax_error (parser, "can not cast any type to void.");
-
-			return 0;
+			return parser_syntax_error (parser, "can not cast any type to void.");
 		}
 		
 		parser_next_token (parser);
@@ -1365,9 +1398,7 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		last = code_last_opcode (code);
 		if (OPCODE_OP (last) != OP_LOAD_VAR &&
 			OPCODE_OP (last) != OP_LOAD_INDEX) {
-			parser_syntax_error (parser, "lvalue required.");
-
-			return 0;
+			return parser_syntax_error (parser, "lvalue required.");
 		}
 
 		/* Recursion needed. */
@@ -1383,9 +1414,7 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 			parser_get_var_assign_op (type):
 			parser_get_index_assign_op (type);
 		if (!op) {
-			parser_syntax_error (parser, "unknown assignment operation.");
-
-			return 0;
+			return parser_syntax_error (parser, "unknown assignment operation.");
 		}
 
 		return code_push_opcode (code, OPCODE (op, OPCODE_PARA (last)), line);
@@ -1409,9 +1438,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 	var = id;
 	if (var == NULL) {
 		if (!parser_check (parser, TOKEN_IDENTIFIER)) {
-			parser_syntax_error (parser, "missing identifier name.");
-
-			return 0;
+			return parser_syntax_error (parser, "missing identifier name.");
 		}
 
 		var = TOKEN_ID (parser->token);
@@ -1480,9 +1507,7 @@ parser_declaration (parser_t *parser, code_t *code,
 	if (t == -1) {
 		t = parser_token_object_type (parser);
 		if (t == OBJECT_TYPE_VOID) {
-			parser_syntax_error (parser, "variable can not be void.");
-
-			return 0;
+			return parser_syntax_error (parser, "variable can not be void.");
 		}
 	}
 	else {
@@ -1561,21 +1586,15 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	line = TOKEN_LINE (parser->token);
 	type = parser_token_object_type (parser);
 	if (type == -1) {
-		parser_syntax_error (parser, "unknown parameter type.");
-
-		return 0;
+		return parser_syntax_error (parser, "unknown parameter type.");
 	}
 	else if (type == OBJECT_TYPE_VOID) {
-		parser_syntax_error (parser, "parameter can not be a void.");
-
-		return 0;
+		return parser_syntax_error (parser, "parameter can not be a void.");
 	}
 
 	parser_next_token (parser);
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
-		parser_syntax_error (parser, "missing identifier name.");
-
-		return 0;
+		return parser_syntax_error (parser, "missing identifier name.");
 	}
 	
 	/* Insert parameter local var and const. */
@@ -1649,16 +1668,12 @@ parser_function_definition (parser_t *parser, code_t *code,
 	}
 
 	if (!parser_check (parser, TOKEN (')'))) {
-		parser_syntax_error (parser, "missing matching ')'.");
-
-		return 0;
+		return parser_syntax_error (parser, "missing matching ')'.");
 	}
 	parser_next_token (parser);
 
 	if (!parser_check (parser, TOKEN ('{'))) {
-		parser_syntax_error (parser, "missing '{' in function definition.");
-
-		return 0;
+		return parser_syntax_error (parser, "missing '{' in function definition.");
 	}
 
 	line = TOKEN_LINE (parser->token);
@@ -1693,16 +1708,12 @@ parser_external_declaration (parser_t *parser, code_t *code)
 
 	type = parser_token_object_type (parser);
 	if (type == -1) {
-		parser_syntax_error (parser, "unknown variable type or return value type.");
-
-		return 0;
+		return parser_syntax_error (parser, "unknown variable type or return value type.");
 	}
 
 	parser_next_token (parser);
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
-		parser_syntax_error (parser, "missing identifier name.");
-
-		return 0;
+		return parser_syntax_error (parser, "missing identifier name.");
 	}
 
 	id = TOKEN_ID (parser->token);
@@ -1714,9 +1725,7 @@ parser_external_declaration (parser_t *parser, code_t *code)
 
 	/* Goes to declaration. */
 	if (type == OBJECT_TYPE_VOID) {
-		parser_syntax_error (parser, "variable can not be a void.");
-
-		return 0;
+		return parser_syntax_error (parser, "variable can not be a void.");
 	}
 
 	return parser_declaration (parser, code, type, id);
