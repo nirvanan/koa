@@ -179,7 +179,7 @@ dict_set (dict_t *dict, void *key, void *value)
 	
 	/* Need rehash? */
 	occupied = hash_occupied (dict->h, hash);
-	if (occupied > 0) {
+	if (occupied == 0) {
 		if (dict_rehash (dict, dict->used + 1) == 0) {
 			return NULL;
 		}

@@ -187,7 +187,7 @@ vec_push_back (vec_t *vec, void *data)
 int
 vec_pop_back (vec_t *vec)
 {
-	return vec_remove (vec, vec->size - 1);
+	return vec_remove (vec, (integer_value_t) vec->size - 1);
 }
 
 int
@@ -199,7 +199,7 @@ vec_push_front (vec_t *vec, void *data)
 int
 vec_pop_front (vec_t *vec)
 {
-	return vec_remove (vec, 0);
+	return vec_remove (vec, (integer_value_t) 0);
 }
 
 void *
@@ -261,6 +261,7 @@ vec_insert (vec_t *vec, integer_value_t pos, void *data)
 	for (size_t i = vec->size; i > (size_t) pos; i++) {
 		vec->v[i] = vec->v[i - 1];
 	}
+
 	vec->v[pos] = data;
 	vec->size++;
 

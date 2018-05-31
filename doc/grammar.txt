@@ -178,18 +178,32 @@ expression-statement:
 	expressionopt ;
 
 selection-statement:
-	if ( expression ) statement
-	if ( expression ) statement else statement
-	switch ( expression ) statement
+	if-statement
 
 iteration-statement:
-	while ( expression ) statement
-	do statement while ( expression ) ;
-	for ( expressionopt ; expressionopt ; expressionopt ) statement
-	for ( declaration expressionopt ; expressionopt ) statement
+	while-statement
+	do-while-statement
+	for-statement
 
 jump-statement:
 	continue ;
 	break ;
 	return expressionopt ;
+
+if-statement:
+	if ( expression ) statement
+	if ( expression ) statement else statement
+
+switch-statement:
+	switch ( expression ) statement
+
+while-statement:
+	while ( expression ) statement
+
+do-while-statement:
+	do statement while ( expression ) ;
+
+for-statement:
+	for ( expressionopt ; expressionopt ; expressionopt ) statement
+	for ( declaration expressionopt ; expressionopt ) statement
 

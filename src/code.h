@@ -38,6 +38,12 @@
 
 #define OPCODE_PARA(x) ((x)&PARA_MASK)
 
+#define OPCODE_IS_JUMP(x) (OPCODE_OP(x)==OP_JUMP_FALSE||\
+	OPCODE_OP(x)==OP_JUMP_FORCE||\
+	OPCODE_OP(x)==OP_JUMP_CONTINUE||\
+	OPCODE_OP(x)==OP_JUMP_BREAK||\
+	OPCODE_OP(x)==OP_JUMP_CASE)
+
 typedef int32_t para_t;
 
 typedef uint32_t opcode_t;
@@ -106,7 +112,13 @@ typedef enum op_e {
 	OP_INDEX_IPOR,
 	OP_JUMP_FALSE,
 	OP_JUMP_FORCE,
-	OP_ENTER_BLOCK
+	OP_ENTER_BLOCK,
+	OP_LEAVE_BLOCK,
+	OP_JUMP_CONTINUE,
+	OP_JUMP_BREAK,
+	OP_RETURN,
+	OP_CASE_BLOCK,
+	OP_JUMP_CASE
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */
@@ -123,6 +135,15 @@ typedef struct code_s {
 	object_type_t ret_type;
 } code_t;
 
+typedef enum upper_type_e
+{
+	UPPER_TYPE_PLAIN,
+	UPPER_TYPE_FOR,
+	UPPER_TYPE_DO,
+	UPPER_TYPE_WHILE,
+	UPPER_TYPE_SWITCH
+} upper_type_t;
+
 code_t *
 code_new (const char *filename, const char *name);
 
@@ -132,7 +153,11 @@ code_set_fun (code_t *code, object_type_t ret_type);
 void
 code_free (code_t *code);
 
-integer_value_t
+int
+code_insert_opcode (code_t *code, para_t pos,
+					opcode_t opcode, uint32_t line);
+
+para_t
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line);
 
 para_t
@@ -145,13 +170,16 @@ opcode_t
 code_last_opcode (code_t *code);
 
 int
-code_modify_opcode (code_t *code, integer_value_t pos,
+code_modify_opcode (code_t *code, para_t pos,
 					opcode_t opcode, uint32_t line);
 
-integer_value_t
+para_t
 code_current_pos (code_t *code);
 
+opcode_t
+code_get_pos (code_t *code, para_t pos);
+
 int
-code_remove_pos (code_t *code, integer_value_t pos);
+code_remove_pos (code_t *code, para_t pos);
 
 #endif /* CODE_H */

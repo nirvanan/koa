@@ -117,18 +117,26 @@ code_free (code_t *code)
 	pool_free ((void *) code);
 }
 
-integer_value_t
-code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
+para_t
+code_insert_opcode (code_t *code, para_t pos, opcode_t opcode, uint32_t line)
 {
 	opcode_t *op;
 	uint32_t *li;
+
+	/* Check const list size. */
+	if (vec_size (code->opcodes) >= MAX_PARA) {
+		error ("number of opcodes exceeded.");
+
+		return -1;
+	}
 
 	op = (opcode_t *) pool_alloc (sizeof (opcode_t));
 	if (op == NULL) {
 		error ("out of memory.");
 
-		return 0;
+		return -1;
 	}
+
 	*op = opcode;
 
 	li = pool_alloc (sizeof (uint32_t));
@@ -136,25 +144,34 @@ code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
 		pool_free ((void *) op);
 		error ("out of memory.");
 
-		return 0;
+		return -1;
 	}
+
 	*li = line;
 
-	if (!vec_push_back (code->opcodes, (void *) op)) {
+	if (!vec_insert (code->opcodes, (integer_value_t) pos, (void *) op)) {
 		pool_free ((void *) op);
 
-		return 0;
+		return -1;
 	}
-	if (!vec_push_back (code->lineinfo, (void *) li)) {
-		UNUSED (vec_pop_back (code->opcodes));
+	if (!vec_insert (code->lineinfo, (integer_value_t) pos, (void *) li)) {
+		UNUSED (vec_remove (code->opcodes, (integer_value_t) pos));
 		pool_free ((void *) op);
 		pool_free ((void *) li);
 
-		return 0;
+		return -1;
 	}
 
-	return (integer_value_t) vec_size (code->opcodes);
+	return (para_t) vec_size (code->opcodes);
 }
+
+para_t
+code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
+{
+	return code_insert_opcode (code,
+		(para_t) vec_size (code->opcodes), opcode, line);
+}
+
 
 static int
 code_var_find_fun (void *a, void *b)
@@ -255,11 +272,11 @@ code_last_opcode (code_t *code)
 }
 
 int
-code_modify_opcode (code_t *code, integer_value_t pos,
+code_modify_opcode (code_t *code, para_t pos,
 					opcode_t opcode, uint32_t line)
 {
 	size_t size;
-	integer_value_t p;
+	para_t p;
 	opcode_t *prev_opcode;
 	uint32_t *prev_line;
 
@@ -272,23 +289,39 @@ code_modify_opcode (code_t *code, integer_value_t pos,
 		p = size;
 	}
 
-	prev_opcode = (opcode_t *) vec_pos (code->opcodes, p);
+	prev_opcode = (opcode_t *) vec_pos (code->opcodes, (integer_value_t) p);
 	*prev_opcode = opcode;
-	prev_line = (opcode_t *) vec_pos (code->lineinfo, p);
-	*prev_line = line;
+	if (line != 0) {
+		prev_line = (uint32_t *) vec_pos (code->lineinfo, (integer_value_t) p);
+		*prev_line = line;
+	}
 	
 	return 1;
 }
 
-integer_value_t
+para_t
 code_current_pos (code_t *code)
 {
-	return vec_size (code->opcodes) - 1;
+	return (para_t) vec_size (code->opcodes) - 1;
+}
+
+opcode_t
+code_get_pos (code_t *code, para_t pos)
+{
+	opcode_t *opcode;
+
+	opcode = (opcode_t *) vec_pos (code->opcodes, (integer_value_t) pos);
+
+	if (opcode == NULL) {
+		return (opcode_t) 0;
+	}
+
+	return *opcode;
 }
 
 int
-code_remove_pos (code_t *code,integer_value_t pos)
+code_remove_pos (code_t *code, para_t pos)
 {
-	return vec_remove (code->opcodes, pos);
+	return vec_remove (code->opcodes, (integer_value_t) pos);
 }
 

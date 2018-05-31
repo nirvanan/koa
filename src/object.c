@@ -63,6 +63,23 @@ static const char *g_type_name[] =
 	"frame"
 };
 
+/* Dummy object, used to represent void values. */
+static object_opset_t g_dummy_ops =
+{
+	NULL
+};
+
+static object_t g_dummy_object = 
+{
+	{
+		1,
+		OBJECT_TYPE_VOID,
+		0,
+		&g_dummy_ops,
+		NULL
+	},
+};
+
 void
 object_ref (object_t *obj)
 {
@@ -1003,6 +1020,8 @@ object_t *
 object_get_default (object_type_t type)
 {
 	switch (type) {
+		case OBJECT_TYPE_VOID:
+			return &g_dummy_object;
 		case OBJECT_TYPE_NULL:
 			return nullobject_new (NULL);
 		case OBJECT_TYPE_BOOL:

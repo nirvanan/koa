@@ -72,6 +72,7 @@
 #define FLOATING_IS_INFINITY(x) (!isfinite((x))&&!isnan((x)))
 #define FLOATING_FINITE(x) isfinite((x))
 
+#define OBJECT_IS_DUMMY(x) (OBJECT_TYPE((x))==OBJECT_TYPE_VOID)
 #define OBJECT_IS_NULL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_NULL)
 #define OBJECT_IS_BOOL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BOOL)
 #define OBJECT_IS_CHAR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_CHAR)
