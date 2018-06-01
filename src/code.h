@@ -119,7 +119,8 @@ typedef enum op_e {
 	OP_RETURN,
 	OP_CASE_BLOCK,
 	OP_JUMP_CASE,
-	OP_JUMP_TRUE
+	OP_JUMP_TRUE,
+	OP_END_PROGRAM
 } op_t;
 
 /* Code is a static structure, it can represent a function, or a module. */

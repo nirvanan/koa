@@ -2344,13 +2344,18 @@ parser_external_declaration (parser_t *parser, code_t *code)
 static int
 parser_translation_unit (parser_t *parser, code_t *code)
 {
+	uint32_t line;
+
 	while (!parser_check (parser, TOKEN_END)) {
 		if (!parser_external_declaration (parser, code)) {
 			return 0;
 		}
 	}
 
-	return 1;
+	/* Emit a END_PROGRAM. */
+	line = TOKEN_LINE (parser->token);
+
+	return code_push_opcode (code, OPCODE (OP_END_PROGRAM, 0), line);
 }
 
 code_t *
