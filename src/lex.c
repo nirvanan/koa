@@ -480,7 +480,7 @@ lex_read_escaped_char (reader_t *reader, token_t *token)
 			/* A hexadecimal char. */
 			if (!lex_read_hexadecimal_char (reader, token)) {
 				error ("%s:%d: invalid hexadecimal char sequence.",
-					reader->path, reader->line);
+					   reader->path, reader->line);
 
 				return 0;
 			}
@@ -490,7 +490,7 @@ lex_read_escaped_char (reader_t *reader, token_t *token)
 			if (LEX_IS_ODIGIT (reader->current)) {
 				if (!lex_read_octal_char (reader, token)) {
 					error ("%s:%d: invalid octal char sequence.",
-						reader->path, reader->line);
+						   reader->path, reader->line);
 
 					return 0;
 				}
@@ -498,7 +498,7 @@ lex_read_escaped_char (reader_t *reader, token_t *token)
 			}
 
 			error ("%s:%d: unknown escape sequence: \\%c.",
-				reader->path, reader->line, reader->current);
+				   reader->path, reader->line, reader->current);
 
 			return 0;
 	}
@@ -520,7 +520,8 @@ lex_read_char (reader_t *reader, token_t *token)
 	}
 
 	if (reader->current != '\'') {
-		return lex_token_error (reader, token, "multiple chars in char literal.");
+		return lex_token_error (reader, token,
+								"multiple chars in char literal.");
 	}
 
 	lex_next_char (reader);
@@ -561,7 +562,8 @@ lex_read_decimal_floating (reader_t *reader, token_t *token, int digit_part)
 		lex_save_char (reader, token, -1, 1);
 		/* Test next for digits. */
 		if (!digit_part && !LEX_IS_DIGIT (reader->current)) {
-			return lex_token_error (reader, token, "invalid floating sequence.");
+			return lex_token_error (reader, token,
+									"invalid floating sequence.");
 		}
 	}
 
@@ -572,7 +574,8 @@ lex_read_decimal_floating (reader_t *reader, token_t *token, int digit_part)
 		else if (reader->current == 'e' || reader->current == 'E') {
 			/* Multiple exponent parts? */
 			if (token->type == TOKEN_EXPO) {
-				return lex_token_error (reader, token, "multiple exponent parts.");
+				return lex_token_error (reader, token,
+										"multiple exponent parts.");
 			}
 
 			lex_save_char (reader, token, -1, 1);
@@ -596,7 +599,8 @@ lex_read_decimal_floating (reader_t *reader, token_t *token, int digit_part)
 				"invalid decimal point in floating sequence.");
 		}
 		else if (LEX_IS_ALPHA (reader->current)) {
-			return lex_token_error (reader, token, "invalid floating literal postfix.");
+			return lex_token_error (reader, token,
+									"invalid floating literal postfix.");
 		}
 		else {
 			break;
@@ -615,7 +619,8 @@ lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
 		lex_save_char (reader, token, -1, 1);
 		/* Test next for xdigits. */
 		if (!hex_part && !LEX_IS_XDIGIT (reader->current)) {
-			return lex_token_error (reader, token, "invalid hexadecimal floating sequence.");
+			return lex_token_error (reader, token,
+									"invalid hexadecimal floating sequence.");
 		}
 	}
 
@@ -627,7 +632,7 @@ lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
 		else if (LEX_IS_XDIGIT (reader->current)) {
 			if (token->type != TOKEN_HEXINT || p) {
 				return lex_token_error (reader, token,
-					"invalid hexadecimal floating sequence.");
+										"invalid hexadecimal floating sequence.");
 			}
 			lex_save_char (reader, token, -1, 1);
 		}
@@ -641,7 +646,7 @@ lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
 			/* Test next for digits. */
 			if (!LEX_IS_DIGIT (reader->current)) {
 				return lex_token_error (reader, token,
-					"invalid floating literal sequence.");
+										"invalid floating literal sequence.");
 			}
 		}
 		else if (reader->current == 'f' || reader->current == 'F') {
@@ -650,10 +655,11 @@ lex_read_hexadecimal_floating (reader_t *reader, token_t *token, int hex_part)
 		}
 		else if (reader->current == '.') {
 			return lex_token_error (reader, token,
-				"invalid decimal point in floating sequence.");
+									"invalid decimal point in floating sequence.");
 		}
 		else if (LEX_IS_ALPHA (reader->current)) {
-			return lex_token_error (reader, token, "invalid floating literal postfix.");
+			return lex_token_error (reader, token,
+									"invalid floating literal postfix.");
 		}
 		else {
 			break;
@@ -683,7 +689,8 @@ lex_read_numberical (reader_t *reader, token_t *token)
 			lex_save_char (reader, token, -1, 1);
 			/* Test next for xdigits. */
 			if (!LEX_IS_XDIGIT (reader->current) && reader->current != '.') {
-				return lex_token_error (reader, token, "invalid hexadecimal sequence.");
+				return lex_token_error (reader, token,
+										"invalid hexadecimal sequence.");
 			}
 			else if (LEX_IS_XDIGIT (reader->current)) {
 				hex_part = 1;
@@ -706,12 +713,14 @@ lex_read_numberical (reader_t *reader, token_t *token)
 				lex_save_char (reader, token, -1, 1);
 			}
 			else {
-				return lex_token_error (reader, token, "invalid floating exponent.");
+				return lex_token_error (reader, token,
+										"invalid floating exponent.");
 			}
 		}
 		else if (LEX_IS_XDIGIT (reader->current)) {
 			if (token->type != TOKEN_HEXINT) {
-				return lex_token_error (reader, token, "invalid decimal sequence.");
+				return lex_token_error (reader, token,
+										"invalid decimal sequence.");
 			}
 			lex_save_char (reader, token, -1, 1);
 		}
@@ -738,7 +747,8 @@ lex_read_numberical (reader_t *reader, token_t *token)
 			break;
 		}
 		else if (LEX_IS_ALPHA (reader->current)) {
-			return lex_token_error (reader, token, "invalid integer literal postfix.");
+			return lex_token_error (reader, token,
+									"invalid integer literal postfix.");
 		}
 		else {
 			break;
@@ -848,7 +858,8 @@ lex_next (reader_t *reader)
 					lex_next_char (reader);
 				}
 				else {
-					lex_set_type_and_next (reader, token, (token_type_t) reader->current);
+					lex_set_type_and_next (reader, token,
+										   (token_type_t) reader->current);
 
 					return token;
 				}
