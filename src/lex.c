@@ -548,6 +548,9 @@ lex_read_str (reader_t *reader, token_t *token)
 		else if (reader->current == EOF) {
 			return lex_token_error (reader, token, "missing matching '\"'.");
 		}
+		else {
+			lex_save_char (reader, token, -1, 1);
+		}
 	}
 
 	token->type = TOKEN_STRING;
