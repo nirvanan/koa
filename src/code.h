@@ -32,7 +32,7 @@
 #define PARA_BITS 24
 #define PARA_MASK MAX_PARA
 
-#define OPCODE(o,p) (((o)<<PARA_BITS)&(p))
+#define OPCODE(o,p) (((o)<<PARA_BITS)|(p))
 
 #define OPCODE_OP(x) ((x)>>PARA_BITS)
 

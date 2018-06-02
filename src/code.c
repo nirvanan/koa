@@ -286,7 +286,7 @@ code_modify_opcode (code_t *code, para_t pos,
 
 	p = pos;
 	if (p == -1) {
-		p = size;
+		p = size - 1;
 	}
 
 	prev_opcode = (opcode_t *) vec_pos (code->opcodes, (integer_value_t) p);
@@ -322,6 +322,7 @@ code_get_pos (code_t *code, para_t pos)
 int
 code_remove_pos (code_t *code, para_t pos)
 {
-	return vec_remove (code->opcodes, (integer_value_t) pos);
+	return vec_remove (code->opcodes, (integer_value_t) pos) &&
+		vec_remove (code->lineinfo, (integer_value_t) pos);
 }
 

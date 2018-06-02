@@ -436,6 +436,26 @@ parser_get_index_assign_op (token_type_t type)
 	return (op_t) 0;
 }
 
+static int
+parser_push_dummy_return (parser_t *parser, code_t *code)
+{
+	para_t pos;
+	uint32_t line;
+
+	line = TOKEN_LINE (parser->token);
+	pos = parser_push_const (code, OBJECT_TYPE_VOID, NULL);
+	if (pos == -1) {
+		return 0;
+	}
+
+	/* Emit a LOAD_CONST. */
+	if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line)) {
+		return 0;
+	}
+
+	return code_push_opcode (code, OPCODE (OP_RETURN, 0), line);
+}
+
 /* for-statement:
  * for ( expressionopt ; expressionopt ; expressionopt ) statement
  * for ( declaration expressionopt ; expressionopt ) statement */
@@ -649,8 +669,9 @@ parser_do_while_statement (parser_t *parser, code_t *code)
 		}
 	}
 
-	/* Skip ';'. */
-	return parser_test_and_next (parser, TOKEN (';'), "missing ';'.");
+	/* Check ')' and ';'. */
+	return parser_test_and_next (parser, TOKEN (')'), "missing matching ')'.") &&
+		parser_test_and_next (parser, TOKEN (';'), "missing ';'.");
 }
 
 /* while-statement:
@@ -680,6 +701,12 @@ parser_while_statement (parser_t *parser, code_t *code)
 	line = TOKEN_LINE (parser->token);
 	if ((false_pos = code_push_opcode (code,
 		OPCODE (OP_JUMP_FALSE, 0), line) - 1) == -1) {
+		return 0;
+	}
+
+	/* Check ')'. */
+	if (!parser_test_and_next (parser, TOKEN (')'),
+		"missing matching ')'.")) {
 		return 0;
 	}
 
@@ -984,28 +1011,15 @@ parser_jump_statement (parser_t *parser, code_t *code,
 		parser_next_token (parser);
 		if (parser_check (parser, TOKEN (';'))) {
 			/* Push a dummy object. */
-			para_t pos;
-
-			pos = parser_push_const (code, OBJECT_TYPE_VOID, NULL);
-			if (pos == -1) {
-				return 0;
-			}
-
-			/* Emit a LOAD_CONST. */
-			if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line)) {
-				return 0;
-			}
+			return parser_push_dummy_return (parser, code);
 		}
 		else {
 			line = TOKEN_LINE (parser->token);
 			if (!parser_expression (parser, code)) {
 				return 0;
 			}
-		}
 
-		/* Emit a RETURN. */
-		if (!code_push_opcode (code, OPCODE (OP_RETURN, 0), line)) {
-			return 0;
+			return code_push_opcode (code, OPCODE (OP_RETURN, 0), line);
 		}
 	}
 	else {
@@ -1033,7 +1047,7 @@ parser_iteration_statement (parser_t *parser, code_t *code)
 		return parser_for_statement (parser, code);
 	}
 
-	return 0;
+	return parser_syntax_error (parser, "unknown iteration expression");
 }
 
 /* selection-statement:
@@ -1096,23 +1110,26 @@ parser_labeled_statement (parser_t *parser, code_t *code,
 
 	/* Emit a CASE_BLOCK. */
 	line = TOKEN_LINE (parser->token);
-	if (code_push_opcode (code, OPCODE (OP_CASE_BLOCK, upper_pos), line)) {
+	if (!code_push_opcode (code, OPCODE (OP_CASE_BLOCK, upper_pos), line)) {
 		return 0;
 	}
 
 	if (parser_check (parser, TOKEN_CASE)) {
+		parser_next_token (parser);
 		if (!parser_conditional_expression (parser, code, 0)) {
 			return 0;
 		}
 
 		/* Emit a JUMP_CASE. */
 		line = TOKEN_LINE (parser->token);
-		if (code_push_opcode (code, OPCODE (OP_JUMP_CASE, upper_pos), line)) {
+		if (!code_push_opcode (code, OPCODE (OP_JUMP_CASE, upper_pos), line)) {
 			return 0;
 		}
 	}
+	else {
+		parser_next_token (parser);
+	}
 
-	parser_next_token (parser);
 	/* Skip ':'. */
 	if (!parser_test_and_next (parser, TOKEN (':'),
 		"missing matching ':' for label statement.")) { 
@@ -1165,10 +1182,9 @@ parser_statement (parser_t *parser, code_t *code,
 
 				/* Emit an LEAVE_BLOCK. */
 				line = TOKEN_LINE (parser->token);
-				if (!code_push_opcode (code, 
-					OPCODE (OP_LEAVE_BLOCK, 0), line)) {
-					return 0;
-				}
+				
+				return code_push_opcode (code, 
+										 OPCODE (OP_LEAVE_BLOCK, 0), line);
 			}
 			break;
 	}
@@ -1219,10 +1235,8 @@ parser_additive_expression (parser_t *parser, code_t *code, int skip)
 	uint32_t line;
 	op_t op;
 
-	if (!skip) {
-		if (!parser_multiplicative_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_multiplicative_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while ((op = parser_get_additive_op (parser))) {
@@ -1251,10 +1265,8 @@ parser_shift_expression (parser_t *parser, code_t *code, int skip)
 	uint32_t line;
 	op_t op;
 
-	if (!skip) {
-		if (!parser_additive_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_additive_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while ((op = parser_get_shift_op (parser))) {
@@ -1285,10 +1297,8 @@ parser_relational_expression (parser_t *parser, code_t *code, int skip)
 	uint32_t line;
 	op_t op;
 
-	if (!skip) {
-		if (!parser_shift_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_shift_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while ((op = parser_get_relational_op (parser))) {
@@ -1317,10 +1327,8 @@ parser_equality_expression (parser_t *parser, code_t *code, int skip)
 	uint32_t line;
 	op_t op;
 
-	if (!skip) {
-		if (!parser_relational_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_relational_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while ((op = parser_get_equality_op (parser))) {
@@ -1347,10 +1355,8 @@ parser_and_expression (parser_t *parser, code_t *code, int skip)
 {
 	uint32_t line;
 
-	if (!skip) {
-		if (!parser_equality_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_equality_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while (parser_check (parser, TOKEN ('&'))) {
@@ -1377,10 +1383,8 @@ parser_exclusive_or_expression (parser_t *parser, code_t *code, int skip)
 {
 	uint32_t line;
 
-	if (!skip) {
-		if (!parser_and_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_and_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while (parser_check (parser, TOKEN ('^'))) {
@@ -1407,10 +1411,8 @@ parser_inclusive_or_expression (parser_t *parser, code_t *code, int skip)
 {
 	uint32_t line;
 
-	if (!skip) {
-		if (!parser_exclusive_or_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_exclusive_or_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while (parser_check (parser, TOKEN ('|'))) {
@@ -1437,10 +1439,8 @@ parser_logical_and_expression (parser_t *parser, code_t *code, int skip)
 {
 	uint32_t line;
 
-	if (!skip) {
-		if (!parser_inclusive_or_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_inclusive_or_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while (parser_check (parser, TOKEN_LAND)) {
@@ -1467,10 +1467,8 @@ parser_logical_or_expression (parser_t *parser, code_t *code, int skip)
 {
 	uint32_t line;
 
-	if (!skip) {
-		if (!parser_logical_and_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_logical_and_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	while (parser_check (parser, TOKEN_LOR)) {
@@ -1497,10 +1495,8 @@ parser_conditional_expression (parser_t *parser, code_t *code, int skip)
 {
 	uint32_t line;
 
-	if (!skip) {
-		if (!parser_logical_or_expression (parser, code, 0)) {
-			return 0;
-		}
+	if (!parser_logical_or_expression (parser, code, skip)) {
+		return 0;
 	}
 
 	line = TOKEN_LINE (parser->token);
@@ -1644,7 +1640,7 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 		}
 	}
 
-	return 0;
+	return parser_syntax_error (parser, "unknown expression postfix.");
 }
 
 /* expression-postfix-list:
@@ -1830,7 +1826,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			break;
 	}
 
-	return 0;
+	return parser_syntax_error (parser, "invalid primary expression.");
 }
 
 /* postfix-expression:
@@ -1839,9 +1835,15 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 static int
 parser_postfix_expression (parser_t *parser, code_t *code, int leading_par)
 {
-	if (!parser_primary_expression (parser, code, leading_par) ||
-		!parser_expression_postfix_list (parser, code)) {
+	if (!parser_primary_expression (parser, code, leading_par)) {
 		return 0;
+	}
+
+	if (parser_check (parser, TOKEN ('[')) ||
+		parser_check (parser, TOKEN ('(')) ||
+		parser_check (parser, TOKEN_INC) ||
+		parser_check (parser, TOKEN_DEC)) {
+		return parser_expression_postfix_list (parser, code);
 	}
 
 	return 1;
@@ -1983,7 +1985,6 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		return parser_conditional_expression (parser, code, 1);
 	}
 	else if (TOKEN_IS_ASSIGN (parser->token)) {
-		para_t pos;
 		opcode_t last;
 		token_type_t type;
 		op_t op;
@@ -1993,10 +1994,6 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		 * otherwise it's not a lvalue. */
 		line = TOKEN_LINE (parser->token);
 		type = TOKEN_TYPE (parser->token);
-		pos = code_current_pos (code);
-		if (pos == -1) {
-			return 0;
-		}
 		last = code_last_opcode (code);
 		if (OPCODE_OP (last) != OP_LOAD_VAR &&
 			OPCODE_OP (last) != OP_LOAD_INDEX) {
@@ -2004,14 +2001,12 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		}
 
 		/* Recursion needed. */
+		parser_next_token (parser);
 		if (!parser_assignment_expression (parser, code)) {
 			return 0;
 		}
 		
 		/* Need to remove that LOAD_* opcode and emit an assignment. */
-		if (!code_remove_pos (code, pos)) {
-			return 0;
-		}
 		op = OPCODE_OP (last) != OP_LOAD_VAR?
 			parser_get_var_assign_op (type):
 			parser_get_index_assign_op (type);
@@ -2020,10 +2015,11 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 										"unknown assignment operation.");
 		}
 
-		return code_push_opcode (code, OPCODE (op, OPCODE_PARA (last)), line);
+		return code_modify_opcode (code, -1,
+								   OPCODE (op, OPCODE_PARA (last)), line);
 	}
 
-	return 0;
+	return 1;
 }
 
 /* init-declarator:
@@ -2113,10 +2109,9 @@ parser_declaration (parser_t *parser, code_t *code,
 			return parser_syntax_error (parser, "variable can not be void.");
 		}
 	}
-	else {
-		/* Skip type-specifier. */
-		parser_next_token (parser);
-	}
+
+	/* Skip type-specifier. */
+	parser_next_token (parser);
 
 	if (!parser_init_declarator_list (parser, code, t, first_id)) {
 		return 0;
@@ -2213,6 +2208,8 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 		return 0;
 	}
 
+	parser_next_token (parser);
+
 	/* Make opcodes and insert them. */
 	return code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) &&
 		code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line);
@@ -2249,6 +2246,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 	para_t var_pos;
 	para_t const_pos;
 	object_t *func_obj;
+	opcode_t last;
 	uint32_t line;
 
 	/* Make a new code for this function. */
@@ -2273,10 +2271,9 @@ parser_function_definition (parser_t *parser, code_t *code,
 		}
 	}
 
-	if (!parser_check (parser, TOKEN (')'))) {
-		return parser_syntax_error (parser, "missing matching ')'.");
+	if (!parser_test_and_next (parser, TOKEN (')'), "missing matching ')'.")) {
+		return 0;
 	}
-	parser_next_token (parser);
 
 	if (!parser_check (parser, TOKEN ('{'))) {
 		return parser_syntax_error (parser,
@@ -2285,6 +2282,13 @@ parser_function_definition (parser_t *parser, code_t *code,
 
 	line = TOKEN_LINE (parser->token);
 	if (!parser_compound_statement (parser, func_code, UPPER_TYPE_PLAIN, -1)) {
+		return 0;
+	}
+
+	/* Check the last opcode, if it's not a RETURN, we need to push one. */
+	last = code_last_opcode (func_code);
+	if (OPCODE_OP (last) != OP_RETURN &&
+		!parser_push_dummy_return (parser, func_code)) {
 		return 0;
 	}
 

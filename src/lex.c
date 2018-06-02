@@ -173,7 +173,7 @@ lex_reader_free (reader_t *reader)
 }
 
 static token_t *
-lex_token_new ()
+lex_token_new (reader_t *reader)
 {
 	token_t *token;
 
@@ -189,6 +189,7 @@ lex_token_new ()
 		fatal_error ("out of memory.");
 	}
 
+	token->lineno = reader->line;
 	token->allocated = TOKEN_LEN_STEP + 1;
 
 	return token;
@@ -811,7 +812,7 @@ lex_next (reader_t *reader)
 {
 	token_t *token;
 
-	token = lex_token_new ();
+	token = lex_token_new (reader);
 
 	for (;;) {
 		switch (reader->current) {
