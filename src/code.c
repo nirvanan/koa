@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "code.h"
@@ -26,12 +27,89 @@
 #include "longobject.h"
 #include "strobject.h"
 
+static const char *g_code_names[] =
+{
+	"NULL",
+	"OP_LOAD_CONST",
+	"OP_STORE_LOCAL",
+	"OP_STORE_VAR",
+	"OP_LOAD_VAR",
+	"OP_FUNC_RETURN",
+	"OP_TYPE_CAST",
+	"OP_VAR_INC",
+	"OP_VAR_DEC",
+	"OP_VAR_POINC",
+	"OP_VAR_PODEC",
+	"OP_VALUE_NEG",
+	"OP_BIT_NOT",
+	"OP_LOGIC_NOT",
+	"OP_POP_STACK",
+	"OP_LOAD_INDEX",
+	"OP_STORE_INDEX",
+	"OP_INDEX_INC",
+	"OP_INDEX_DEC",
+	"OP_INDEX_POINC",
+	"OP_INDEX_PODEC",
+	"OP_MAKE_VEC",
+	"OP_CALL_FUNC",
+	"OP_CON_SEL",
+	"OP_LOGIC_OR",
+	"OP_LOGIC_AND",
+	"OP_BIT_OR",
+	"OP_BIT_XOR",
+	"OP_BIT_AND",
+	"OP_EQUAL",
+	"OP_NOT_EQUAL",
+	"OP_LESS_THAN",
+	"OP_LARGE_THAN",
+	"OP_LESS_EQUAL",
+	"OP_LARGE_EQUAL",
+	"OP_LEFT_SHIFT",
+	"OP_RIGHT_SHIFT",
+	"OP_ADD",
+	"OP_SUB",
+	"OP_MUL",
+	"OP_DIV",
+	"OP_MOD",
+	"OP_VAR_IPMUL",
+	"OP_VAR_IPDIV",
+	"OP_VAR_IPMOD",
+	"OP_VAR_IPADD",
+	"OP_VAR_IPSUB",
+	"OP_VAR_IPLS",
+	"OP_VAR_IPRS",
+	"OP_VAR_IPAND",
+	"OP_VAR_IPXOR",
+	"OP_VAR_IPOR",
+	"OP_INDEX_IPMUL",
+	"OP_INDEX_IPDIV",
+	"OP_INDEX_IPMOD",
+	"OP_INDEX_IPADD",
+	"OP_INDEX_IPSUB",
+	"OP_INDEX_IPLS",
+	"OP_INDEX_IPRS",
+	"OP_INDEX_IPAND",
+	"OP_INDEX_IPXOR",
+	"OP_INDEX_IPOR",
+	"OP_JUMP_FALSE",
+	"OP_JUMP_FORCE",
+	"OP_ENTER_BLOCK",
+	"OP_LEAVE_BLOCK",
+	"OP_JUMP_CONTINUE",
+	"OP_JUMP_BREAK",
+	"OP_RETURN",
+	"OP_CASE_BLOCK",
+	"OP_JUMP_CASE",
+	"OP_JUMP_TRUE",
+	"OP_END_PROGRAM"
+};
+
 code_t *
 code_new (const char *filename, const char *name)
 {
 	code_t *code;
 
-	code = (code_t *) pool_alloc (sizeof (code_t));
+	code = (code_t *) pool_calloc (1, sizeof (code_t));
 	if (code == NULL) {
 		error ("failed to alloc code.");
 
@@ -40,7 +118,7 @@ code_new (const char *filename, const char *name)
 
 	code->filename = str_new (filename, strlen (filename));
 	if (code->filename == NULL) {
-		pool_free ((void *) code);
+		code_free (code);
 		error ("out of memory.");
 
 		return NULL;
@@ -48,8 +126,7 @@ code_new (const char *filename, const char *name)
 
 	code->name = str_new (name, strlen (name));
 	if (code->name == NULL) {
-		pool_free ((void *) code->filename);
-		pool_free ((void *) code);
+		code_free (code);
 		error ("out of memory.");
 
 		return NULL;
@@ -112,6 +189,12 @@ code_free (code_t *code)
 	if (code->varnames != NULL) {
 		vec_foreach (code->varnames, code_vec_unref_fun);
 		vec_free (code->varnames);
+	}
+	if (code->filename != NULL) {
+		str_free (code->filename);
+	}
+	if (code->name != NULL) {
+		str_free (code->name);
 	}
 
 	pool_free ((void *) code);
@@ -338,3 +421,46 @@ code_get_name (code_t *code)
 	return str_c_str (code->name);
 }
 
+static void
+code_print_object_vec (vec_t *vec)
+{
+	size_t size;
+	object_t *obj;
+	object_t *dump;
+
+	size = vec_size (vec);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		obj = (object_t *) vec_pos (vec, i);
+		dump = object_dump (obj);
+		printf ("%ld\t%s\n", i, str_c_str (strobject_get_value (dump)));
+		object_free (dump);
+	}
+}
+
+void
+code_print (code_t *code)
+{
+	size_t size;
+
+	/* Print consts. */
+	printf ("consts:\n");
+	code_print_object_vec (code->consts);
+
+	/* Print varnames. */
+	printf ("varnames:\n");
+	code_print_object_vec (code->varnames);
+
+	/* Print opcodes. */
+	size = vec_size (code->opcodes);
+	printf ("opcodes:\n");
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		opcode_t *opcode;
+		uint32_t *line;
+
+		opcode = (opcode_t *) vec_pos (code->opcodes, i);
+		line = (uint32_t *) vec_pos (code->lineinfo, i);
+		printf ("%u\t%s\t\t%d\n",
+				*line, g_code_names[OPCODE_OP (*opcode)],
+				OPCODE_PARA (*opcode));
+	}
+}

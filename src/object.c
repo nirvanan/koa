@@ -864,7 +864,7 @@ object_equal (object_t *obj1, object_t *obj2)
 	eq_fun = (OBJECT_OPSET (obj1))->eq;
 	if (eq_fun == NULL) {
 		/* Actually all types have equality routine. */
-		error ("no equality routine for left operand.");
+		error ("no equality routine for left operand %s.", TYPE_NAME (obj1));
 
 		return NULL;
 	}

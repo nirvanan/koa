@@ -34,6 +34,7 @@
 /* Object ops. */
 static void modobject_op_free (object_t *obj);
 static object_t *modobject_op_dump (object_t *obj);
+static object_t *modobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *modobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
@@ -56,7 +57,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Logic or. */
 	NULL, /* Left shift. */
 	NULL, /* Right shift. */
-	NULL, /* Equality. */
+	modobject_op_eq, /* Equality. */
 	NULL, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
@@ -93,6 +94,13 @@ modobject_op_dump (object_t *obj)
 	pool_free ((void *) buf);
 
 	return res;
+}
+
+/* Equality. */
+static object_t *
+modobject_op_eq (object_t *obj1, object_t *obj2)
+{
+	return boolobject_new (obj1 == obj2, NULL);
 }
 
 /* Hash. */

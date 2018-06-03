@@ -190,4 +190,7 @@ code_get_filename (code_t *code);
 const char *
 code_get_name (code_t *code);
 
+void
+code_print (code_t *code);
+
 #endif /* CODE_H */

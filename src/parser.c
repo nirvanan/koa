@@ -186,6 +186,17 @@ parser_next_token (parser_t * parser)
 	}
 }
 
+static token_t *
+parser_next_no_free (parser_t * parser)
+{
+	token_t *prev;
+
+	prev = parser->token;
+	parser->token = lex_next (parser->reader);
+
+	return prev;
+}
+
 static int
 parser_check (parser_t * parser, token_type_t need)
 {
@@ -1717,8 +1728,8 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 	line = TOKEN_LINE (parser->token);
 	switch (TOKEN_TYPE (parser->token)) {
 		case TOKEN_IDENTIFIER:
-			parser_next_token (parser);
 			pos = code_push_varname (code,TOKEN_ID (parser->token), 0);	
+			parser_next_token (parser);
 			if (pos == -1) {
 				return 0;
 			}
@@ -1790,13 +1801,13 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			char val;
 
 			val = (char) *TOKEN_ID (parser->token);
-			parser_next_token (parser);
 			pos = parser_push_const (code,
 									 OBJECT_TYPE_CHAR,
 									 charobject_new (val, NULL));
 			if (pos == -1) {
 				return 0;
 			}
+			parser_next_token (parser);
 
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
@@ -2040,12 +2051,15 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		}
 
 		var = TOKEN_ID (parser->token);
-		parser_next_token (parser);
 	}
 
 	var_pos = code_push_varname (code, var, 0);
 	if (var_pos == -1) {
 		return 0;
+	}
+
+	if (id == NULL) {
+		parser_next_token (parser);
 	}
 
 	if (parser_check (parser, TOKEN ('='))) {
@@ -2107,10 +2121,8 @@ parser_declaration (parser_t *parser, code_t *code,
 		if (t == OBJECT_TYPE_VOID) {
 			return parser_syntax_error (parser, "variable can not be void.");
 		}
+		parser_next_token (parser);
 	}
-
-	/* Skip type-specifier. */
-	parser_next_token (parser);
 
 	if (!parser_init_declarator_list (parser, code, t, first_id)) {
 		return 0;
@@ -2315,6 +2327,7 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	/* Need to look ahead 3 tokens: type id '('. */
 	object_type_t type;
 	const char *id;
+	token_t *temp;
 
 	type = parser_token_object_type (parser);
 	if (type == -1) {
@@ -2327,10 +2340,16 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	}
 
 	id = TOKEN_ID (parser->token);
-	parser_next_token (parser);
+	temp = parser_next_no_free (parser);
 	if (parser_check (parser, TOKEN ('('))) {
 		/* Goes to function-definition. */
-		return parser_function_definition (parser, code, type, id);
+		if (!parser_function_definition (parser, code, type, id)) {
+			return 0;
+		}
+
+		lex_token_free (temp);
+
+		return 1;
 	}
 
 	/* Goes to declaration. */
@@ -2338,7 +2357,13 @@ parser_external_declaration (parser_t *parser, code_t *code)
 		return parser_syntax_error (parser, "variable can not be a void.");
 	}
 
-	return parser_declaration (parser, code, type, id);
+	if (!parser_declaration (parser, code, type, id)) {
+		return 0;
+	}
+
+	lex_token_free (temp);
+
+	return 1;
 }
 
 /* translation-unit:
@@ -2408,6 +2433,11 @@ parser_load_file (const char *path)
 		return NULL;
 	}
 
+	if (parser->token != NULL) {
+		lex_token_free (parser->token);
+	}
+	parser_free (parser);
+
 	return code;
 }
 
@@ -2456,6 +2486,11 @@ parser_load_buf (const char *path, str_t *buf)
 
 		return NULL;
 	}
+
+	if (parser->token != NULL) {
+		lex_token_free (parser->token);
+	}
+	parser_free (parser);
 
 	return code;
 }

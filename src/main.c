@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	lex_init ();
 	int c = 0;
 
-	while (1) {
+	while (0) {
 		object_t *val = dictobject_new (NULL);
 		object_t *idx = intobject_new (2, NULL);
 		object_t *str = charobject_new ('f', NULL);
@@ -59,12 +59,15 @@ int main(int argc, char *argv[])
 			printf ("%d\n", c);
 	}
 
-	code_t *code = parser_load_file ("/home/nirvanan/c/stage_1/invalid/missing_paren.c");
-	if (code) {
-		printf ("accepted\n");
-	}
-	else {
-		printf ("wrong\n");
+	while (1) {
+		code_t *code = parser_load_file ("/home/nirvanan/c/stage_1/invalid/missing_paren.c");
+		if (code) {
+			code_print (code);
+		}
+		else {
+			printf ("wrong\n");
+		}
+		code_free (code);
 	}
 
 	return 0;

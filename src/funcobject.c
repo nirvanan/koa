@@ -29,11 +29,12 @@
 #include "longobject.h"
 #include "strobject.h"
 
-#define DUMP_BUF_EXTRA 8
+#define DUMP_BUF_EXTRA 9
 
 /* Object ops. */
 static void funcobject_op_free (object_t *obj);
 static object_t *funcobject_op_dump (object_t *obj);
+static object_t *funcobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *funcobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
@@ -56,7 +57,7 @@ static object_opset_t g_object_ops =
 	NULL, /* Logic or. */
 	NULL, /* Left shift. */
 	NULL, /* Right shift. */
-	NULL, /* Equality. */
+	funcobject_op_eq, /* Equality. */
 	NULL, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
@@ -74,13 +75,15 @@ funcobject_op_free (object_t *obj)
 static object_t *
 funcobject_op_dump (object_t *obj)
 {
+	const char *filename;
 	const char *name;
 	char *buf;
 	size_t size;
 	object_t *res;
 
+	filename = code_get_filename (funcobject_get_value (obj));
 	name = code_get_name (funcobject_get_value (obj));
-	size = strlen (name) + DUMP_BUF_EXTRA;
+	size = strlen (filename) + strlen (name) + DUMP_BUF_EXTRA;
 	buf = (char *) pool_calloc (size, sizeof (char));
 	if (buf == NULL) {
 		error ("out of memory.");
@@ -88,11 +91,18 @@ funcobject_op_dump (object_t *obj)
 		return NULL;
 	}
 
-	snprintf (buf, size, "<func %s>", name);
+	snprintf (buf, size, "<func %s:%s>", filename, name);
 	res = strobject_new (buf, NULL);
 	pool_free ((void *) buf);
 
 	return res;
+}
+
+/* Equality. */
+static object_t *
+funcobject_op_eq (object_t *obj1, object_t *obj2)
+{
+	return boolobject_new (obj1 == obj2, NULL);
 }
 
 /* Hash. */
