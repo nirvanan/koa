@@ -35,6 +35,7 @@
 #include "vecobject.h"
 #include "dictobject.h"
 #include "funcobject.h"
+#include "modobject.h"
 
 #define TYPE_NAME(x) (g_type_name[(x)->head.type])
 
@@ -1037,6 +1038,8 @@ object_get_default (object_type_t type)
 		case OBJECT_TYPE_DICT:
 			return dictobject_new (NULL);
 		case OBJECT_TYPE_FUNC:
+			return funcobject_new (NULL);
+		case OBJECT_TYPE_MOD:
 			return funcobject_new (NULL);
 		default:
 			break;

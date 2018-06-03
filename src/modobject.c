@@ -1,15 +1,15 @@
 /*
- * funcobject.c
+ * modobject.c
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
  *
- * This program is free software: you can redifuncibute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is difuncibuted in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "funcobject.h"
+#include "modobject.h"
 #include "pool.h"
 #include "error.h"
 #include "nullobject.h"
@@ -32,19 +32,19 @@
 #define DUMP_BUF_EXTRA 8
 
 /* Object ops. */
-static void funcobject_op_free (object_t *obj);
-static object_t *funcobject_op_dump (object_t *obj);
-static object_t *funcobject_op_hash (object_t *obj);
+static void modobject_op_free (object_t *obj);
+static object_t *modobject_op_dump (object_t *obj);
+static object_t *modobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
-	funcobject_op_free, /* Free. */
-	funcobject_op_dump, /* Dump. */
+	modobject_op_free, /* Free. */
+	modobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	NULL, /* Addition. */
-	NULL, /* Subfuncaction. */
+	NULL, /* Submodaction. */
 	NULL, /* Multiplication. */
 	NULL, /* Division. */
 	NULL, /* Mod. */
@@ -60,27 +60,27 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
-	funcobject_op_hash /* Hash. */
+	modobject_op_hash /* Hash. */
 };
 
 /* Free. */
 void
-funcobject_op_free (object_t *obj)
+modobject_op_free (object_t *obj)
 {
-	code_free (funcobject_get_value (obj));
+	code_free (modobject_get_value (obj));
 }
 
 /* Dump. */
 static object_t *
-funcobject_op_dump (object_t *obj)
+modobject_op_dump (object_t *obj)
 {
-	const char *name;
+	const char *filename;
 	char *buf;
 	size_t size;
 	object_t *res;
 
-	name = code_get_name (funcobject_get_value (obj));
-	size = strlen (name) + DUMP_BUF_EXTRA;
+	filename = code_get_filename (modobject_get_value (obj));
+	size = strlen (filename) + DUMP_BUF_EXTRA;
 	buf = (char *) pool_calloc (size, sizeof (char));
 	if (buf == NULL) {
 		error ("out of memory.");
@@ -88,7 +88,7 @@ funcobject_op_dump (object_t *obj)
 		return NULL;
 	}
 
-	snprintf (buf, size, "<func %s>", name);
+	snprintf (buf, size, "<mod %s>", filename);
 	res = strobject_new (buf, NULL);
 	pool_free ((void *) buf);
 
@@ -97,7 +97,7 @@ funcobject_op_dump (object_t *obj)
 
 /* Hash. */
 static object_t *
-funcobject_op_hash(object_t *obj)
+modobject_op_hash(object_t *obj)
 {
 	if (OBJECT_DIGEST (obj) == 0) {
 		OBJECT_DIGEST (obj) = object_address_hash ((void *) obj);
@@ -106,20 +106,20 @@ funcobject_op_hash(object_t *obj)
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
-/* This is a null func object, which means it is not callable. */
+/* This is a null mod object, which means it has nothing. */
 object_t *
-funcobject_new (void *udata)
+modobject_new (void *udata)
 {
-	funcobject_t *obj;
+	modobject_t *obj;
 
-	obj = (funcobject_t *) pool_alloc (sizeof (funcobject_t));
+	obj = (modobject_t *) pool_alloc (sizeof (modobject_t));
 	if (obj == NULL) {
 		error ("out of memory.");
 
 		return NULL;
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
 
 	obj->val = NULL;
 
@@ -127,18 +127,18 @@ funcobject_new (void *udata)
 }
 
 object_t *
-funcobject_code_new (code_t *val, void *udata)
+modobject_code_new (code_t *val, void *udata)
 {
-	funcobject_t *obj;
+	modobject_t *obj;
 
-	obj = (funcobject_t *) pool_alloc (sizeof (funcobject_t));
+	obj = (modobject_t *) pool_alloc (sizeof (modobject_t));
 	if (obj == NULL) {
 		error ("out of memory.");
 
 		return NULL;
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
 
 	obj->val = val;
 
@@ -146,11 +146,11 @@ funcobject_code_new (code_t *val, void *udata)
 }
 
 code_t *
-funcobject_get_value (object_t *obj)
+modobject_get_value (object_t *obj)
 {
-	funcobject_t *ob;
+	modobject_t *ob;
 
-	ob = (funcobject_t *) obj;
+	ob = (modobject_t *) obj;
 
 	return ob->val;
 }

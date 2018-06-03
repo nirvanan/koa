@@ -32,6 +32,8 @@ list.h \
 longobject.c \
 longobject.h \
 main.c \
+modobject.c \
+modobject.h \
 nullobject.c \
 nullobject.h \
 object.c \
