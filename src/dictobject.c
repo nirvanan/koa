@@ -25,20 +25,27 @@
 #include "nullobject.h"
 #include "boolobject.h"
 #include "longobject.h"
+#include "strobject.h"
 
 /* Object ops. */
 static void dictobject_op_free (object_t *obj);
+static object_t *dictobject_op_dump (object_t *obj);
 static object_t *dictobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_ipindex (object_t *obj1,
 										object_t *obj2, object_t *obj3);
 static object_t *dictobject_op_hash (object_t *obj);
 
+static object_t *g_dump_head;
+static object_t *g_dump_tail;
+static object_t *g_dump_sep;
+static object_t *g_dump_map;
+
 static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	dictobject_op_free, /* Free. */
-	NULL, /* Dump. */
+	dictobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	NULL, /* Addition. */
@@ -80,12 +87,126 @@ dictobject_op_free (object_t *obj)
 	size = vec_size (pairs);
 	/* Unref all pairs. */
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		object_unref ((object_t *) DICT_PAIR_KEY (vec_pos (pairs, i)));
-		object_unref ((object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i)));
+		object_t *key;
+		object_t *value;
+
+		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
+		object_unref (key);
+		object_unref (value);
 	}
 
 	vec_free (pairs);
 	dict_free (dict);
+}
+
+static object_t *
+dictobject_dump_concat (object_t *obj1, object_t *obj2, int free)
+{
+	object_t *res;
+
+	res = object_add (obj1, obj2);
+	object_free (obj1);
+	if (free) {
+		object_free (obj2);
+	}
+
+	return res;
+}
+
+static object_t *
+dictobject_pair_concat (object_t *key, object_t *value)
+{
+	object_t *dump_key;
+	object_t *dump_value;
+	object_t *res;
+	object_t *temp;
+
+	dump_key = object_dump (key);
+	if (dump_key == NULL) {
+		return NULL;
+	}
+	dump_value = object_dump (value);
+	if (dump_value == NULL) {
+		object_free (dump_key);
+
+		return NULL;
+	}
+
+	temp = object_add (dump_key, g_dump_map);
+	if (temp == NULL) {
+		object_free (dump_key);
+		object_free (dump_value);
+
+		return NULL;
+	}
+
+	res = object_add (temp, dump_value);
+
+	object_free (dump_key);
+	object_free (dump_value);
+	object_free (temp);
+
+	return res;
+}
+
+/* Dump. */
+static object_t *
+dictobject_op_dump (object_t *obj)
+{
+	object_t *res;
+	dict_t *dict;
+	vec_t *pairs;
+	size_t size;
+	object_t *key;
+	object_t *value;
+	object_t *pair;
+
+	dict = dictobject_get_value (obj);
+	pairs = dict_pairs (dict);
+	if (pairs == NULL) {
+		error ("failed to get dict pairs while dumping.");
+
+		return NULL;
+	}
+
+	size = vec_size (pairs);
+	if (!size) {
+		return object_add (g_dump_head, g_dump_tail);
+	}
+
+	key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, 0));
+	value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, 0));
+	pair = dictobject_pair_concat (key, value);
+	res = object_add (g_dump_head, pair);
+	if (res == NULL) {
+		object_free (pair);
+
+		return NULL;
+	}
+	object_free (pair);
+
+	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+		object_t *dump;
+
+		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, 0));
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, 0));
+		dump = dictobject_pair_concat (key, value);
+		if (dump == NULL) {
+			object_free (res);
+
+			return NULL;
+		}
+
+		if ((res = dictobject_dump_concat (res, g_dump_sep, 0)) == NULL ||
+			(res = dictobject_dump_concat (res, dump, 1)) == NULL) {
+			return NULL;
+		}
+	}
+
+	vec_free (pairs);
+
+	return dictobject_dump_concat (res, g_dump_tail, 0);
 }
 
 /* Equality. */
@@ -120,17 +241,32 @@ static object_t *
 dictobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 {
 	dict_t *dict;
+	object_t *prev;
+	object_t *res;
 
-	if (!NUMBERICAL_TYPE (obj2) && OBJECT_TYPE (obj2) != OBJECT_TYPE_STR) {
+	if (!NUMBERICAL_TYPE (obj2) && !OBJECT_IS_STR (obj2)) {
 		error ("dict index must be a number or str.");
 
 		return NULL;
 	}
 
-	dict = dictobject_get_value (obj1);
-
 	/* obj3 is returned if successfully inserted. */
-	return (object_t *) dict_set (dict, (void *) obj2, (void *) obj3);
+	dict = dictobject_get_value (obj1);
+	prev = (object_t *) dict_get (dict, (void *) obj2);
+	res = (object_t *) dict_set (dict, (void *) obj2, (void *) obj3);
+	if (res == NULL) {
+		return res;
+	}
+
+	object_ref (obj3);
+	if (prev == NULL) {
+		object_ref (obj2);
+	}
+	else {
+		object_unref (prev);
+	}
+
+	return obj3;
 }
 
 /* Hash. */
@@ -231,3 +367,24 @@ dictobject_get_value (object_t *obj)
 	return ob->val;
 }
 
+void
+dictobject_init ()
+{
+	/* Make dump objects. */
+	g_dump_head = strobject_new ("<dict {", NULL);
+	if (g_dump_head == NULL) {
+		fatal_error ("failed to init dict dump head.");
+	}
+	g_dump_tail = strobject_new ("}>", NULL);
+	if (g_dump_tail == NULL) {
+		fatal_error ("failed to init dict dump tail.");
+	}
+	g_dump_sep = strobject_new (", ", NULL);
+	if (g_dump_sep == NULL) {
+		fatal_error ("failed to init dict dump sep.");
+	}
+	g_dump_map = strobject_new (": ", NULL);
+	if (g_dump_map == NULL) {
+		fatal_error ("failed to init dict dump map.");
+	}
+}

@@ -20,6 +20,7 @@
 
 #include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "charobject.h"
 #include "pool.h"
@@ -27,6 +28,9 @@
 #include "boolobject.h"
 #include "intobject.h"
 #include "longobject.h"
+#include "strobject.h"
+
+#define DUMP_BUF_SIZE 12
 
 #define CHAR_CACHE_MIN CHAR_MIN
 #define CHAR_CACHE_MAX CHAR_MAX
@@ -41,6 +45,7 @@ static object_t *g_char_cache[CHAR_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *charobject_op_lnot (object_t *obj);
+static object_t *charobject_op_dump (object_t *obj);
 static object_t *charobject_op_land (object_t *obj1, object_t *obj2);
 static object_t *charobject_op_lor (object_t *obj1, object_t *obj2);
 static object_t *charobject_op_eq (object_t *obj1, object_t *obj2);
@@ -51,7 +56,7 @@ static object_opset_t g_object_ops =
 {
 	charobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
-	NULL, /* Dump. */
+	charobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	NULL, /* Addition. */
@@ -78,11 +83,18 @@ static object_opset_t g_object_ops =
 static object_t *
 charobject_op_lnot (object_t *obj)
 {
-	char val;
+	return boolobject_new (!charobject_get_value (obj), NULL);
+}
 
-	val = charobject_get_value (obj);
+/* Dump. */
+static object_t *
+charobject_op_dump (object_t *obj)
+{
+	char buf[DUMP_BUF_SIZE];
 
-	return boolobject_new (!val, NULL);
+	snprintf (buf, DUMP_BUF_SIZE, "<char %d>", charobject_get_value (obj));
+
+	return strobject_new (buf, NULL);
 }
 
 /* Logic and. */

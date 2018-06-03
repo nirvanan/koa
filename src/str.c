@@ -42,7 +42,7 @@ str_new (const char *s, size_t len)
 
 	str->len = len;
 	if (len > 0) {
-		strcpy (str->s, s);
+		memcpy (str->s, s, len);
 	}
 	str->s[len] = '\0';
 
@@ -96,8 +96,12 @@ str_concat (str_t *str1, str_t *str2)
 
 	new_len = str_len (str1) + str_len (str2);
 	str = str_empty_str_new (new_len);
+	if (str == NULL) {
+		return NULL;
+	}
 
-	snprintf (str->s, new_len + 1, "%s%s", str_c_str (str1), str_c_str (str2));
+	memcpy (str->s, str1->s, str1->len);
+	memcpy (str->s + str1->len, str2->s, str2->len);
 
 	return str;
 }

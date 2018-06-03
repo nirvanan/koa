@@ -40,4 +40,7 @@ dictobject_dict_new (dict_t *val, void *udata);
 dict_t *
 dictobject_get_value (object_t *obj);
 
+void
+dictobject_init ();
+
 #endif /* DICTOBJECT_H */

@@ -32,6 +32,7 @@
 
 typedef uint64_t (*hash_f) (void *data);
 typedef int (*hash_test_f) (void *value, void *hd);
+typedef void (*hash_del_f) (void *data);
 
 typedef struct hash_node_s
 {
@@ -45,12 +46,13 @@ typedef struct hash_s
 	list_t **h;
 	hash_f hf;
 	hash_test_f tf;
+	hash_del_f df;
 	size_t bu;
 	size_t size;
 } hash_t;
 
 hash_t *
-hash_new (size_t bu, hash_f hf, hash_test_f tf);
+hash_new (size_t bu, hash_f hf, hash_test_f tf, hash_del_f df);
 
 void
 hash_free (hash_t *ha);

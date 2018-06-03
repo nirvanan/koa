@@ -24,9 +24,11 @@
 #include "nullobject.h"
 #include "boolobject.h"
 #include "longobject.h"
+#include "strobject.h"
 
 /* Object ops. */
 static void vecobject_op_free (object_t *obj);
+static object_t *vecobject_op_dump (object_t *obj);
 static object_t *vecobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_index (object_t *obj1, object_t *obj2);
@@ -34,11 +36,15 @@ static object_t *vecobject_op_ipindex (object_t *obj1,
 									   object_t *obj2, object_t *obj3);
 static object_t *vecobject_op_hash (object_t *obj);
 
+static object_t *g_dump_head;
+static object_t *g_dump_tail;
+static object_t *g_dump_sep;
+
 static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	vecobject_op_free, /* Free. */
-	NULL, /* Dump. */
+	vecobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	vecobject_op_add, /* Addition. */
@@ -76,6 +82,60 @@ vecobject_op_free (object_t *obj)
 	}
 
 	vec_free (vec);
+}
+
+static object_t *
+vecobject_dump_concat (object_t *obj1, object_t *obj2, int free)
+{
+	object_t *res;
+
+	res = object_add (obj1, obj2);
+	object_free (obj1);
+	if (free) {
+		object_free (obj2);
+	}
+
+	return res;
+}
+
+/* Dump. */
+static object_t *
+vecobject_op_dump (object_t *obj)
+{
+	object_t *res;
+	object_t *element;
+	vec_t *vec;
+	size_t size;
+
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+	if (!size) {
+		return object_add (g_dump_head, g_dump_tail);
+	}
+
+	res = object_add (g_dump_head, (object_t *) vec_pos (vec, 0));
+	if (res == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+		object_t *dump;
+
+		element = (object_t *) vec_pos (vec, i);
+		dump = object_dump (element);
+		if (dump == NULL) {
+			object_free (res);
+
+			return NULL;
+		}
+
+		if ((res = vecobject_dump_concat (res, g_dump_sep, 0)) == NULL ||
+			(res = vecobject_dump_concat (res, dump, 1)) == NULL) {
+			return NULL;
+		}
+	}
+
+	return vecobject_dump_concat (res, g_dump_tail, 0);
 }
 
 /* Addition. */
@@ -124,7 +184,7 @@ vecobject_op_index (object_t *obj1, object_t *obj2)
 		return NULL;
 	}
 
-	return vec_pos (v, pos);
+	return (object_t *) vec_pos (v, pos);
 }
 
 /* Inplace index. */
@@ -133,6 +193,7 @@ vecobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 {
 	vec_t *v;
 	integer_value_t pos;
+	object_t *prev;
 
 	if (!INTEGER_TYPE (obj2)) {
 		error ("vec index must be an integer.");
@@ -148,7 +209,11 @@ vecobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 		return NULL;
 	}
 
-	return (object_t *) vec_set (v, pos, obj3);
+	prev = (object_t *) vec_set (v, pos, obj3);
+	object_ref (obj3);
+	object_unref (prev);
+
+	return obj3;
 }
 
 /* Hash. */
@@ -245,3 +310,20 @@ vecobject_get_value (object_t *obj)
 	return ob->val;
 }
 
+void
+vecobject_init ()
+{
+	/* Make dump objects. */
+	g_dump_head = strobject_new ("<vec [", NULL);
+	if (g_dump_head == NULL) {
+		fatal_error ("failed to init vec dump head.");
+	}
+	g_dump_tail = strobject_new ("]>", NULL);
+	if (g_dump_tail == NULL) {
+		fatal_error ("failed to init vec dump tail.");
+	}
+	g_dump_sep = strobject_new (", ", NULL);
+	if (g_dump_sep == NULL) {
+		fatal_error ("failed to init vec dump sep.");
+	}
+}

@@ -24,6 +24,9 @@
 #include "intobject.h"
 #include "strobject.h"
 #include "vecobject.h"
+#include "dictobject.h"
+#include "doubleobject.h"
+#include "charobject.h"
 #include "str.h"
 #include "lex.h"
 #include "code.h"
@@ -40,19 +43,19 @@ int main(int argc, char *argv[])
 	lex_init ();
 	int c = 0;
 
-	while (0) {
-		object_t *str = vecobject_new (10, NULL);
-		object_t *idx = intobject_new (4, NULL);
-		object_t *val = strobject_new ("fuck", NULL);
+	while (1) {
+		object_t *val = dictobject_new (NULL);
+		object_t *idx = intobject_new (2, NULL);
+		object_t *str = charobject_new ('f', NULL);
+		object_t *dump;
 
-		object_add (str, idx);
-		object_ipindex (str, idx, val);
-		object_ref (val);
-
-		object_free (str);
-		object_free (idx);
+		object_ipindex (val, idx, str);
+		dump = object_dump (val);
+		printf ("%s\n", strobject_get_value(dump)->s);
+		object_free (val);
+		object_free (dump);
 		c++;
-		if (c % 6000000 == 0)
+		if (c % 600000 == 0)
 			printf ("%d\n", c);
 	}
 

@@ -184,4 +184,10 @@ code_get_pos (code_t *code, para_t pos);
 int
 code_remove_pos (code_t *code, para_t pos);
 
+const char *
+code_get_filename (code_t *code);
+
+const char *
+code_get_name (code_t *code);
+
 #endif /* CODE_H */

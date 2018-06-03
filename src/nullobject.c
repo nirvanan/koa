@@ -25,11 +25,13 @@
 #include "error.h"
 #include "boolobject.h"
 #include "longobject.h"
+#include "strobject.h"
 
 /* Note that the 'null' object is shared everywhere. */
 static object_t *g_null_object;
 
 /* Object ops. */
+static object_t *nullobject_op_dump (object_t *obj);
 static object_t *nullobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *nullobject_op_hash (object_t *obj);
 
@@ -37,7 +39,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	NULL, /* Free. */
-	NULL, /* Dump. */
+	nullobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	NULL, /* Addition. */
@@ -73,6 +75,13 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 	}
 	
 	return boolobject_new (false, NULL);
+}
+
+/* Dump. */
+static object_t *
+nullobject_op_dump (object_t *obj)
+{
+	return strobject_new ("<null null>", NULL);
 }
 
 /* Hash. */

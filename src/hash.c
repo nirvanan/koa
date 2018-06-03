@@ -49,7 +49,7 @@ typedef struct hash_remove_cleanup_s
 } hash_remove_cleanup_t;
 
 hash_t *
-hash_new (size_t bu, hash_f hf, hash_test_f tf)
+hash_new (size_t bu, hash_f hf, hash_test_f tf, hash_del_f df)
 {
 	hash_t *ha;
 	size_t bucket_size;
@@ -72,6 +72,7 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 	}
 	ha->hf = hf;
 	ha->tf = tf;
+	ha->df = df;
 	ha->bu = bu;
 	ha->size = 0;
 
@@ -80,12 +81,16 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf)
 
 /* Used to delete whole hash bucket list. */
 static int
-hash_clear_fun (list_t *list, void *data)
+hash_clearall_fun (list_t *list, void *data)
 {
 	hash_t *ha;
+	hash_node_t *hn;
 
-	UNUSED (list);
+	hn = (hash_node_t *) list;
 	ha = (hash_t *) data;
+	if (ha->df != NULL) {
+		ha->df (hn->value);
+	}
 
 	ha->size--;
 
@@ -96,7 +101,7 @@ void
 hash_free (hash_t *ha)
 {
 	for (size_t i = 0; i < ha->bu; i++) {
-		ha->h[i] = list_cleanup (ha->h[i], hash_clear_fun, 1, (void *) ha);
+		ha->h[i] = list_cleanup (ha->h[i], hash_clearall_fun, 1, (void *) ha);
 	}
 
 	pool_free ((void *) ha->h);

@@ -25,6 +25,7 @@
 #include "error.h"
 #include "intobject.h"
 #include "longobject.h"
+#include "strobject.h"
 
 /* Note that the 'true' and 'false' objects are shared everywhere. */
 static object_t *g_true_object;
@@ -32,6 +33,7 @@ static object_t *g_false_object;
 
 /* Object ops. */
 static object_t *boolobject_op_lnot (object_t *obj);
+static object_t *boolobject_op_dump (object_t *obj);
 static object_t *boolobject_op_land (object_t *obj1, object_t *obj2);
 static object_t *boolobject_op_lor (object_t *obj1, object_t *obj2);
 static object_t *boolobject_op_eq (object_t *obj1, object_t *obj2);
@@ -42,7 +44,7 @@ static object_opset_t g_object_ops =
 {
 	boolobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
-	NULL, /* Dump. */
+	boolobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	NULL, /* Addition. */
@@ -65,15 +67,22 @@ static object_opset_t g_object_ops =
 	boolobject_op_hash /* Hash. */
 };
 
+/* Dump. */
+static object_t *
+boolobject_op_dump (object_t *obj)
+{
+	if (boolobject_get_value (obj)) {
+		return strobject_new ("<bool true>", NULL);
+	}
+
+	return strobject_new ("<bool false>", NULL);
+}
+
 /* Logic Not. */
 static object_t *
 boolobject_op_lnot (object_t *obj)
 {
-	bool val;
-
-	val = boolobject_get_value (obj);
-
-	return boolobject_new (!val, NULL);
+	return boolobject_new (!boolobject_get_value (obj), NULL);
 }
 
 /* Logic and. */

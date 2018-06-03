@@ -50,6 +50,12 @@ dict_hash_test_fun (void *value, void *hd)
 	return node->d->tf (node->first, hd);
 }
 
+static void
+dict_hash_cleanup_fun (void *value)
+{
+	pool_free (value);
+}
+
 dict_t *
 dict_new (hash_f hf, hash_test_f tf)
 {
@@ -70,7 +76,10 @@ dict_new (hash_f hf, hash_test_f tf)
 	dict->size = 0;
 	dict->hf = hf;
 	dict->tf = tf;
-	dict->h = hash_new (req, dict_hash_fun, dict_hash_test_fun);
+	dict->h = hash_new (req,
+						dict_hash_fun,
+						dict_hash_test_fun,
+						dict_hash_cleanup_fun);
 	if (dict->h == NULL) {
 		pool_free ((void *) dict);
 		error ("out of memery.");
@@ -116,7 +125,10 @@ dict_rehash (dict_t *dict, size_t req)
 		size_t size;
 		dict_node_t *dn;
 
-		new_hash = hash_new (req, dict_hash_fun, dict_hash_test_fun);
+		new_hash = hash_new (req,
+							 dict_hash_fun,
+							 dict_hash_test_fun,
+							 dict_hash_cleanup_fun);
 		if (new_hash == NULL) {
 			error ("failed to rehash.");
 

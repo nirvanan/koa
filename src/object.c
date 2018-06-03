@@ -310,12 +310,6 @@ object_add (object_t *obj1, object_t *obj2)
 	bin_op_f add_fun;
 
 	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_STR) {
-		if (OBJECT_TYPE (obj2) != OBJECT_TYPE_STR && !NUMBERICAL_TYPE (obj2)) {
-			error ("invalid right operand type %s for '+'.", TYPE_NAME (obj2));
-		
-			return NULL;
-		}
-
 		add_fun = (OBJECT_OPSET (obj1))->add;
 		
 		return add_fun (obj1, obj2);
@@ -1060,4 +1054,6 @@ object_init ()
 	intobject_init ();
 	longobject_init ();
 	strobject_init ();
+	vecobject_init ();
+	dictobject_init ();
 }

@@ -18,15 +18,21 @@
  * afloat with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+
 #include "floatobject.h"
 #include "pool.h"
 #include "error.h"
 #include "boolobject.h"
 #include "intobject.h"
 #include "longobject.h"
+#include "strobject.h"
+
+#define DUMP_BUF_SIZE 1400
 
 /* Object ops. */
-static object_t *floatobject_op_not (object_t *obj);
+static object_t *floatobject_op_lnot (object_t *obj);
+static object_t *floatobject_op_dump (object_t *obj);
 static object_t *floatobject_op_neg (object_t *obj);
 static object_t *floatobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *floatobject_op_sub (object_t *obj1, object_t *obj2);
@@ -40,9 +46,9 @@ static object_t *floatobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
-	floatobject_op_not, /* Logic Not. */
+	floatobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
-	NULL, /* Dump. */
+	floatobject_op_dump, /* Dump. */
 	floatobject_op_neg, /* Negative. */
 	NULL, /* Call. */
 	floatobject_op_add, /* Addition. */
@@ -67,16 +73,20 @@ static object_opset_t g_object_ops =
 
 /* Logic Not. */
 static object_t *
-floatobject_op_not (object_t *obj)
+floatobject_op_lnot (object_t *obj)
 {
-	float val;
+	return boolobject_new (!floatobject_get_value (obj), NULL);
+}
 
-	val = floatobject_get_value (obj);
-	if (val == 0) {
-		return boolobject_new (true, NULL);
-	}
+/* Dump. */
+static object_t *
+floatobject_op_dump (object_t *obj)
+{
+	char buf[DUMP_BUF_SIZE];
 
-	return boolobject_new (false, NULL);
+	snprintf (buf, DUMP_BUF_SIZE, "<float %f>", floatobject_get_value (obj));
+
+	return strobject_new (buf, NULL);
 }
 
 /* Negative. */

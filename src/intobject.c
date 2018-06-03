@@ -18,11 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+
 #include "intobject.h"
 #include "pool.h"
 #include "error.h"
 #include "boolobject.h"
 #include "longobject.h"
+#include "strobject.h"
+
+#define DUMP_BUF_SIZE 18
 
 #define INT_CACHE_MIN -1000
 #define INT_CACHE_MAX 10000
@@ -37,6 +42,7 @@ static object_t *g_int_cache[INT_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *intobject_op_lnot (object_t *obj);
+static object_t *intobject_op_dump (object_t *obj);
 static object_t *intobject_op_neg (object_t *obj);
 static object_t *intobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *intobject_op_sub (object_t *obj1, object_t *obj2);
@@ -59,7 +65,7 @@ static object_opset_t g_object_ops =
 {
 	intobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
-	NULL, /* Dump. */
+	intobject_op_dump, /* Dump. */
 	intobject_op_neg, /* Negative. */
 	NULL, /* Call. */
 	intobject_op_add, /* Addition. */
@@ -86,14 +92,18 @@ static object_opset_t g_object_ops =
 static object_t *
 intobject_op_lnot (object_t *obj)
 {
-	int val;
+	return boolobject_new (!intobject_get_value (obj), NULL);
+}
 
-	val = intobject_get_value (obj);
-	if (val == 0) {
-		return boolobject_new (true, NULL);
-	}
+/* Dump. */
+static object_t *
+intobject_op_dump (object_t *obj)
+{
+	char buf[DUMP_BUF_SIZE];
 
-	return boolobject_new (false, NULL);
+	snprintf (buf, DUMP_BUF_SIZE, "<int %d>", intobject_get_value (obj));
+
+	return strobject_new (buf, NULL);
 }
 
 /* Negative. */

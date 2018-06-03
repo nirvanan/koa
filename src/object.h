@@ -29,20 +29,20 @@
  * as negetive values of signed objects can be parsed as BIG
  * unsigned value if you are willing to do so.*/
 
-#define INTEGER_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL\
-	||(x)->head.type==OBJECT_TYPE_CHAR\
-	||(x)->head.type==OBJECT_TYPE_INT\
-	||(x)->head.type==OBJECT_TYPE_LONG)
+#define INTEGER_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL||\
+	(x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_INT||\
+	(x)->head.type==OBJECT_TYPE_LONG)
 
-#define FLOATING_TYPE(x) ((x)->head.type==OBJECT_TYPE_FLOAT\
-	||(x)->head.type==OBJECT_TYPE_DOUBLE)
+#define FLOATING_TYPE(x) ((x)->head.type==OBJECT_TYPE_FLOAT||\
+	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
-#define NUMBERICAL_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL\
-	||(x)->head.type==OBJECT_TYPE_CHAR\
-	||(x)->head.type==OBJECT_TYPE_INT\
-	||(x)->head.type==OBJECT_TYPE_LONG\
-	||(x)->head.type==OBJECT_TYPE_FLOAT\
-	||(x)->head.type==OBJECT_TYPE_DOUBLE)
+#define NUMBERICAL_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL||\
+	(x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_INT||\
+	(x)->head.type==OBJECT_TYPE_LONG||\
+	(x)->head.type==OBJECT_TYPE_FLOAT||\
+	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
 #define OBJECT_REF(x) ((x)->head.ref)
 

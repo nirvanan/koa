@@ -326,3 +326,15 @@ code_remove_pos (code_t *code, para_t pos)
 		vec_remove (code->lineinfo, (integer_value_t) pos);
 }
 
+const char *
+code_get_filename (code_t *code)
+{
+	return str_c_str (code->filename);
+}
+
+const char *
+code_get_name (code_t *code)
+{
+	return str_c_str (code->name);
+}
+

@@ -40,4 +40,7 @@ vecobject_vec_new (vec_t *val, void *udata);
 vec_t *
 vecobject_get_value (object_t *obj);
 
+void
+vecobject_init ();
+
 #endif /* VECOBJECT_H */

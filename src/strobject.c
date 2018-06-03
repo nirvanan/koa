@@ -30,6 +30,9 @@
 #include "intobject.h"
 #include "longobject.h"
 
+#define DUMP_HEAD_LENGTH 6
+#define DUMP_TAIL_LENGTH 2
+
 #define INTERNAL_STR_LENGTH 6
 
 #define HASH_M 0xc6a4a7935bd1e995
@@ -42,8 +45,12 @@ static hash_t *g_internal_hash;
 
 static unsigned int g_internal_hash_seed;
 
+static str_t *g_dump_head;
+static str_t *g_dump_tail;
+
 /* Object ops. */
 static void strobject_op_free (object_t *obj);
+static object_t *strobject_op_dump (object_t *obj);
 static object_t *strobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_cmp (object_t *obj1, object_t *obj2);
@@ -54,7 +61,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	strobject_op_free, /* Free. */
-	NULL, /* Dump. */
+	strobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	strobject_op_add, /* Addition. */
@@ -88,6 +95,29 @@ strobject_op_free (object_t *obj)
 	str_free (strobject_get_value (obj));
 }
 
+/* Dump. */
+static object_t *
+strobject_op_dump (object_t *obj)
+{
+	str_t *temp;
+	str_t *res;
+
+	temp = str_concat (g_dump_head, strobject_get_value (obj));
+	if (temp == NULL) {
+		return NULL;
+	}
+	res = str_concat (temp, g_dump_tail);
+	if (res == NULL) {
+		str_free (temp);
+
+		return NULL;
+	}
+
+	str_free (temp);
+
+	return strobject_str_new (res, NULL);
+}
+
 /* Addition. */
 static object_t *
 strobject_op_add (object_t *obj1, object_t *obj2)
@@ -99,7 +129,7 @@ strobject_op_add (object_t *obj1, object_t *obj2)
 
 	right = obj2;
 	/* Convert numberical to string. */
-	if (NUMBERICAL_TYPE (obj2)) {
+	if (!OBJECT_IS_STR (obj2)) {
 		right = object_dump (obj2);
 		if (right == NULL) {
 			return NULL;
@@ -365,13 +395,32 @@ strobject_test_fun (void *value, void *hd)
 		(const char *) hd) == 0;
 }
 
+static void
+strobject_cleanup_fun (void *value)
+{
+	object_free (value);
+}
+
 void
 strobject_init ()
 {
-	g_internal_hash = hash_new (INTERNAL_HASH_SIZE, strobject_hash_fun, strobject_test_fun);
+	g_internal_hash = hash_new (INTERNAL_HASH_SIZE,
+								strobject_hash_fun,
+								strobject_test_fun,
+								strobject_cleanup_fun);
 	if (g_internal_hash == NULL) {
 		fatal_error ("failed to init str internal hash.");
 	}
 
 	g_internal_hash_seed = random () & ((~(unsigned int) 0));
+
+	/* Make dump head and tail. */
+	g_dump_head = str_new ("<str \"", DUMP_HEAD_LENGTH);
+	if (g_dump_head == NULL) {
+		fatal_error ("failed to init str dump head.");
+	}
+	g_dump_tail = str_new ("\">", DUMP_TAIL_LENGTH);
+	if (g_dump_tail == NULL) {
+		fatal_error ("failed to init str dump tail.");
+	}
 }

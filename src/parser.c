@@ -1656,7 +1656,6 @@ parser_expression_postfix_list (parser_t *parser, code_t *code)
 			if (!parser_expression_postfix (parser, code)) {
 				return 0;
 			}
-
 		}
 		else {
 			break;

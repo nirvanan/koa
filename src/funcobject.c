@@ -18,22 +18,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "funcobject.h"
 #include "pool.h"
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
 #include "longobject.h"
+#include "strobject.h"
+
+#define DUMP_BUF_EXTRA 8
 
 /* Object ops. */
 static void funcobject_op_free (object_t *obj);
+static object_t *funcobject_op_dump (object_t *obj);
 static object_t *funcobject_op_hash (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	funcobject_op_free, /* Free. */
-	NULL, /* Dump. */
+	funcobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
 	NULL, /* Addition. */
@@ -61,6 +68,31 @@ void
 funcobject_op_free (object_t *obj)
 {
 	code_free (funcobject_get_value (obj));
+}
+
+/* Dump. */
+static object_t *
+funcobject_op_dump (object_t *obj)
+{
+	const char *name;
+	char *buf;
+	size_t size;
+	object_t *res;
+
+	name = code_get_name (funcobject_get_value (obj));
+	size = strlen (name) + DUMP_BUF_EXTRA;
+	buf = (char *) pool_calloc (size, sizeof (char));
+	if (buf == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
+	snprintf (buf, size, "<func %s>", name);
+	res = strobject_new (buf, NULL);
+	pool_free ((void *) buf);
+
+	return res;
 }
 
 /* Hash. */
