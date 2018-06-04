@@ -26,6 +26,7 @@
 #include "pool.h"
 #include "longobject.h"
 #include "strobject.h"
+#include "funcobject.h"
 
 static const char *g_code_names[] =
 {
@@ -52,6 +53,7 @@ static const char *g_code_names[] =
 	"OP_INDEX_PODEC",
 	"OP_MAKE_VEC",
 	"OP_CALL_FUNC",
+	"OP_BIND_ARGS",
 	"OP_CON_SEL",
 	"OP_LOGIC_OR",
 	"OP_LOGIC_AND",
@@ -98,7 +100,8 @@ static const char *g_code_names[] =
 	"OP_JUMP_CONTINUE",
 	"OP_JUMP_BREAK",
 	"OP_RETURN",
-	"OP_CASE_BLOCK",
+	"OP_PUSH_BLOCKS",
+	"OP_POP_BLOCKS",
 	"OP_JUMP_CASE",
 	"OP_JUMP_TRUE",
 	"OP_END_PROGRAM"
@@ -459,8 +462,24 @@ code_print (code_t *code)
 
 		opcode = (opcode_t *) vec_pos (code->opcodes, i);
 		line = (uint32_t *) vec_pos (code->lineinfo, i);
-		printf ("%u\t%s\t\t%d\n",
-				*line, g_code_names[OPCODE_OP (*opcode)],
+		printf ("%ld\t%u\t%s\t\t%d\n",
+				i, *line, g_code_names[OPCODE_OP (*opcode)],
 				OPCODE_PARA (*opcode));
+	}
+
+	/* Print function codes. */
+	size = vec_size (code->consts);
+	printf ("\n\n");
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *obj;
+
+		obj = (object_t *) vec_pos (code->consts, i);
+		if (OBJECT_IS_FUNC (obj)) {
+			code_t *func;
+
+			func = funcobject_get_value (obj);
+			printf ("func %s:\n", code_get_name (func));
+			code_print (func);
+		}
 	}
 }

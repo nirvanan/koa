@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/home/nirvanan/c/stage_1/invalid/missing_paren.c");
+		code_t *code = parser_load_file ("/home/nirvanan/test.c");
 		if (code) {
 			code_print (code);
 		}
@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 			printf ("wrong\n");
 		}
 		code_free (code);
+		break;
 	}
 
 	return 0;

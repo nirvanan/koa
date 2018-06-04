@@ -628,6 +628,7 @@ parser_do_while_statement (parser_t *parser, code_t *code)
 	para_t statement_pos;
 	para_t eval_pos;
 	para_t out_pos;
+	para_t blocks;
 
 	parser_next_token (parser);
 	statement_pos = code_current_pos (code) + 1;
@@ -659,12 +660,19 @@ parser_do_while_statement (parser_t *parser, code_t *code)
 
 	/* Modify JUMP_CONTINUE and JUMP_BREAK opcodes. */
 	out_pos = code_current_pos (code) + 1;
+	blocks = 0;
 	for (para_t i = statement_pos; i < eval_pos; i++) {
 		opcode_t opcode;
 
 		opcode = code_get_pos (code, i);
 		/* Check the para to get matching break statements. */
-		if (OPCODE_OP (opcode) == OP_JUMP_BREAK &&
+		if (OPCODE_OP (opcode) == OP_ENTER_BLOCK) {
+			blocks++;
+		}
+		else if (OPCODE_OP (opcode) == OP_LEAVE_BLOCK) {
+			blocks--;
+		}
+		else if (OPCODE_OP (opcode) == OP_JUMP_BREAK &&
 			OPCODE_PARA (opcode) == statement_pos) {
 			if (!code_modify_opcode (code, i,
 				OPCODE (OP_JUMP_BREAK, out_pos), 0)) {
@@ -674,7 +682,14 @@ parser_do_while_statement (parser_t *parser, code_t *code)
 		else if (OPCODE_OP (opcode) == OP_JUMP_CONTINUE &&
 				 OPCODE_PARA (opcode) == statement_pos) {
 			if (!code_modify_opcode (code, i,
-				OPCODE (OP_JUMP_BREAK, eval_pos), 0)) {
+				OPCODE (OP_JUMP_CONTINUE, eval_pos), 0)) {
+				return 0;
+			}
+		}
+		else if (OPCODE_OP (opcode) == OP_POP_BLOCKS &&
+				 OPCODE_PARA (opcode) == statement_pos) {
+			if (!code_modify_opcode (code, i,
+				OPCODE (OP_POP_BLOCKS, blocks), 0)) {
 				return 0;
 			}
 		}
@@ -695,6 +710,7 @@ parser_while_statement (parser_t *parser, code_t *code)
 	para_t false_pos;
 	para_t statement_pos;
 	para_t out_pos;
+	para_t blocks;
 
 	parser_next_token (parser);
 	/* Check '('. */
@@ -740,15 +756,29 @@ parser_while_statement (parser_t *parser, code_t *code)
 	}
 
 	/* JUMP_BREAK opcodes need modification. */
+	blocks = 0;
 	for (para_t i = statement_pos; i < out_pos; i++) {
 		opcode_t opcode;
 
 		opcode = code_get_pos (code, i);
 		/* Check the para to get matching break statements. */
-		if (OPCODE_OP (opcode) == OP_JUMP_BREAK &&
-			OPCODE_PARA (opcode) == eval_pos) {
+		if (OPCODE_OP (opcode) == OP_ENTER_BLOCK) {
+			blocks++;
+		}
+		else if (OPCODE_OP (opcode) == OP_LEAVE_BLOCK) {
+			blocks--;
+		}
+		else if (OPCODE_OP (opcode) == OP_JUMP_BREAK &&
+				 OPCODE_PARA (opcode) == eval_pos) {
 			if (!code_modify_opcode (code, i,
 				OPCODE (OP_JUMP_BREAK, out_pos), 0)) {
+				return 0;
+			}
+		}
+		else if (OPCODE_OP (opcode) == OP_POP_BLOCKS &&
+				 OPCODE_PARA (opcode) == eval_pos) {
+			if (!code_modify_opcode (code, i,
+				OPCODE (OP_POP_BLOCKS, blocks), 0)) {
 				return 0;
 			}
 		}
@@ -805,14 +835,14 @@ parser_switch_statement (parser_t *parser, code_t *code)
 			case OP_LEAVE_BLOCK:
 				blocks--;
 				break;
-			case OP_CASE_BLOCK:
+			case OP_PUSH_BLOCKS:
 				/* If para matchs, this label
 				 * is matched for current switch. */
 				if (OPCODE_PARA (opcode) != start_pos) {
 					break;
 				}
 				if (!code_modify_opcode (code, i,
-					OPCODE (OP_CASE_BLOCK, blocks), 0)) {
+					OPCODE (OP_PUSH_BLOCKS, blocks), 0)) {
 					return 0;
 				}
 				/* Insert a JUMP_FORCE. */
@@ -1000,8 +1030,9 @@ parser_jump_statement (parser_t *parser, code_t *code,
 			return parser_syntax_error (parser, "invalid jump statement.");
 		}
 
-		/* Emit a JUMP_CONTINUE. */
-		if (!code_push_opcode (code, OPCODE (OP_JUMP_CONTINUE, upper_pos),
+		/* Emit POP_BLOCKS and JUMP_CONTINUE. */
+		if (!code_push_opcode (code, OPCODE (OP_POP_BLOCKS, upper_pos), line) ||
+			!code_push_opcode (code, OPCODE (OP_JUMP_CONTINUE, upper_pos),
 			line)) {
 			return 0;
 		}
@@ -1012,8 +1043,9 @@ parser_jump_statement (parser_t *parser, code_t *code,
 			return parser_syntax_error (parser, "invalid jump statement.");
 		}
 
-		/* Emit a JUMP_BREAK. */
-		if (!code_push_opcode (code, OPCODE (OP_JUMP_BREAK, upper_pos),
+		/* Emit POP_BLOCKS and JUMP_BREAK. */
+		if (!code_push_opcode (code, OPCODE (OP_POP_BLOCKS, upper_pos), line) ||
+			!code_push_opcode (code, OPCODE (OP_JUMP_BREAK, upper_pos),
 			line)) {
 			return 0;
 		}
@@ -1119,9 +1151,9 @@ parser_labeled_statement (parser_t *parser, code_t *code,
 		return parser_syntax_error (parser, "unmatched switch label.");
 	}
 
-	/* Emit a CASE_BLOCK. */
+	/* Emit a PUSH_BLOCKS. */
 	line = TOKEN_LINE (parser->token);
-	if (!code_push_opcode (code, OPCODE (OP_CASE_BLOCK, upper_pos), line)) {
+	if (!code_push_opcode (code, OPCODE (OP_PUSH_BLOCKS, upper_pos), line)) {
 		return 0;
 	}
 
@@ -1746,7 +1778,6 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
 		case TOKEN_TRUE:
 		case TOKEN_FALSE:
-			parser_next_token (parser);
 			pos = parser_push_const (code,
 									 OBJECT_TYPE_BOOL,
 									 boolobject_new (TOKEN_TYPE (parser->token) == TOKEN_TRUE,
@@ -1754,6 +1785,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			if (pos == -1) {
 				return 0;
 			}
+			parser_next_token (parser);
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
 		case TOKEN_INTEGER:
@@ -1801,13 +1833,13 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			char val;
 
 			val = (char) *TOKEN_ID (parser->token);
+			parser_next_token (parser);
 			pos = parser_push_const (code,
 									 OBJECT_TYPE_CHAR,
 									 charobject_new (val, NULL));
 			if (pos == -1) {
 				return 0;
 			}
-			parser_next_token (parser);
 
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
@@ -2192,11 +2224,8 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 {
 	object_type_t type;
 	para_t var_pos;
-	para_t const_pos;
-	uint32_t line;
-
-	line = TOKEN_LINE (parser->token);
 	type = parser_token_object_type (parser);
+
 	if (type == -1) {
 		return parser_syntax_error (parser, "unknown parameter type.");
 	}
@@ -2214,16 +2243,11 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	if (var_pos == -1) {
 		return 0;
 	}
-	const_pos = parser_push_const (code, type, NULL);
-	if (const_pos == -1) {
-		return 0;
-	}
 
 	parser_next_token (parser);
 
 	/* Make opcodes and insert them. */
-	return code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) &&
-		code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line);
+	return 1;
 }
 
 /* parameter-list:
@@ -2232,19 +2256,30 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 static int
 parser_parameter_list (parser_t *parser, code_t *code)
 {
+	para_t pos;
+	uint32_t line;
+
+	line = TOKEN_LINE (parser->token);
 	/* First parameter. */
+	pos = 1;
 	if (!parser_parameter_declaration (parser, code)) {
 		return 0;
 	}
 
 	while (parser_check (parser, TOKEN (','))) {
+		pos++;
+		if (pos > MAX_PARA) {
+			return parser_syntax_error (parser,
+										"number of parameters exceeded.");
+		}
+
 		parser_next_token (parser);
 		if (!parser_parameter_declaration (parser, code)) {
 			return 0;
 		}
 	}
 
-	return 1;
+	return code_push_opcode (code, OPCODE (OP_BIND_ARGS, pos), line);
 }
 
 /* function-definition:

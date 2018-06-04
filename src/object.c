@@ -266,6 +266,10 @@ object_dump (object_t *obj)
 
 	dump_fun = (OBJECT_OPSET (obj))->dump;
 	if (dump_fun == NULL) {
+		if (OBJECT_IS_DUMMY (obj)) {
+			return strobject_new ("<dummy>", NULL);
+		}
+
 		error ("%s has no dump routine.", TYPE_NAME (obj));
 
 		return NULL;
