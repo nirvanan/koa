@@ -129,11 +129,11 @@ typedef enum op_e {
 typedef struct code_s {
 	vec_t *opcodes; /* All op codes in this block. */
 	vec_t *lineinfo; /* Line numbers of all codes. */
+	vec_t *args; /* Type of arguments. */
 	vec_t *consts; /* All consts appears in this block. */
 	vec_t *varnames; /* The names of local variables (args included). */
 	str_t *name; /* Reference name of this block (or function name). */
 	str_t *filename; /* File name of this block. */
-	int args; /* Number of arguments. */
 	int fun; /* Is this code representing a function? */
 	int lineno; /* The first line number of this block. */
 	object_type_t ret_type;
@@ -168,7 +168,8 @@ para_t
 code_push_const (code_t *code, object_t *var, int *exist);
 
 para_t
-code_push_varname (code_t *code, const char *var, int para);
+code_push_varname (code_t *code, const char *var,
+				   int para, object_type_t type);
 
 opcode_t
 code_last_opcode (code_t *code);

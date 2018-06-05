@@ -138,10 +138,12 @@ code_new (const char *filename, const char *name)
 	/* Allocate all data segments. */
 	code->opcodes = vec_new (0);
 	code->lineinfo = vec_new (0);
+	code->args = vec_new (0);
 	code->consts = vec_new (0);
 	code->varnames = vec_new (0);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
-		code->consts == NULL || code->varnames == NULL) {
+		code->args == NULL ||code->consts == NULL ||
+		code->varnames == NULL) {
 		code_free (code);
 		error ("out of memory.");
 
@@ -184,6 +186,10 @@ code_free (code_t *code)
 	if (code->lineinfo != NULL) {
 		vec_foreach (code->lineinfo, code_vec_free_fun);
 		vec_free (code->lineinfo);
+	}
+	if (code->args != NULL) {
+		vec_foreach (code->args, code_vec_free_fun);
+		vec_free (code->args);
 	}
 	if (code->consts != NULL) {
 		vec_foreach (code->consts, code_vec_unref_fun);
@@ -241,8 +247,6 @@ code_insert_opcode (code_t *code, para_t pos, opcode_t opcode, uint32_t line)
 		return -1;
 	}
 	if (!vec_insert (code->lineinfo, (integer_value_t) pos, (void *) li)) {
-		UNUSED (vec_remove (code->opcodes, (integer_value_t) pos));
-		pool_free ((void *) op);
 		pool_free ((void *) li);
 
 		return -1;
@@ -306,7 +310,8 @@ code_push_const (code_t *code, object_t *var, int *exist)
 }
 
 para_t
-code_push_varname (code_t *code, const char *var, int para)
+code_push_varname (code_t *code, const char *var,
+				   int para, object_type_t type)
 {
 	object_t *name;
 	size_t pos;
@@ -338,7 +343,19 @@ code_push_varname (code_t *code, const char *var, int para)
 
 	/* Is this var a parameter? */
 	if (para) {
-		code->args++;
+		object_type_t *arg_type;
+
+		arg_type = (object_type_t *) pool_alloc (sizeof (object_type_t));
+		if (arg_type == NULL) {
+			return -1;
+		}
+
+		*arg_type = type;
+		if (!vec_push_back (code->args, (void *) arg_type)) {
+			pool_free ((void *) arg_type);
+
+			return -1;
+		}
 	}
 
 	object_ref (name);
@@ -455,14 +472,14 @@ code_print (code_t *code)
 
 	/* Print opcodes. */
 	size = vec_size (code->opcodes);
-	printf ("opcodes:\n");
+	printf ("opcodes:\nPos\tLine\tOP\t\t\tPara\n");
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		opcode_t *opcode;
 		uint32_t *line;
 
 		opcode = (opcode_t *) vec_pos (code->opcodes, i);
 		line = (uint32_t *) vec_pos (code->lineinfo, i);
-		printf ("%ld\t%u\t%s\t\t%d\n",
+		printf ("%ld\t%u\t%-16s\t%d\n",
 				i, *line, g_code_names[OPCODE_OP (*opcode)],
 				OPCODE_PARA (*opcode));
 	}

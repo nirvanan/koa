@@ -719,13 +719,13 @@ parser_while_statement (parser_t *parser, code_t *code)
 		return 0;
 	}
 
+	line = TOKEN_LINE (parser->token);
 	eval_pos = code_current_pos (code) + 1;
 	if (!parser_expression (parser, code)) {
 		return 0;
 	}
 
 	/* Emit a JUMP_FALSE, the para is pending. */
-	line = TOKEN_LINE (parser->token);
 	if ((false_pos = code_push_opcode (code,
 		OPCODE (OP_JUMP_FALSE, 0), line) - 1) == -1) {
 		return 0;
@@ -751,7 +751,7 @@ parser_while_statement (parser_t *parser, code_t *code)
 	/* Modify last JUMP_FALSE. */
 	out_pos = code_current_pos (code) + 1;
 	if (!code_modify_opcode (code, false_pos,
-		OPCODE (OP_JUMP_FALSE, out_pos), line)) {
+		OPCODE (OP_JUMP_FALSE, out_pos), 0)) {
 		return 0;
 	}
 
@@ -854,7 +854,7 @@ parser_switch_statement (parser_t *parser, code_t *code)
 				out_pos++;
 				i++;
 				/* Adjust all jump opcodes in the statement. */
-				for (para_t j = start_pos + label_num; j < out_pos; j++) {
+				for (para_t j = start_pos; j < out_pos; j++) {
 					opcode_t opcode;
 					para_t para;
 
@@ -863,14 +863,13 @@ parser_switch_statement (parser_t *parser, code_t *code)
 						continue;
 					}
 					/* Matched JUMP_CASE for current switch? */
-					if (OPCODE_OP (opcode) == OP_JUMP_CASE &&
-						OPCODE_PARA (opcode) >= start_pos &&
+					para = OPCODE_PARA (opcode);
+					if (OPCODE_PARA (opcode) >= start_pos &&
 						OPCODE_PARA (opcode) < start_pos + label_num) {
 						continue;
 					}
 
 					/* Modify para by moving one position. */
-					para = OPCODE_PARA (opcode);
 					if (!code_modify_opcode (code, j,
 						OPCODE (OPCODE_OP (opcode), para + 1), 0)) {
 						return 0;
@@ -909,10 +908,10 @@ parser_switch_statement (parser_t *parser, code_t *code)
 
 	/* Insert a JUMP_FORCE. */
 	if (!code_insert_opcode (code, start_pos + label_num,
-		OPCODE (OP_JUMP_FORCE, out_pos), line)) {
+		OPCODE (OP_JUMP_FORCE, out_pos + 1), line)) {
 		return 0;
 	}
-	for (para_t j = start_pos + label_num + 1; j < out_pos; j++) {
+	for (para_t j = start_pos + label_num + 1; j < out_pos + 1; j++) {
 		opcode_t opcode;
 		para_t para;
 
@@ -921,8 +920,7 @@ parser_switch_statement (parser_t *parser, code_t *code)
 			continue;
 		}
 		/* Matched JUMP_CASE for current switch? */
-		if (OPCODE_OP (opcode) == OP_JUMP_CASE &&
-			OPCODE_PARA (opcode) >= start_pos &&
+		if (OPCODE_PARA (opcode) >= start_pos &&
 			OPCODE_PARA (opcode) <= start_pos + label_num) {
 			continue;
 		}
@@ -1760,7 +1758,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 	line = TOKEN_LINE (parser->token);
 	switch (TOKEN_TYPE (parser->token)) {
 		case TOKEN_IDENTIFIER:
-			pos = code_push_varname (code,TOKEN_ID (parser->token), 0);	
+			pos = code_push_varname (code,TOKEN_ID (parser->token), 0, OBJECT_TYPE_VOID);
 			parser_next_token (parser);
 			if (pos == -1) {
 				return 0;
@@ -2085,7 +2083,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		var = TOKEN_ID (parser->token);
 	}
 
-	var_pos = code_push_varname (code, var, 0);
+	var_pos = code_push_varname (code, var, 0, type);
 	if (var_pos == -1) {
 		return 0;
 	}
@@ -2223,7 +2221,6 @@ static int
 parser_parameter_declaration (parser_t *parser, code_t *code)
 {
 	object_type_t type;
-	para_t var_pos;
 	type = parser_token_object_type (parser);
 
 	if (type == -1) {
@@ -2238,9 +2235,10 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 		return parser_syntax_error (parser, "missing identifier name.");
 	}
 	
+	/* Insert a default value for this parameter, this is used while
+	 * checking arguments. */
 	/* Insert parameter local var and const. */
-	var_pos = code_push_varname (code, TOKEN_ID (parser->token), 1);
-	if (var_pos == -1) {
+	if (code_push_varname (code, TOKEN_ID (parser->token), 1, type) == -1) {
 		return 0;
 	}
 
@@ -2302,7 +2300,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 	}
 
 	/* Push func name. */
-	var_pos = code_push_varname (code, id, 0);
+	var_pos = code_push_varname (code, id, 0, OBJECT_TYPE_FUNC);
 	if (var_pos == -1) {
 		return 0;
 	}
