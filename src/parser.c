@@ -1011,6 +1011,17 @@ parser_switch_statement (parser_t *parser, code_t *code)
 					return 0;
 				}
 				break;
+			case OP_POP_BLOCKS:
+				/* Check if this opcode matchs. */
+				if (OPCODE_PARA (opcode) != start_pos) {
+					break;
+				}
+				/* Modify this POP_BLOCKS. */
+				if (!code_modify_opcode (code, i,
+					OPCODE (OP_POP_BLOCKS, blocks), 0)) {
+					return 0;
+				}
+				break;
 			default:
 				break;
 		}
