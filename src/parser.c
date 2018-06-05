@@ -467,6 +467,101 @@ parser_push_dummy_return (parser_t *parser, code_t *code)
 	return code_push_opcode (code, OPCODE (OP_RETURN, 0), line);
 }
 
+static int
+parser_adjust_jump_force (code_t *code, para_t start_pos,
+					para_t len, para_t move)
+{
+	for (para_t i = start_pos; i < start_pos + len; i++) {
+		opcode_t opcode;
+
+		opcode = code_get_pos (code, i);
+		if (OPCODE_OP (opcode) == OP_JUMP_FORCE &&
+			!code_modify_opcode (code, i,
+			OPCODE (OP_JUMP_FORCE, OPCODE_PARA (opcode) + move), 0)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int
+parser_adjust_jump (code_t *code, para_t start_pos,
+					para_t len, para_t move)
+{
+	for (para_t i = start_pos; i < start_pos + len; i++) {
+		opcode_t opcode;
+		op_t op;
+		para_t para;
+
+		opcode = code_get_pos (code, i);
+		op = OPCODE_OP (opcode);
+		para = OPCODE_PARA (opcode);
+		if (!OPCODE_IS_JUMP (opcode) || para >= start_pos + len) {
+			continue;
+		}
+
+		if (!code_modify_opcode (code, i, OPCODE (op, para + move), 0)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int
+parser_adjust_case (code_t *code, para_t start_pos, para_t insert_pos,
+					para_t case_pos, para_t len)
+{
+	/* Adjust case opcodes. */
+	for (para_t i = case_pos; i < case_pos + len - 3; i++) {
+		code_switch_opcode (code, i, i + 1);
+	}
+
+	/* Move case opcodes into insert_pos. */
+	for (para_t i = insert_pos; i < (insert_pos + case_pos) / 2; i++) {
+		code_switch_opcode (code, i, insert_pos + case_pos - i - 1);
+	}
+	for (para_t i = case_pos; i < (case_pos * 2 + len) / 2; i++) {
+		code_switch_opcode (code, i, case_pos * 2 + len - i - 1);
+	}
+	for (para_t i = insert_pos; i < (insert_pos + case_pos + len) / 2; i++) {
+		code_switch_opcode (code, i, insert_pos + case_pos + len - i - 1);
+	}
+
+	/* Modify all jump opcodes in this range. */
+	if (!parser_adjust_jump (code, insert_pos + len,
+		case_pos - insert_pos, len)) {
+		return 0;
+	}
+
+	/* Modify previous JUMP_FORCE. */
+	return parser_adjust_jump_force (code, start_pos,
+									 insert_pos - start_pos, len);
+}
+
+static int
+parser_adjust_default (code_t *code, para_t start_pos,
+					   para_t insert_pos, para_t push_pos)
+{
+	for (para_t i = push_pos; i > insert_pos; i--) {
+		code_switch_opcode (code, i, i - 1);
+	}
+	for (para_t i = push_pos + 1; i > insert_pos + 1; i--) {
+		code_switch_opcode (code, i, i - 1);
+	}
+
+	/* Modify all jump opcodes in this range. */
+	if (!parser_adjust_jump (code, insert_pos + 2,
+							 push_pos - insert_pos, 2)) {
+		return 0;
+	}
+
+	/* Modify previous JUMP_FORCE. */
+	return parser_adjust_jump_force (code, start_pos,
+									 insert_pos - start_pos, 2);
+}
+
 /* for-statement:
  * for ( expressionopt ; expressionopt ; expressionopt ) statement
  * for ( declaration expressionopt ; expressionopt ) statement */
@@ -794,11 +889,12 @@ parser_switch_statement (parser_t *parser, code_t *code)
 {
 	uint32_t line;
 	para_t start_pos;
+	para_t insert_pos;
+	para_t jump_pos;
 	para_t out_pos;
-	int label_num;
+	para_t last_jump_case;
 	para_t blocks;
 
-	line = TOKEN_LINE (parser->token);
 	parser_next_token (parser);
 	/* Check '('. */
 	if (!parser_test_and_next (parser, TOKEN ('('),
@@ -817,12 +913,24 @@ parser_switch_statement (parser_t *parser, code_t *code)
 	}
 
 	start_pos = code_current_pos (code) + 1;
+	insert_pos = start_pos;
+
+	/* Emit a POP_STACK and JUMP_FORCE. */
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_POP_STACK, 0), line)) {
+		return 0;
+	}
+	jump_pos = code_push_opcode (code, OPCODE (OP_JUMP_FORCE, 0), line) - 1;
+	if (jump_pos == -1) {
+		return 0;
+	}
+
 	if (!parser_statement (parser, code, UPPER_TYPE_SWITCH, start_pos)) {
 		return 0;
 	}
 
-	label_num = 0;
 	blocks = 0;
+	last_jump_case = -1;
 	out_pos = code_current_pos (code) + 1;
 	for (para_t i = start_pos; i < out_pos; i++) {
 		opcode_t opcode;
@@ -835,9 +943,42 @@ parser_switch_statement (parser_t *parser, code_t *code)
 			case OP_LEAVE_BLOCK:
 				blocks--;
 				break;
+			case OP_JUMP_CASE:
+				/* Check if this label matchs. */
+				if (OPCODE_PARA (opcode) != start_pos) {
+					break;
+				}
+				for (para_t j = i + 1; j < out_pos; j++) {
+					opcode_t opcode;
+
+					opcode = code_get_pos (code, j);
+					if (OPCODE_OP (opcode) != OP_PUSH_BLOCKS ||
+						OPCODE_PARA (opcode) != start_pos) {
+						continue;
+					}
+
+					if (!code_modify_opcode (code, j,
+						OPCODE (OP_PUSH_BLOCKS, blocks), 0)) {
+						return 0;
+					}
+					if (!parser_adjust_case (code, start_pos,
+						insert_pos, i, j - i + 2)) {
+						return 0;
+					}
+					if (last_jump_case != -1 &&
+						!code_modify_opcode (code, last_jump_case,
+						OPCODE (OP_JUMP_CASE, insert_pos), 0)) {
+						return 0;
+					}
+					last_jump_case = insert_pos + j - i - 1;
+					jump_pos += j - i + 2;
+					insert_pos += j - i + 2;
+					i = j + 1;
+					break;
+				}
+				break;
 			case OP_PUSH_BLOCKS:
-				/* If para matchs, this label
-				 * is matched for current switch. */
+				/* Check if this label matchs. */
 				if (OPCODE_PARA (opcode) != start_pos) {
 					break;
 				}
@@ -845,53 +986,22 @@ parser_switch_statement (parser_t *parser, code_t *code)
 					OPCODE (OP_PUSH_BLOCKS, blocks), 0)) {
 					return 0;
 				}
-				/* Insert a JUMP_FORCE. */
-				if (!code_insert_opcode (code, start_pos + label_num,
-					OPCODE (OP_JUMP_FORCE, i + 1), line)) {
+				/* The next must be a matching JUMP_DEFAULT. */ 
+				parser_adjust_default (code, start_pos, insert_pos, i);
+				if (last_jump_case != -1 &&
+					!code_modify_opcode (code, last_jump_case,
+					OPCODE (OP_JUMP_CASE, insert_pos), 0)) {
 					return 0;
 				}
-				label_num++;
-				out_pos++;
+				else {
+					last_jump_case = -1;
+				}
 				i++;
-				/* Adjust all jump opcodes in the statement. */
-				for (para_t j = start_pos; j < out_pos; j++) {
-					opcode_t opcode;
-					para_t para;
-
-					opcode = code_get_pos (code, j);
-					if (!OPCODE_IS_JUMP (opcode)) {
-						continue;
-					}
-					/* Matched JUMP_CASE for current switch? */
-					para = OPCODE_PARA (opcode);
-					if (OPCODE_PARA (opcode) >= start_pos &&
-						OPCODE_PARA (opcode) < start_pos + label_num) {
-						continue;
-					}
-
-					/* Modify para by moving one position. */
-					if (!code_modify_opcode (code, j,
-						OPCODE (OPCODE_OP (opcode), para + 1), 0)) {
-						return 0;
-					}
-				}
-				break;
-			case OP_JUMP_CASE:
-				/* If para matchs, this label
-				 * is matched for current switch. */
-				if (OPCODE_PARA (opcode) != start_pos) {
-					break;
-				}
-				/* Modify jump position to move forward to
-				 * the next label or outside the switch. */
-				if (!code_modify_opcode (code, i,
-					OPCODE (OP_JUMP_CASE, start_pos + label_num), 0)) {
-					return 0;
-				}
+				jump_pos += 2;
+				insert_pos += 2;
 				break;
 			case OP_JUMP_BREAK:
-				/* If para matchs, this label
-				 * is matched for current switch. */
+				/* Check if this label matchs. */
 				if (OPCODE_PARA (opcode) != start_pos) {
 					break;
 				}
@@ -906,32 +1016,19 @@ parser_switch_statement (parser_t *parser, code_t *code)
 		}
 	}
 
-	/* Insert a JUMP_FORCE. */
-	if (!code_insert_opcode (code, start_pos + label_num,
-		OPCODE (OP_JUMP_FORCE, out_pos + 1), line)) {
+	/* Modify the JUMP_FORCE. */
+	if (!code_modify_opcode (code, jump_pos,
+		OPCODE (OP_JUMP_FORCE, out_pos), 0)) {
 		return 0;
 	}
-	for (para_t j = start_pos + label_num + 1; j < out_pos + 1; j++) {
-		opcode_t opcode;
-		para_t para;
 
-		opcode = code_get_pos (code, j);
-		if (!OPCODE_IS_JUMP (opcode)) {
-			continue;
-		}
-		/* Matched JUMP_CASE for current switch? */
-		if (OPCODE_PARA (opcode) >= start_pos &&
-			OPCODE_PARA (opcode) <= start_pos + label_num) {
-			continue;
-		}
-
-		/* Modify para by moving one position. */
-		para = OPCODE_PARA (opcode);
-		if (!code_modify_opcode (code, j,
-			OPCODE (OPCODE_OP (opcode), para + 1), 0)) {
-			return 0;
-		}
+	/* Modify the last JUMP_CASE. */
+	if (last_jump_case != -1 &&
+		!code_modify_opcode (code, last_jump_case,
+		OPCODE (OP_JUMP_CASE, jump_pos - 1), 0)) {
+		return 0;
 	}
+
 
 	return 1;
 }
@@ -1143,32 +1240,42 @@ parser_labeled_statement (parser_t *parser, code_t *code,
 						  upper_type_t ut, para_t upper_pos)
 {
 	uint32_t line;
+	para_t current;
 
 	/* Check upper type. */
 	if (ut != UPPER_TYPE_SWITCH) {
 		return parser_syntax_error (parser, "unmatched switch label.");
 	}
 
-	/* Emit a PUSH_BLOCKS. */
 	line = TOKEN_LINE (parser->token);
-	if (!code_push_opcode (code, OPCODE (OP_PUSH_BLOCKS, upper_pos), line)) {
-		return 0;
-	}
-
 	if (parser_check (parser, TOKEN_CASE)) {
 		parser_next_token (parser);
-		if (!parser_conditional_expression (parser, code, 0)) {
+		/* Emit a JUMP_CASE. */
+		if (!code_push_opcode (code, OPCODE (OP_JUMP_CASE, upper_pos), line) ||
+			!parser_conditional_expression (parser, code, 0)) {
 			return 0;
 		}
 
-		/* Emit a JUMP_CASE. */
+		/* Emit PUSH_BLOCKS and JUMP_FORCE. */
 		line = TOKEN_LINE (parser->token);
-		if (!code_push_opcode (code, OPCODE (OP_JUMP_CASE, upper_pos), line)) {
+		current = code_current_pos (code) + 3;
+		if (!code_push_opcode (code, OPCODE (OP_PUSH_BLOCKS, upper_pos), line) ||
+			!code_push_opcode (code, OPCODE (OP_JUMP_FORCE, current), line)) {
 			return 0;
 		}
 	}
 	else {
 		parser_next_token (parser);
+		/* Emit PUSH_BLOCKS and JUMP_DEFAULT. */
+		line = TOKEN_LINE (parser->token);
+		if (!code_push_opcode (code, OPCODE (OP_PUSH_BLOCKS, upper_pos), line)) {
+			return 0;
+		}
+		current = code_current_pos (code) + 2;
+		if (!code_push_opcode (code,
+			OPCODE (OP_JUMP_DEFAULT, current), line)) {
+			return 0;
+		}
 	}
 
 	/* Skip ':'. */

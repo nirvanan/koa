@@ -103,6 +103,7 @@ static const char *g_code_names[] =
 	"OP_PUSH_BLOCKS",
 	"OP_POP_BLOCKS",
 	"OP_JUMP_CASE",
+	"OP_JUMP_DEFAULT",
 	"OP_JUMP_TRUE",
 	"OP_END_PROGRAM"
 };
@@ -262,6 +263,18 @@ code_push_opcode (code_t *code, opcode_t opcode, uint32_t line)
 		(para_t) vec_size (code->opcodes), opcode, line);
 }
 
+void
+code_switch_opcode (code_t *code, para_t f, para_t s)
+{
+	void *t;
+
+	t = vec_set (code->opcodes, (integer_value_t) f,
+				 vec_pos (code->opcodes, (integer_value_t) s));
+	t = vec_set (code->opcodes, (integer_value_t) s, t);
+	t = vec_set (code->lineinfo, (integer_value_t) f,
+				 vec_pos (code->lineinfo, (integer_value_t) s));
+	t = vec_set (code->lineinfo, (integer_value_t) s, t);
+}
 
 static int
 code_var_find_fun (void *a, void *b)
@@ -293,7 +306,8 @@ code_push_const (code_t *code, object_t *var, int *exist)
 	}
 
 	/* Check whether there is already a var. */
-	if ((pos = vec_find (code->consts, (void *) var, code_var_find_fun)) != -1) {
+	if ((pos = vec_find (code->consts,
+		(void *) var, code_var_find_fun)) != -1) {
 		*exist = 1;
 
 		return pos;

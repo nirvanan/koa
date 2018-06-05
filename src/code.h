@@ -42,7 +42,8 @@
 	OPCODE_OP(x)==OP_JUMP_FORCE||\
 	OPCODE_OP(x)==OP_JUMP_CONTINUE||\
 	OPCODE_OP(x)==OP_JUMP_BREAK||\
-	OPCODE_OP(x)==OP_JUMP_CASE)
+	OPCODE_OP(x)==OP_JUMP_CASE||\
+	OPCODE_OP(x)==OP_JUMP_DEFAULT)
 
 typedef int32_t para_t;
 
@@ -121,6 +122,7 @@ typedef enum op_e {
 	OP_PUSH_BLOCKS,
 	OP_POP_BLOCKS,
 	OP_JUMP_CASE,
+	OP_JUMP_DEFAULT,
 	OP_JUMP_TRUE,
 	OP_END_PROGRAM
 } op_t;
@@ -163,6 +165,9 @@ code_insert_opcode (code_t *code, para_t pos,
 
 para_t
 code_push_opcode (code_t *code, opcode_t opcode, uint32_t line);
+
+void
+code_switch_opcode (code_t *code, para_t f, para_t s);
 
 para_t
 code_push_const (code_t *code, object_t *var, int *exist);
