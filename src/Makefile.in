@@ -105,9 +105,9 @@ am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
 	funcobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
 	intobject.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
 	longobject.$(OBJEXT) main.$(OBJEXT) modobject.$(OBJEXT) \
-	nullobject.$(OBJEXT) object.$(OBJEXT) parser.$(OBJEXT) \
-	pool.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) vec.$(OBJEXT) \
-	vecobject.$(OBJEXT)
+	misc.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
+	parser.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT) \
+	strobject.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -294,6 +294,8 @@ longobject.h \
 main.c \
 modobject.c \
 modobject.h \
+misc.c \
+misc.h \
 nullobject.c \
 nullobject.h \
 object.c \
@@ -412,6 +414,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/longobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/modobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nullobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@

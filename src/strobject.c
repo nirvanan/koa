@@ -33,7 +33,7 @@
 #define DUMP_HEAD_LENGTH 6
 #define DUMP_TAIL_LENGTH 2
 
-#define INTERNAL_STR_LENGTH 6
+#define INTERNAL_STR_LENGTH 0
 
 #define HASH_M 0xc6a4a7935bd1e995
 
@@ -56,6 +56,7 @@ static object_t *strobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_cmp (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_hash (object_t *obj);
+static object_t *strobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -81,7 +82,8 @@ static object_opset_t g_object_ops =
 	strobject_op_cmp, /* Comparation. */
 	strobject_op_index, /* Index. */
 	NULL, /* Inplace index. */ /* Note that str objects are read-only! */
-	strobject_op_hash /* Hash. */
+	strobject_op_hash, /* Hash. */
+	strobject_op_binary /* Binary. */
 };
 
 /* Free. */
@@ -276,23 +278,45 @@ strobject_op_hash(object_t *obj)
 
 		str = strobject_get_value (obj);
 
-		OBJECT_DIGEST (obj) = strobject_murmur (str_c_str (str), str_len (str), g_internal_hash_seed);
+		OBJECT_DIGEST (obj) = strobject_murmur (str_c_str (str),
+												str_len (str),
+												g_internal_hash_seed);
 	}
 
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
+/* Binary. */
+static object_t *
+strobject_op_binary (object_t *obj)
+{
+	str_t *str;
+	size_t len;
+	object_t *len_obj;
+	object_t *res;
+
+	str = strobject_get_value (obj);
+	len = str_len (str);
+
+	len_obj = strobject_new (BINARY (len), sizeof (size_t), NULL);
+	if (len_obj == NULL) {
+		return NULL;
+	}
+	
+	res = object_add (len_obj, obj);
+	object_free (len_obj);
+
+	return res;
+}
+
 object_t *
-strobject_new (const char *val, void *udata)
+strobject_new (const char *val, size_t len, void *udata)
 {
 	strobject_t *obj;
-	size_t len;
 
 	if (val == NULL) {
 		val = "";
 	}
-	
-	len = strlen (val);
 
 	/* If len is small, this object gonna be interned. */
 	if (len <= INTERNAL_STR_LENGTH) {

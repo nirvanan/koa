@@ -18,6 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "dictobject.h"
 #include "pool.h"
 #include "hash.h"
@@ -35,6 +37,7 @@ static object_t *dictobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_ipindex (object_t *obj1,
 										object_t *obj2, object_t *obj3);
 static object_t *dictobject_op_hash (object_t *obj);
+static object_t *dictobject_op_binary (object_t *obj);
 
 static object_t *g_dump_head;
 static object_t *g_dump_tail;
@@ -65,7 +68,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	dictobject_op_index, /* Index. */
 	dictobject_op_ipindex, /* Inplace index. */
-	dictobject_op_hash /* Hash. */
+	dictobject_op_hash, /* Hash. */
+	dictobject_op_binary /* Binary. */
 };
 
 /* Free. */
@@ -79,8 +83,6 @@ dictobject_op_free (object_t *obj)
 	dict = dictobject_get_value (obj);
 	pairs = dict_pairs (dict);
 	if (pairs == NULL) {
-		error ("failed to get dict pairs while freeing.");
-
 		return;
 	}
 
@@ -280,6 +282,70 @@ dictobject_op_hash(object_t *obj)
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
+static object_t *
+dictobject_binary_concat (object_t *obj1, object_t *obj2)
+{
+	object_t *res;
+
+	obj2 = object_binary (obj2);
+	if (obj2 == NULL) {
+		object_free (obj1);
+
+		return NULL;
+	}
+
+	res = object_add (obj1, obj2);
+	object_free (obj1);
+	object_free (obj2);
+
+	return res;
+}
+
+/* Binary. */
+static object_t *
+dictobject_op_binary (object_t *obj)
+{
+	dict_t *dict;
+	vec_t *pairs;
+	size_t size;
+	object_t *temp;
+
+	dict = dictobject_get_value (obj);
+	size = dict_size (dict);
+
+	temp = strobject_new (BINARY (size), sizeof (size_t), NULL);
+	if (temp == NULL) {
+		return NULL;
+	}
+
+	pairs = dict_pairs (dict);
+	if (pairs == NULL) {
+		object_free (temp);
+
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *obj;
+
+		obj = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
+		temp = dictobject_binary_concat (temp, obj);
+		if (temp == NULL) {
+			return NULL;
+		}
+
+		obj = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
+		temp = dictobject_binary_concat (temp, obj);
+		if (temp == NULL) {
+			return NULL;
+		}
+	}
+	
+	vec_free (pairs);
+
+	return temp;
+}
+
 /* Hash function for dict. */
 static uint64_t
 dictobject_hash_fun (void *data)
@@ -371,19 +437,19 @@ void
 dictobject_init ()
 {
 	/* Make dump objects. */
-	g_dump_head = strobject_new ("<dict {", NULL);
+	g_dump_head = strobject_new ("<dict {", strlen ("<dict {"), NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init dict dump head.");
 	}
-	g_dump_tail = strobject_new ("}>", NULL);
+	g_dump_tail = strobject_new ("}>", strlen ("}>"), NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init dict dump tail.");
 	}
-	g_dump_sep = strobject_new (", ", NULL);
+	g_dump_sep = strobject_new (", ", strlen (", "), NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init dict dump sep.");
 	}
-	g_dump_map = strobject_new (": ", NULL);
+	g_dump_map = strobject_new (": ", strlen (": "), NULL);
 	if (g_dump_map == NULL) {
 		fatal_error ("failed to init dict dump map.");
 	}

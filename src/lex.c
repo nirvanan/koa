@@ -203,7 +203,7 @@ lex_token_free (token_t *token)
 }
 
 static void
-lex_new_line (reader_t *reader, char prev)
+lex_new_line (reader_t *reader, token_t *token, char prev)
 {
 	lex_next_char (reader);
 	/* Skip "\r\n" and "\n\r" sequences. */
@@ -211,6 +211,7 @@ lex_new_line (reader_t *reader, char prev)
 		reader->current != prev) {
 		lex_next_char (reader);
 	}
+	token->lineno++;
 	reader->line++;
 	if (reader->line > MAX_SOURCE_LINE) {
 		fatal_error ("source line exceeded.");
@@ -795,7 +796,7 @@ lex_read_identifier (reader_t *reader, token_t *token)
 	}
 
 	/* Check whether this token is a reserved word. */
-	word = strobject_new (token->token, NULL);
+	word = strobject_new (token->token, strlen (token->token), NULL);
 	res = object_index (g_reserved_tokens, word);
 	if (OBJECT_IS_INT (res)) {
 		/* Ok, a reserved word. */
@@ -821,7 +822,7 @@ lex_next (reader_t *reader)
 		switch (reader->current) {
 			case '\r':
 			case '\n':
-				lex_new_line (reader, reader->current);
+				lex_new_line (reader, token, reader->current);
 				break;
 			case '|':
 			case '&':
@@ -889,7 +890,7 @@ lex_init()
 		object_t *word;
 		object_t *suc;
 
-		word = strobject_new (re->word, NULL);
+		word = strobject_new (re->word, strlen (re->word), NULL);
 		if (word == NULL) {
 			fatal_error ("failed to generate the reserved word dict.");
 		}

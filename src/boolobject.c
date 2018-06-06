@@ -19,10 +19,12 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "boolobject.h"
 #include "pool.h"
 #include "error.h"
+#include "str.h"
 #include "intobject.h"
 #include "longobject.h"
 #include "strobject.h"
@@ -39,6 +41,7 @@ static object_t *boolobject_op_lor (object_t *obj1, object_t *obj2);
 static object_t *boolobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *boolobject_op_cmp (object_t *obj1, object_t *obj2);
 static object_t *boolobject_op_hash (object_t *obj);
+static object_t *boolobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -64,7 +67,8 @@ static object_opset_t g_object_ops =
 	boolobject_op_cmp, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
-	boolobject_op_hash /* Hash. */
+	boolobject_op_hash, /* Hash. */
+	boolobject_op_binary /* Binary. */
 };
 
 /* Dump. */
@@ -72,10 +76,10 @@ static object_t *
 boolobject_op_dump (object_t *obj)
 {
 	if (boolobject_get_value (obj)) {
-		return strobject_new ("<bool true>", NULL);
+		return strobject_new ("<bool true>", strlen ("<bool true>"), NULL);
 	}
 
-	return strobject_new ("<bool false>", NULL);
+	return strobject_new ("<bool false>", strlen ("<bool true>"), NULL);
 }
 
 /* Logic Not. */
@@ -143,6 +147,14 @@ boolobject_op_hash(object_t *obj)
 
 	/* The digest is already computed. */
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
+/* Binary. */
+static object_t *
+boolobject_op_binary (object_t *obj)
+{
+	return strobject_new (BINARY (((boolobject_t *) obj)->val),
+						  sizeof (bool), NULL);
 }
 
 object_t *

@@ -36,6 +36,7 @@ static void modobject_op_free (object_t *obj);
 static object_t *modobject_op_dump (object_t *obj);
 static object_t *modobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *modobject_op_hash (object_t *obj);
+static object_t *modobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -61,7 +62,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
-	modobject_op_hash /* Hash. */
+	modobject_op_hash, /* Hash. */
+	modobject_op_binary /* Binary. */
 };
 
 /* Free. */
@@ -90,7 +92,7 @@ modobject_op_dump (object_t *obj)
 	}
 
 	snprintf (buf, size, "<mod %s>", filename);
-	res = strobject_new (buf, NULL);
+	res = strobject_new (buf, strlen (buf), NULL);
 	pool_free ((void *) buf);
 
 	return res;
@@ -112,6 +114,13 @@ modobject_op_hash(object_t *obj)
 	}
 
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
+/* Binary. */
+static object_t *
+modobject_op_binary (object_t *obj)
+{
+	return code_binary (modobject_get_value (obj));
 }
 
 /* This is a null mod object, which means it has nothing. */

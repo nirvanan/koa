@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include "object.h"
@@ -267,7 +268,7 @@ object_dump (object_t *obj)
 	dump_fun = (OBJECT_OPSET (obj))->dump;
 	if (dump_fun == NULL) {
 		if (OBJECT_IS_DUMMY (obj)) {
-			return strobject_new ("<dummy>", NULL);
+			return strobject_new ("<dummy>", strlen ("<dummy>"), NULL);
 		}
 
 		error ("%s has no dump routine.", TYPE_NAME (obj));
@@ -1015,6 +1016,46 @@ object_hash (object_t *obj)
 	return hash_fun (obj);
 }
 
+/* At this stage, this operation is only used by dumping code.
+ * TODO: Check loop refererence. */
+object_t *
+object_binary (object_t *obj)
+{
+	una_op_f binary_fun;
+	object_t *head_obj;
+	object_t *content_obj;
+	object_t *res;
+
+	head_obj = strobject_new (BINARY (OBJECT_TYPE (obj)),
+							  sizeof (object_type_t), NULL);
+	if (head_obj == NULL) {
+		return NULL;
+	}
+
+	binary_fun = (OBJECT_OPSET (obj))->binary;
+	/* At this stage, this is impossible, =_=. */
+	if (binary_fun == NULL) {
+		object_free (head_obj);
+
+		error ("type %s has no binary routine.", TYPE_NAME (obj));
+		
+		return NULL;
+	}
+	
+	content_obj = binary_fun (obj);
+	if (content_obj == NULL) {
+		object_free (head_obj);
+
+		return NULL;
+	}
+
+	res = object_add (head_obj, content_obj);
+	object_free (head_obj);
+	object_free (content_obj);
+
+	return res;
+}
+
 object_t *
 object_get_default (object_type_t type)
 {
@@ -1036,7 +1077,7 @@ object_get_default (object_type_t type)
 		case OBJECT_TYPE_DOUBLE:
 			return doubleobject_new ((double) 0.0, NULL);
 		case OBJECT_TYPE_STR:
-			return strobject_new ("", NULL);
+			return strobject_new ("", 0, NULL);
 		case OBJECT_TYPE_VEC:
 			return vecobject_new ((size_t) 0, NULL);
 		case OBJECT_TYPE_DICT:

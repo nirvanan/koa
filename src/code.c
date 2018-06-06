@@ -24,8 +24,10 @@
 #include "code.h"
 #include "error.h"
 #include "pool.h"
+#include "object.h"
 #include "longobject.h"
 #include "strobject.h"
+#include "vecobject.h"
 #include "funcobject.h"
 
 static const char *g_code_names[] =
@@ -155,9 +157,10 @@ code_new (const char *filename, const char *name)
 }
 
 void
-code_set_fun (code_t *code, object_type_t ret_type)
+code_set_fun (code_t *code, uint32_t line, object_type_t ret_type)
 {
 	code->fun = 1;
+	code->lineno = line;
 	code->ret_type = ret_type;
 }
 
@@ -337,7 +340,7 @@ code_push_varname (code_t *code, const char *var,
 		return -1;
 	}
 
-	name = strobject_new (var, NULL);
+	name = strobject_new (var, strlen (var), NULL);
 	if (name == NULL) {
 		return -1;
 	}
@@ -514,3 +517,263 @@ code_print (code_t *code)
 		}
 	}
 }
+
+static object_t *
+code_vec_to_binary (vec_t *vec, size_t el)
+{
+	size_t size;
+	object_t *temp;
+
+	size = vec_size (vec);
+	temp = strobject_new (BINARY (size), sizeof (size_t), NULL);
+	if (temp == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *res;
+		object_t *obj;
+
+		obj = strobject_new (vec_pos (vec, i), el, NULL);
+		if (obj == NULL) {
+			object_free (temp);
+
+			return NULL;
+		}
+
+		res = object_add (temp, obj);
+		object_free (temp);
+		object_free (obj);
+		if (res == NULL) {
+			return NULL;
+		}
+		
+		temp = res;
+	}
+	
+	return temp;
+}
+
+static object_t *
+code_object_binary (vec_t *vec)
+{
+	object_t *obj;
+	object_t *res;
+
+	obj = vecobject_vec_new (vec, NULL);
+	if (obj == NULL) {
+		return NULL;
+	}
+
+	res = object_binary (obj);
+	/* Data can not be freed. */
+	pool_free ((void *) obj);
+
+	return res;
+}
+
+static object_t *
+code_str_binary (str_t *str)
+{
+	object_t *obj;
+	object_t *res;
+
+	obj = strobject_str_new (str, NULL);
+	if (obj == NULL) {
+		return NULL;
+	}
+
+	res = object_binary (obj);
+	/* Data can not be freed. */
+	pool_free ((void *) obj);
+
+	return res;
+}
+
+static object_t *
+code_binary_concat (object_t *obj1, object_t *obj2)
+{
+	object_t *res;
+
+	res = object_add (obj1, obj2);
+	object_free (obj1);
+	object_free (obj2);
+
+	return res;
+}
+
+object_t *
+code_binary (code_t *code)
+{
+	object_t *cur;
+	object_t *temp;
+
+	/* Dump opcodes. */
+	cur = code_vec_to_binary (code->opcodes, sizeof (opcode_t));
+	if (cur == NULL) {
+		return NULL;
+	}
+
+	/* Dump lineinfo. */
+	temp = code_vec_to_binary (code->lineinfo, sizeof (uint32_t));
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump args. */
+	temp = code_vec_to_binary (code->args, sizeof (object_type_t));
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump consts. */
+	temp = code_object_binary (code->consts);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump varnames. */
+	temp = code_object_binary (code->consts);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump name. */
+	temp = code_str_binary (code->name);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump filename. */
+	temp = code_str_binary (code->filename);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump fun. */
+	temp = strobject_new (BINARY (code->fun), sizeof (int), NULL);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump lineno. */
+	temp = strobject_new (BINARY (code->lineno), sizeof (int), NULL);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump ret_type. */
+	temp = strobject_new (BINARY (code->ret_type), sizeof (object_type_t), NULL);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	return cur;
+}
+
+int
+code_save_binary (code_t *code)
+{
+	char *path;
+	size_t len;
+	FILE *b;
+	object_t *obj;
+	str_t *str;
+
+	len = str_len (code->filename);
+	path = (char *) pool_alloc (len + 1);
+	if (path == NULL) {
+		error ("out of memory.");
+
+		return 0;
+	}
+
+	memcpy (path, str_c_str (code->filename), len);
+	path[len] = '\0';
+	/* Binary is saved as ".b". */
+	path[len - 1] = 'b';
+
+	b = fopen (path, "wb");
+	if (b == NULL) {
+		error ("can't open binary file: %s.", path);
+		pool_free ((void *) path);
+
+		return 0;
+	}
+
+	obj = code_binary (code);
+	if (obj == NULL) {
+		pool_free ((void *) path);
+		UNUSED (fclose (b));
+
+		return 0;
+	}
+
+	str = strobject_get_value (obj);
+	if (fwrite ((const void *) str_c_str (str), sizeof (char), len, b) != len) {
+		UNUSED (fclose (b));
+		error ("saving binary failed: %s.", path);
+		pool_free ((void *) path);
+
+		return 0;
+	}
+
+	UNUSED (fclose (b));
+
+	return 1;
+}
+

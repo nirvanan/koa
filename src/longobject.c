@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "longobject.h"
 #include "pool.h"
@@ -60,6 +61,7 @@ static object_t *longobject_op_rshift (object_t *obj1, object_t *obj2);
 static object_t *longobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *longobject_op_cmp (object_t *obj1, object_t *obj2);
 static object_t *longobject_op_hash (object_t *obj);
+static object_t *longobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -85,7 +87,8 @@ static object_opset_t g_object_ops =
 	longobject_op_cmp, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
-	longobject_op_hash /* Hash. */
+	longobject_op_hash, /* Hash. */
+	longobject_op_binary /* Binary. */
 };
 
 /* Logic Not. */
@@ -103,7 +106,7 @@ longobject_op_dump (object_t *obj)
 
 	snprintf (buf, DUMP_BUF_SIZE, "<int %ld>", longobject_get_value (obj));
 
-	return strobject_new (buf, NULL);
+	return strobject_new (buf, strlen (buf), NULL);
 }
 
 /* Negative. */
@@ -316,6 +319,13 @@ longobject_op_hash(object_t *obj)
 	}
 
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
+/* Binary. */
+static object_t *
+longobject_op_binary (object_t *obj)
+{
+	return strobject_new (BINARY (((longobject_t *) obj)->val), sizeof (long), NULL);
 }
 
 object_t *

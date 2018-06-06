@@ -36,6 +36,7 @@ static void funcobject_op_free (object_t *obj);
 static object_t *funcobject_op_dump (object_t *obj);
 static object_t *funcobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *funcobject_op_hash (object_t *obj);
+static object_t *funcobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -61,7 +62,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
-	funcobject_op_hash /* Hash. */
+	funcobject_op_hash, /* Hash. */
+	funcobject_op_binary /* Binary. */
 };
 
 /* Free. */
@@ -92,7 +94,7 @@ funcobject_op_dump (object_t *obj)
 	}
 
 	snprintf (buf, size, "<func %s:%s>", filename, name);
-	res = strobject_new (buf, NULL);
+	res = strobject_new (buf, strlen (buf), NULL);
 	pool_free ((void *) buf);
 
 	return res;
@@ -114,6 +116,13 @@ funcobject_op_hash(object_t *obj)
 	}
 
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
+/* Binary. */
+static object_t *
+funcobject_op_binary (object_t *obj)
+{
+	return code_binary (funcobject_get_value (obj));
 }
 
 /* This is a null func object, which means it is not callable. */

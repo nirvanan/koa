@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "nullobject.h"
 #include "pool.h"
@@ -34,6 +35,7 @@ static object_t *g_null_object;
 static object_t *nullobject_op_dump (object_t *obj);
 static object_t *nullobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *nullobject_op_hash (object_t *obj);
+static object_t *nullobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -59,7 +61,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
-	nullobject_op_hash /* Hash. */
+	nullobject_op_hash, /* Hash. */
+	nullobject_op_binary /* Binary. */
 };
 
 /* Equality. */
@@ -81,7 +84,7 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 static object_t *
 nullobject_op_dump (object_t *obj)
 {
-	return strobject_new ("<null null>", NULL);
+	return strobject_new ("<null null>", strlen ("<null null>"), NULL);
 }
 
 /* Hash. */
@@ -90,6 +93,13 @@ nullobject_op_hash (object_t *obj)
 {
 	/* The digest is already computed. */
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
+/* Binary. */
+static object_t *
+nullobject_op_binary (object_t *obj)
+{
+	return strobject_new ("", 0, NULL);
 }
 
 /* This object is known as 'null'. */

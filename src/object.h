@@ -24,10 +24,13 @@
 #include <stdint.h>
 
 #include "koa.h"
+#include "str.h"
 
 /* In koa world, we do not present unsigned integers explitly,
  * as negetive values of signed objects can be parsed as BIG
  * unsigned value if you are willing to do so.*/
+
+#define BINARY(x) ((const char*)&(x))
 
 #define INTEGER_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL||\
 	(x)->head.type==OBJECT_TYPE_CHAR||\
@@ -151,6 +154,7 @@ typedef struct object_opset_s
 	bin_op_f index;
 	ter_op_f ipindex;
 	una_op_f hash;
+	una_op_f binary;
 } object_opset_t;
 
 void
@@ -248,6 +252,9 @@ object_address_hash (void *val);
 
 object_t *
 object_hash (object_t *obj);
+
+object_t *
+object_binary (object_t *obj);
 
 object_t *
 object_get_default (object_type_t type);

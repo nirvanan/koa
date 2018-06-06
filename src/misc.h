@@ -1,5 +1,5 @@
 /*
- * strobject.h
+ * misc.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,31 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STROBJECT_H
-#define STROBJECT_H
+#ifndef MISC_H
+#define MISC_H
 
 #include "koa.h"
-#include "object.h"
-#include "str.h"
-#include "hash.h"
 
-typedef struct strobject_s
-{
-	object_head_t head;
-	str_t *val;
-	void *hn; /* For quick dehash. */
-} strobject_t;
+int
+misc_check_source_extension (const char *filename);
 
-object_t *
-strobject_new (const char *val, size_t len, void *udata);
-
-object_t *
-strobject_str_new (str_t *val, void *udata);
-
-str_t *
-strobject_get_value (object_t *obj);
-
-void
-strobject_init ();
-
-#endif /* STROBJECT_H */
+#endif /* MISC_H */

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 
 #include "parser.h"
 #include "pool.h"
@@ -30,6 +31,7 @@
 #include "str.h"
 #include "vec.h"
 #include "error.h"
+#include "misc.h"
 #include "nullobject.h"
 #include "boolobject.h"
 #include "charobject.h"
@@ -1963,7 +1965,9 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 		case TOKEN_STRING:
 			pos = parser_push_const (code,
 									 OBJECT_TYPE_STR, 
-									 strobject_new (TOKEN_ID (parser->token), NULL));
+									 strobject_new (TOKEN_ID (parser->token),
+									 strlen (TOKEN_ID (parser->token)),
+									 NULL));
 			parser_next_token (parser);
 			if (pos == -1) {
 				return 0;
@@ -2411,11 +2415,14 @@ parser_function_definition (parser_t *parser, code_t *code,
 	opcode_t last;
 	uint32_t line;
 
+	line = TOKEN_LINE (parser->token);
 	/* Make a new code for this function. */
 	func_code = code_new (parser->path, id);
 	if (func_code == NULL) {
 		return 0;
 	}
+
+	code_set_fun (code, line, ret_type);
 
 	/* Push func name. */
 	var_pos = code_push_varname (code, id, 0, OBJECT_TYPE_FUNC);
@@ -2442,7 +2449,6 @@ parser_function_definition (parser_t *parser, code_t *code,
 									"missing '{' in function definition.");
 	}
 
-	line = TOKEN_LINE (parser->token);
 	if (!parser_compound_statement (parser, func_code, UPPER_TYPE_PLAIN, -1)) {
 		return 0;
 	}
@@ -2543,6 +2549,12 @@ parser_load_file (const char *path)
 	code_t *code;
 	parser_t *parser;
 	FILE *f;
+
+	if (!misc_check_source_extension (path)) {
+		error ("source file extension must be \".k\".");
+
+		return NULL;
+	}
 
 	code = code_new (path, TOP_LEVEL_TAG);
 	if (code == NULL) {

@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <string.h>
 
 #include "vecobject.h"
 #include "pool.h"
@@ -35,6 +36,7 @@ static object_t *vecobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_ipindex (object_t *obj1,
 									   object_t *obj2, object_t *obj3);
 static object_t *vecobject_op_hash (object_t *obj);
+static object_t *vecobject_op_binary (object_t *obj);
 
 static object_t *g_dump_head;
 static object_t *g_dump_tail;
@@ -64,7 +66,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Comparation. */
 	vecobject_op_index, /* Index. */
 	vecobject_op_ipindex, /* Inplace index. */
-	vecobject_op_hash /* Hash. */
+	vecobject_op_hash, /* Hash. */
+	vecobject_op_binary /* Binary. */
 };
 
 /* Free. */
@@ -227,6 +230,47 @@ vecobject_op_hash(object_t *obj)
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
 }
 
+/* Binary. */
+static object_t *
+vecobject_op_binary (object_t *obj)
+{
+	vec_t *vec;
+	size_t size;
+	object_t *temp;
+
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+
+	temp = strobject_new (BINARY (size), sizeof (size_t), NULL);
+	if (temp == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *obj;
+		object_t *res;
+
+		obj = (object_t *) vec_pos (vec, i);
+		obj = object_binary (obj);
+		if (obj == NULL) {
+			object_free (temp);
+
+			return NULL;
+		}
+
+		res = object_add (temp, obj);
+		object_free (temp);
+		object_free (obj);
+		if (res == NULL) {
+			return NULL;
+		}
+		
+		temp = res;
+	}
+	
+	return temp;
+}
+
 static int
 vecobject_empty_init (vecobject_t *obj)
 {
@@ -314,15 +358,15 @@ void
 vecobject_init ()
 {
 	/* Make dump objects. */
-	g_dump_head = strobject_new ("<vec [", NULL);
+	g_dump_head = strobject_new ("<vec [", strlen ("<vec ["), NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init vec dump head.");
 	}
-	g_dump_tail = strobject_new ("]>", NULL);
+	g_dump_tail = strobject_new ("]>", strlen ("]>"), NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init vec dump tail.");
 	}
-	g_dump_sep = strobject_new (", ", NULL);
+	g_dump_sep = strobject_new (", ", strlen (", "), NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init vec dump sep.");
 	}

@@ -138,7 +138,7 @@ typedef struct code_s {
 	str_t *filename; /* File name of this block. */
 	int fun; /* Is this code representing a function? */
 	int lineno; /* The first line number of this block. */
-	object_type_t ret_type;
+	object_type_t ret_type; /* Return type of function. */
 } code_t;
 
 typedef enum upper_type_e
@@ -154,7 +154,7 @@ code_t *
 code_new (const char *filename, const char *name);
 
 void
-code_set_fun (code_t *code, object_type_t ret_type);
+code_set_fun (code_t *code, uint32_t line, object_type_t ret_type);
 
 void
 code_free (code_t *code);
@@ -200,5 +200,11 @@ code_get_name (code_t *code);
 
 void
 code_print (code_t *code);
+
+object_t *
+code_binary (code_t *code);
+
+int
+code_save_binary (code_t *code);
 
 #endif /* CODE_H */

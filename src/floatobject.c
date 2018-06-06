@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>	
 
 #include "floatobject.h"
 #include "pool.h"
@@ -43,6 +44,7 @@ static object_t *floatobject_op_lor (object_t *obj1, object_t *obj2);
 static object_t *floatobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *floatobject_op_cmp (object_t *obj1, object_t *obj2);
 static object_t *floatobject_op_hash (object_t *obj);
+static object_t *floatobject_op_binary (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -68,7 +70,8 @@ static object_opset_t g_object_ops =
 	floatobject_op_cmp, /* Comparation. */
 	NULL,  /* Index. */
 	NULL,  /* Inplace index. */
-	floatobject_op_hash /* Hash. */
+	floatobject_op_hash, /* Hash. */
+	floatobject_op_binary /* Binary. */
 };
 
 /* Logic Not. */
@@ -86,7 +89,7 @@ floatobject_op_dump (object_t *obj)
 
 	snprintf (buf, DUMP_BUF_SIZE, "<float %f>", floatobject_get_value (obj));
 
-	return strobject_new (buf, NULL);
+	return strobject_new (buf, strlen (buf), NULL);
 }
 
 /* Negative. */
@@ -210,6 +213,14 @@ floatobject_op_hash(object_t *obj)
 	}
 
 	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+}
+
+/* Binary. */
+static object_t *
+floatobject_op_binary (object_t *obj)
+{
+	return strobject_new (BINARY (((floatobject_t *) obj)->val),
+						  sizeof (float), NULL);
 }
 
 object_t *
