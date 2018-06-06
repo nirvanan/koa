@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		code_t *code = parser_load_file ("/home/nirvanan/test.k");
 		if (code) {
-			//code_print (code);
+			code_print (code);
 		}
 		else {
 			printf ("wrong\n");

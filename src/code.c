@@ -30,6 +30,8 @@
 #include "vecobject.h"
 #include "funcobject.h"
 
+#define BINARY_HEADER "KOABIN"
+
 static const char *g_code_names[] =
 {
 	"NULL",
@@ -725,6 +727,16 @@ code_binary (code_t *code)
 	return cur;
 }
 
+static int
+code_write_header (FILE *b)
+{
+	size_t len;
+
+	len = strlen (BINARY_HEADER);
+
+	return fwrite (BINARY_HEADER, sizeof (char), len, b) == len;
+}
+
 int
 code_save_binary (code_t *code)
 {
@@ -755,24 +767,34 @@ code_save_binary (code_t *code)
 		return 0;
 	}
 
-	obj = code_binary (code);
-	if (obj == NULL) {
+	if (!code_write_header (b)) {
 		pool_free ((void *) path);
 		UNUSED (fclose (b));
+	}
+
+	obj = code_binary (code);
+	if (obj == NULL) {
+		UNUSED (fclose (b));
+		error ("saving binary header failed: %s.", path);
+		pool_free ((void *) path);
 
 		return 0;
 	}
 
 	str = strobject_get_value (obj);
+	len = str_len (str);
 	if (fwrite ((const void *) str_c_str (str), sizeof (char), len, b) != len) {
 		UNUSED (fclose (b));
+		object_free (obj);
 		error ("saving binary failed: %s.", path);
 		pool_free ((void *) path);
 
 		return 0;
 	}
 
+	pool_free ((void *) path);
 	UNUSED (fclose (b));
+	object_free (obj);
 
 	return 1;
 }
