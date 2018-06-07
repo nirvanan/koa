@@ -31,6 +31,9 @@ typedef struct doubleobject_s
 } doubleobject_t;
 
 object_t *
+doubleobject_load_binary (FILE *f);
+
+object_t *
 doubleobject_new (double val, void *udata);
 
 double

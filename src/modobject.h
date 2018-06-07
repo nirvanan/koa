@@ -32,6 +32,9 @@ typedef struct modobject_s
 } modobject_t;
 
 object_t *
+modobject_load_binary (FILE *f);
+
+object_t *
 modobject_new (void *udata);
 
 object_t *

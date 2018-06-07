@@ -123,6 +123,19 @@ modobject_op_binary (object_t *obj)
 	return code_binary (modobject_get_value (obj));
 }
 
+object_t *
+modobject_load_binary (FILE *f)
+{
+	code_t *code;
+
+	code = code_load_binary (NULL, f);
+	if (code == NULL) {
+		return NULL;
+	}
+
+	return modobject_code_new (code, NULL);
+}
+
 /* This is a null mod object, which means it has nothing. */
 object_t *
 modobject_new (void *udata)

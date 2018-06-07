@@ -31,6 +31,9 @@ typedef struct charobject_s
 } charobject_t;
 
 object_t *
+charobject_load_binary (FILE *f);
+
+object_t *
 charobject_new (char val, void *udata);
 
 char

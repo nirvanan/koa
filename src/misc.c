@@ -19,6 +19,9 @@
  */
 
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "misc.h"
 
@@ -35,4 +38,33 @@ misc_check_source_extension (const char *filename)
 	return 1;
 }
 
+int
+misc_check_file_access (const char *path, int read, int write)
+{
+	int mode;
 
+	mode = F_OK;
+	if (read) {
+		mode |= R_OK;
+	}
+	if (write) {
+		mode |= W_OK;
+	}
+
+	return access (path, mode) != -1;
+}
+
+int
+misc_file_is_older (const char *s, const char *b)
+{
+	struct stat s_stat;
+	struct stat b_stat;
+
+	if (stat (s, &s_stat) || stat (b, &b_stat)) {
+		return -1;
+	}
+
+	return b_stat.st_mtim.tv_sec > s_stat.st_mtim.tv_sec ||
+		(b_stat.st_mtim.tv_sec == s_stat.st_mtim.tv_sec &&
+		 b_stat.st_mtim.tv_nsec > s_stat.st_mtim.tv_nsec);
+}

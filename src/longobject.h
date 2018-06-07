@@ -31,6 +31,9 @@ typedef struct longobject_s
 } longobject_t;
 
 object_t *
+longobject_load_binary (FILE *f);
+
+object_t *
 longobject_new (long val, void *udata);
 
 long

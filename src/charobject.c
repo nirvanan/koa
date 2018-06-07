@@ -169,6 +169,20 @@ charobject_op_binary (object_t *obj)
 }
 
 object_t *
+charobject_load_binary (FILE *f)
+{
+	char val;
+
+	if (fread (&val, sizeof (char), 1, f) != 1) {
+		error ("failed to load char binary.");
+
+		return NULL;
+	}
+
+	return charobject_new (val, NULL);
+}
+
+object_t *
 charobject_new (char val, void *udata)
 {
 	charobject_t *obj;

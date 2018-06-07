@@ -26,4 +26,10 @@
 int
 misc_check_source_extension (const char *filename);
 
+int
+misc_check_file_access (const char *path, int read, int write);
+
+int
+misc_file_is_older (const char *s, const char *b);
+
 #endif /* MISC_H */

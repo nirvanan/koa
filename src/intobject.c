@@ -330,6 +330,20 @@ intobject_op_binary (object_t *obj)
 }
 
 object_t *
+intobject_load_binary (FILE *f)
+{
+	int val;
+
+	if (fread (&val, sizeof (int), 1, f) != 1) {
+		error ("failed to load int binary.");
+
+		return NULL;
+	}
+
+	return intobject_new (val, NULL);
+}
+
+object_t *
 intobject_new (int val, void *udata)
 {
 	intobject_t *obj;

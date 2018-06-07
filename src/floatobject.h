@@ -31,6 +31,9 @@ typedef struct floatobject_s
 } floatobject_t;
 
 object_t *
+floatobject_load_binary (FILE *f);
+
+object_t *
 floatobject_new (float val, void *udata);
 
 float

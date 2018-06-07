@@ -32,6 +32,9 @@ typedef struct vecobject_s
 } vecobject_t;
 
 object_t *
+vecobject_load_binary (FILE *f);
+
+object_t *
 vecobject_new (size_t len, void *udata);
 
 object_t *

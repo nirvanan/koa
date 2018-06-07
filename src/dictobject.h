@@ -32,6 +32,9 @@ typedef struct dictobject_s
 } dictobject_t;
 
 object_t *
+dictobject_load_binary (FILE *f);
+
+object_t *
 dictobject_new (void *udata);
 
 object_t *

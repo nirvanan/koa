@@ -207,4 +207,7 @@ code_binary (code_t *code);
 int
 code_save_binary (code_t *code);
 
+code_t *
+code_load_binary (const char *path, FILE *f);
+
 #endif /* CODE_H */

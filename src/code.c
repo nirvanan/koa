@@ -31,6 +31,7 @@
 #include "funcobject.h"
 
 #define BINARY_HEADER "KOABIN"
+#define BINARY_HEADER_LEN 6
 
 static const char *g_code_names[] =
 {
@@ -147,10 +148,9 @@ code_new (const char *filename, const char *name)
 	code->consts = vec_new (0);
 	code->varnames = vec_new (0);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
-		code->args == NULL ||code->consts == NULL ||
+		code->args == NULL || code->consts == NULL ||
 		code->varnames == NULL) {
 		code_free (code);
-		error ("out of memory.");
 
 		return NULL;
 	}
@@ -323,6 +323,7 @@ code_push_const (code_t *code, object_t *var, int *exist)
 	}
 
 	*exist = 0;
+	object_ref (var);
 
 	/* Return the index of this new var. */
 	return vec_size (code->consts) - 1;
@@ -557,7 +558,7 @@ code_vec_to_binary (vec_t *vec, size_t el)
 }
 
 static object_t *
-code_object_binary (vec_t *vec)
+code_object_to_binary (vec_t *vec)
 {
 	object_t *obj;
 	object_t *res;
@@ -575,7 +576,7 @@ code_object_binary (vec_t *vec)
 }
 
 static object_t *
-code_str_binary (str_t *str)
+code_str_to_binary (str_t *str)
 {
 	object_t *obj;
 	object_t *res;
@@ -641,7 +642,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump consts. */
-	temp = code_object_binary (code->consts);
+	temp = code_object_to_binary (code->consts);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -653,7 +654,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump varnames. */
-	temp = code_object_binary (code->consts);
+	temp = code_object_to_binary (code->varnames);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -665,7 +666,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump name. */
-	temp = code_str_binary (code->name);
+	temp = code_str_to_binary (code->name);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -677,7 +678,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump filename. */
-	temp = code_str_binary (code->filename);
+	temp = code_str_to_binary (code->filename);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -754,11 +755,9 @@ code_save_binary (code_t *code)
 		return 0;
 	}
 
-	memcpy (path, str_c_str (code->filename), len);
-	path[len] = '\0';
 	/* Binary is saved as ".b". */
+	strcpy (path, str_c_str (code->filename));
 	path[len - 1] = 'b';
-
 	b = fopen (path, "wb");
 	if (b == NULL) {
 		error ("can't open binary file: %s.", path);
@@ -799,3 +798,173 @@ code_save_binary (code_t *code)
 	return 1;
 }
 
+static vec_t *
+code_binary_to_vec (FILE *f, size_t el)
+{
+	size_t size;
+	vec_t *vec;
+
+	vec = vec_new (0);
+	if (vec == NULL) {
+		return NULL;
+	}
+
+	if (fread (&size, sizeof (size_t), 1, f) != 1) {
+		vec_free (vec);
+		error ("read binary failed.");
+
+		return NULL;
+	}
+
+	for (int i = 0; i < size; i++) {
+		void *data;
+
+		data = pool_alloc (el);
+		if (fread (data, el, 1, f) != 1 ||
+			!vec_push_back (vec, data)) {
+			pool_free (data);
+			vec_free (vec);
+
+			return NULL;
+		}
+	}
+
+	return vec;
+}
+
+static vec_t *
+code_binary_to_object (FILE *f)
+{
+	vec_t *vec;
+	object_t *obj;
+
+	obj = object_load_binary (f);
+	if (obj == NULL) {
+		return NULL;
+	}
+	vec = vecobject_get_value (obj);
+	pool_free ((void *) obj);
+
+	return vec;
+}
+
+static str_t *
+code_binary_to_str (FILE *f)
+{
+	str_t *str;
+	object_t *obj;
+
+	obj = object_load_binary (f);
+	if (obj == NULL) {
+		return NULL;
+	}
+	str = strobject_get_value (obj);
+	pool_free ((void *) obj);
+
+	return str;
+}
+
+static int
+code_load_header (FILE *f)
+{
+	char header[BINARY_HEADER_LEN];
+
+	if (fread ((void *) header, BINARY_HEADER_LEN, 1, f) != 1) {
+		error ("read binary header failed.");
+
+		return 0;
+	}
+
+	if (memcmp (header, BINARY_HEADER, BINARY_HEADER_LEN) != 0) {
+		error ("invalid binary header.");
+
+		return 0;
+	}
+
+	return 1;
+}
+
+code_t *
+code_load_binary (const char *path, FILE *f)
+{
+	code_t *code;
+	FILE *b;
+
+	if (f == NULL) {
+		char *bin_path;
+		size_t len;
+
+		len = strlen (path);
+		bin_path = (char *) pool_alloc (len + 1);
+		if (bin_path == NULL) {
+			error ("out of memory.");
+
+			return 0;
+		}
+
+		strcpy (bin_path, path);
+		bin_path[len - 1] = 'b';
+		b = fopen (bin_path, "rb");
+		pool_free ((void *) bin_path);
+		if (b == NULL) {
+			error ("failed to open binary: %s", path);
+
+			return NULL;
+		}
+	}
+	else {
+		b = f;
+	}
+
+	code = (code_t *) pool_calloc (1, sizeof (code_t));
+	if (code == NULL) {
+		if (f == NULL) {
+			UNUSED (fclose (b));
+		}
+		error ("out of memory.");
+
+		return NULL;
+	}
+
+	if (f == NULL && !code_load_header (b)) {
+		UNUSED (fclose (b));
+
+		return NULL;
+	}
+
+	code->opcodes = code_binary_to_vec (b, sizeof (opcode_t));
+	code->lineinfo = code_binary_to_vec (b, sizeof (uint32_t));
+	code->args = code_binary_to_vec (b, sizeof (object_type_t));
+	code->consts = code_binary_to_object (b);
+	code->varnames = code_binary_to_object (b);
+	code->name = code_binary_to_str (b);
+	code->filename = code_binary_to_str (b);
+	if (code->opcodes == NULL || code->lineinfo == NULL ||
+		code->args == NULL || code->consts == NULL ||
+		code->varnames == NULL || code->name == NULL ||
+		code->filename == NULL) {
+		code_free (code);
+		if (f == NULL) {
+			UNUSED (fclose (b));
+		}
+
+		return NULL;
+	}
+
+	if (fread (&code->fun, sizeof (int), 1, b) != 1 ||
+		fread (&code->lineno, sizeof (int), 1, b) != 1 ||
+		fread (&code->ret_type, sizeof (object_type_t), 1, b) != 1) {
+		code_free (code);
+		if (f == NULL) {
+			UNUSED (fclose (b));
+		}
+
+		return NULL;
+	}
+
+	if (f == NULL) {
+		UNUSED (fclose (b));
+	}
+
+	return code;
+}

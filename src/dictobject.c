@@ -381,6 +381,55 @@ dictobject_test_fun (void *key, void *hd)
 }
 
 object_t *
+dictobject_load_binary (FILE *f)
+{
+	size_t size;
+	dict_t *dict;
+
+	if (fread (&size, sizeof (size_t), 1, f) != 1) {
+		error ("failed to load size while load dict.");
+
+		return NULL;
+	}
+
+	dict = dict_new (dictobject_hash_fun, dictobject_test_fun);
+	if (dict == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *key;
+		object_t *value;
+
+		key = object_load_binary (f);
+		if (key == NULL) {
+			dict_free (dict);
+
+			return NULL;
+		}
+		value = object_load_binary (f);
+		if (value == NULL) {
+			dict_free (dict);
+			object_free (key);
+
+			return NULL;
+		}
+
+
+		if (dict_set (dict, (void *) key, (void *) value) == NULL) {
+			dict_free (dict);
+			object_free (key);
+			object_free (value);
+
+			return NULL;
+		}
+	}
+
+	return dictobject_dict_new (dict, NULL);
+
+}
+
+object_t *
 dictobject_new (void *udata)
 {
 	dictobject_t *obj;

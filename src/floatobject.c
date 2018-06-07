@@ -224,6 +224,20 @@ floatobject_op_binary (object_t *obj)
 }
 
 object_t *
+floatobject_load_binary (FILE *f)
+{
+	float val;
+
+	if (fread (&val, sizeof (float), 1, f) != 1) {
+		error ("failed to load float binary.");
+
+		return NULL;
+	}
+
+	return floatobject_new (val, NULL);
+}
+
+object_t *
 floatobject_new (float val, void *udata)
 {
 	floatobject_t *obj;

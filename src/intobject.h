@@ -31,6 +31,9 @@ typedef struct intobject_s
 } intobject_t;
 
 object_t *
+intobject_load_binary (FILE *f);
+
+object_t *
 intobject_new (int val, void *udata);
 
 int

@@ -30,6 +30,9 @@ typedef struct nullobject_s
 } nullobject_t;
 
 object_t *
+nullobject_load_binary (FILE *f);
+
+object_t *
 nullobject_new (void *udata);
 
 void

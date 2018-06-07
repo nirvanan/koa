@@ -1085,7 +1085,52 @@ object_get_default (object_type_t type)
 		case OBJECT_TYPE_FUNC:
 			return funcobject_new (NULL);
 		case OBJECT_TYPE_MOD:
-			return funcobject_new (NULL);
+			return modobject_new (NULL);
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+object_t *
+object_load_binary (FILE *f)
+{
+	object_type_t type;
+
+	if (fread (&type, sizeof (object_type_t), 1, f) != 1) {
+		error ("failed to load object type while loading binary.");
+
+		return NULL;
+	}
+
+	switch (type) {
+		case OBJECT_TYPE_VOID:
+			return &g_dummy_object;
+		case OBJECT_TYPE_NULL:
+			return nullobject_load_binary (f);
+		case OBJECT_TYPE_BOOL:
+			return boolobject_load_binary (f);
+		case OBJECT_TYPE_CHAR:
+			return charobject_load_binary (f);
+		case OBJECT_TYPE_INT:
+			return intobject_load_binary (f);
+		case OBJECT_TYPE_LONG:
+			return longobject_load_binary (f);
+		case OBJECT_TYPE_FLOAT:
+			return floatobject_load_binary (f);
+		case OBJECT_TYPE_DOUBLE:
+			return doubleobject_load_binary (f);
+		case OBJECT_TYPE_STR:
+			return strobject_load_binary (f);
+		case OBJECT_TYPE_VEC:
+			return vecobject_load_binary (f);
+		case OBJECT_TYPE_DICT:
+			return dictobject_load_binary (f);
+		case OBJECT_TYPE_FUNC:
+			return funcobject_load_binary (f);
+		case OBJECT_TYPE_MOD:
+			return modobject_load_binary (f);
 		default:
 			break;
 	}

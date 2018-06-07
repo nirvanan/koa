@@ -271,6 +271,40 @@ vecobject_op_binary (object_t *obj)
 	return temp;
 }
 
+object_t *
+vecobject_load_binary (FILE *f)
+{
+	size_t size;
+	vec_t *vec;
+
+	if (fread (&size, sizeof (size_t), 1, f) != 1) {
+		error ("failed to load size while load vec.");
+
+		return NULL;
+	}
+
+	vec = vec_new (size);
+	if (vec == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *obj;
+
+		obj = object_load_binary (f);
+		if (obj == NULL) {
+			vec_free (vec);
+
+			return NULL;
+		}
+
+		UNUSED (vec_set (vec, i, (void *) obj));
+		object_ref (obj);
+	}
+
+	return vecobject_vec_new (vec, NULL);
+}
+
 static int
 vecobject_empty_init (vecobject_t *obj)
 {

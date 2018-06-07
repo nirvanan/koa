@@ -33,6 +33,9 @@ typedef struct boolobject_s
 } boolobject_t;
 
 object_t *
+boolobject_load_binary (FILE *f);
+
+object_t *
 boolobject_new (bool val, void *udata);
 
 bool

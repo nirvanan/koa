@@ -224,6 +224,20 @@ doubleobject_op_binary (object_t *obj)
 }
 
 object_t *
+doubleobject_load_binary (FILE *f)
+{
+	double val;
+
+	if (fread (&val, sizeof (double), 1, f) != 1) {
+		error ("failed to load double binary.");
+
+		return NULL;
+	}
+
+	return doubleobject_new (val, NULL);
+}
+
+object_t *
 doubleobject_new (double val, void *udata)
 {
 	doubleobject_t *obj;

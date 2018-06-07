@@ -158,6 +158,20 @@ boolobject_op_binary (object_t *obj)
 }
 
 object_t *
+boolobject_load_binary (FILE *f)
+{
+	bool val;
+
+	if (fread (&val, sizeof (bool), 1, f) != 1) {
+		error ("failed to load bool binary.");
+
+		return NULL;
+	}
+
+	return boolobject_new (val, NULL);
+}
+
+object_t *
 boolobject_new (bool val, void *udata)
 {
 	boolobject_t *obj;

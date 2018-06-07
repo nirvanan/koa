@@ -2543,17 +2543,76 @@ parser_translation_unit (parser_t *parser, code_t *code)
 	return code_push_opcode (code, OPCODE (OP_END_PROGRAM, 0), line);
 }
 
+static int
+parser_check_source (const char *path)
+{
+	if (!misc_check_source_extension (path)) {
+		error ("source file extension must be \".k\".");
+
+		return 0;
+	}
+
+	if (!misc_check_file_access (path, 1, 0)) {
+		error ("file doesn't exist or no access: %s.", path);
+
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+parser_check_binary (const char *path)
+{
+	char *f;
+	size_t len;
+	int res;
+
+	len = strlen (path);
+	f = (char *) pool_alloc (len);
+	if (f == NULL) {
+		return -1;
+	}
+
+	strcpy (f, path);
+	f[len - 1] = 'b';
+	if (!misc_check_file_access (f, 0, 0)) {
+		pool_free ((void *) f);
+
+		return 0;
+	}
+	if (!misc_check_file_access (f, 1, 1)) {
+		pool_free ((void *) f);
+
+		return -1;
+	}
+	
+	res = misc_file_is_older (path, f);
+	pool_free ((void *) f);
+
+	return res;
+}
+
 code_t *
 parser_load_file (const char *path)
 {
 	code_t *code;
 	parser_t *parser;
+	int bin_stat;
 	FILE *f;
 
-	if (!misc_check_source_extension (path)) {
-		error ("source file extension must be \".k\".");
+	if (!parser_check_source (path)) {
+		return NULL;
+	}
+
+	bin_stat = parser_check_binary (path);
+	if (bin_stat == -1) {
+		error ("no access or can not stat binary: %s", path);
 
 		return NULL;
+	}
+	else if (bin_stat == 1) {
+		return code_load_binary (path, NULL);
 	}
 
 	code = code_new (path, TOP_LEVEL_TAG);
@@ -2600,6 +2659,8 @@ parser_load_file (const char *path)
 		lex_token_free (parser->token);
 	}
 	parser_free (parser);
+
+	code_save_binary (code);
 
 	return code;
 }

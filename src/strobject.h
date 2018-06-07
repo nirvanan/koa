@@ -34,6 +34,9 @@ typedef struct strobject_s
 } strobject_t;
 
 object_t *
+strobject_load_binary (FILE *f);
+
+object_t *
 strobject_new (const char *val, size_t len, void *udata);
 
 object_t *

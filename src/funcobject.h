@@ -32,6 +32,9 @@ typedef struct funcobject_s
 } funcobject_t;
 
 object_t *
+funcobject_load_binary (FILE *f);
+
+object_t *
 funcobject_new (void *udata);
 
 object_t *

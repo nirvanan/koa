@@ -102,6 +102,12 @@ nullobject_op_binary (object_t *obj)
 	return strobject_new ("", 0, NULL);
 }
 
+object_t *
+nullobject_load_binary (FILE *f)
+{
+	return nullobject_new (NULL);
+}
+
 /* This object is known as 'null'. */
 object_t *
 nullobject_new (void *udata)

@@ -310,6 +310,39 @@ strobject_op_binary (object_t *obj)
 }
 
 object_t *
+strobject_load_binary (FILE *f)
+{
+	size_t len;
+	char *data;
+	object_t *obj;
+
+	if (fread (&len, sizeof (size_t), 1, f) != 1) {
+		error ("failed to load size while loading str.");
+
+		return NULL;
+	}
+
+	data = pool_calloc (len + 1, sizeof (char));
+	if (data == NULL) {
+		error ("out of memory.");
+
+		return NULL;
+	}
+
+	if (fread (data, sizeof (char), len, f) != len) {
+		pool_free (data);
+		error ("failed to load str.");
+
+		return NULL;
+	}
+
+	obj = strobject_new ((const char *) data, len, NULL);
+	pool_free (data);
+
+	return obj;
+}
+
+object_t *
 strobject_new (const char *val, size_t len, void *udata)
 {
 	strobject_t *obj;

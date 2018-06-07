@@ -125,6 +125,19 @@ funcobject_op_binary (object_t *obj)
 	return code_binary (funcobject_get_value (obj));
 }
 
+object_t *
+funcobject_load_binary (FILE *f)
+{
+	code_t *code;
+
+	code = code_load_binary (NULL, f);
+	if (code == NULL) {
+		return NULL;
+	}
+
+	return funcobject_code_new (code, NULL);
+}
+
 /* This is a null func object, which means it is not callable. */
 object_t *
 funcobject_new (void *udata)

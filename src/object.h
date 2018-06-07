@@ -22,6 +22,7 @@
 #define OBJECT_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "koa.h"
 #include "str.h"
@@ -258,6 +259,9 @@ object_binary (object_t *obj);
 
 object_t *
 object_get_default (object_type_t type);
+
+object_t *
+object_load_binary (FILE *f);
 
 void
 object_init ();

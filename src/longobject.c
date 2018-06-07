@@ -329,6 +329,20 @@ longobject_op_binary (object_t *obj)
 }
 
 object_t *
+longobject_load_binary (FILE *f)
+{
+	long val;
+
+	if (fread (&val, sizeof (long), 1, f) != 1) {
+		error ("failed to load long binary.");
+
+		return NULL;
+	}
+
+	return longobject_new (val, NULL);
+}
+
+object_t *
 longobject_new (long val, void *udata)
 {
 	longobject_t *obj;
