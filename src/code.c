@@ -144,11 +144,11 @@ code_new (const char *filename, const char *name)
 	/* Allocate all data segments. */
 	code->opcodes = vec_new (0);
 	code->lineinfo = vec_new (0);
-	code->args = vec_new (0);
+	code->types = vec_new (0);
 	code->consts = vec_new (0);
 	code->varnames = vec_new (0);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
-		code->args == NULL || code->consts == NULL ||
+		code->types == NULL || code->consts == NULL ||
 		code->varnames == NULL) {
 		code_free (code);
 
@@ -193,9 +193,9 @@ code_free (code_t *code)
 		vec_foreach (code->lineinfo, code_vec_free_fun);
 		vec_free (code->lineinfo);
 	}
-	if (code->args != NULL) {
-		vec_foreach (code->args, code_vec_free_fun);
-		vec_free (code->args);
+	if (code->types != NULL) {
+		vec_foreach (code->types, code_vec_free_fun);
+		vec_free (code->types);
 	}
 	if (code->consts != NULL) {
 		vec_foreach (code->consts, code_vec_unref_fun);
@@ -330,11 +330,11 @@ code_push_const (code_t *code, object_t *var, int *exist)
 }
 
 para_t
-code_push_varname (code_t *code, const char *var,
-				   int para, object_type_t type)
+code_push_varname (code_t *code, const char *var, object_type_t type)
 {
 	object_t *name;
 	size_t pos;
+	object_type_t *var_type;
 
 	/* Check var list size. */
 	if (vec_size (code->varnames) >= MAX_PARA) {
@@ -349,7 +349,8 @@ code_push_varname (code_t *code, const char *var,
 	}
 
 	/* Check whether there is already a var. */
-	if ((pos = vec_find (code->varnames, (void *) name, code_var_find_fun)) != -1) {
+	if ((pos = vec_find (code->varnames,
+		(void *) name, code_var_find_fun)) != -1) {
 		object_free (name);
 
 		return pos;
@@ -362,20 +363,16 @@ code_push_varname (code_t *code, const char *var,
 	}
 
 	/* Is this var a parameter? */
-	if (para) {
-		object_type_t *arg_type;
+	var_type = (object_type_t *) pool_alloc (sizeof (object_type_t));
+	if (var_type == NULL) {
+		return -1;
+	}
 
-		arg_type = (object_type_t *) pool_alloc (sizeof (object_type_t));
-		if (arg_type == NULL) {
-			return -1;
-		}
+	*var_type = type;
+	if (!vec_push_back (code->types, (void *) var_type)) {
+		pool_free ((void *) var_type);
 
-		*arg_type = type;
-		if (!vec_push_back (code->args, (void *) arg_type)) {
-			pool_free ((void *) arg_type);
-
-			return -1;
-		}
+		return -1;
 	}
 
 	object_ref (name);
@@ -629,8 +626,8 @@ code_binary (code_t *code)
 		return cur;
 	}
 
-	/* Dump args. */
-	temp = code_vec_to_binary (code->args, sizeof (object_type_t));
+	/* Dump types. */
+	temp = code_vec_to_binary (code->types, sizeof (object_type_t));
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -934,13 +931,13 @@ code_load_binary (const char *path, FILE *f)
 
 	code->opcodes = code_binary_to_vec (b, sizeof (opcode_t));
 	code->lineinfo = code_binary_to_vec (b, sizeof (uint32_t));
-	code->args = code_binary_to_vec (b, sizeof (object_type_t));
+	code->types = code_binary_to_vec (b, sizeof (object_type_t));
 	code->consts = code_binary_to_object (b);
 	code->varnames = code_binary_to_object (b);
 	code->name = code_binary_to_str (b);
 	code->filename = code_binary_to_str (b);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
-		code->args == NULL || code->consts == NULL ||
+		code->types == NULL || code->consts == NULL ||
 		code->varnames == NULL || code->name == NULL ||
 		code->filename == NULL) {
 		code_free (code);

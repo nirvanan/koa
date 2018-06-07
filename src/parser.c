@@ -1878,7 +1878,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 	line = TOKEN_LINE (parser->token);
 	switch (TOKEN_TYPE (parser->token)) {
 		case TOKEN_IDENTIFIER:
-			pos = code_push_varname (code,TOKEN_ID (parser->token), 0, OBJECT_TYPE_VOID);
+			pos = code_push_varname (code,TOKEN_ID (parser->token), OBJECT_TYPE_VOID);
 			parser_next_token (parser);
 			if (pos == -1) {
 				return 0;
@@ -2205,7 +2205,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		var = TOKEN_ID (parser->token);
 	}
 
-	var_pos = code_push_varname (code, var, 0, type);
+	var_pos = code_push_varname (code, var, type);
 	if (var_pos == -1) {
 		return 0;
 	}
@@ -2360,7 +2360,7 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	/* Insert a default value for this parameter, this is used while
 	 * checking arguments. */
 	/* Insert parameter local var and const. */
-	if (code_push_varname (code, TOKEN_ID (parser->token), 1, type) == -1) {
+	if (code_push_varname (code, TOKEN_ID (parser->token), type) == -1) {
 		return 0;
 	}
 
@@ -2425,7 +2425,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 	code_set_fun (code, line, ret_type);
 
 	/* Push func name. */
-	var_pos = code_push_varname (code, id, 0, OBJECT_TYPE_FUNC);
+	var_pos = code_push_varname (code, id, OBJECT_TYPE_FUNC);
 	if (var_pos == -1) {
 		return 0;
 	}
