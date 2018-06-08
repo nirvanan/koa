@@ -106,7 +106,7 @@ longobject_op_dump (object_t *obj)
 
 	snprintf (buf, DUMP_BUF_SIZE, "<int %ld>", longobject_get_value (obj));
 
-	return strobject_new (buf, strlen (buf), NULL);
+	return strobject_new (buf, strlen (buf), 1, NULL);
 }
 
 /* Negative. */
@@ -325,7 +325,8 @@ longobject_op_hash(object_t *obj)
 static object_t *
 longobject_op_binary (object_t *obj)
 {
-	return strobject_new (BINARY (((longobject_t *) obj)->val), sizeof (long), NULL);
+	return strobject_new (BINARY (((longobject_t *) obj)->val),
+						  sizeof (long), 1, NULL);
 }
 
 object_t *

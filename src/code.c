@@ -343,7 +343,7 @@ code_push_varname (code_t *code, const char *var, object_type_t type)
 		return -1;
 	}
 
-	name = strobject_new (var, strlen (var), NULL);
+	name = strobject_new (var, strlen (var), 0, NULL);
 	if (name == NULL) {
 		return -1;
 	}
@@ -525,7 +525,7 @@ code_vec_to_binary (vec_t *vec, size_t el)
 	object_t *temp;
 
 	size = vec_size (vec);
-	temp = strobject_new (BINARY (size), sizeof (size_t), NULL);
+	temp = strobject_new (BINARY (size), sizeof (size_t), 1, NULL);
 	if (temp == NULL) {
 		return NULL;
 	}
@@ -534,7 +534,7 @@ code_vec_to_binary (vec_t *vec, size_t el)
 		object_t *res;
 		object_t *obj;
 
-		obj = strobject_new (vec_pos (vec, i), el, NULL);
+		obj = strobject_new (vec_pos (vec, i), el, 1, NULL);
 		if (obj == NULL) {
 			object_free (temp);
 
@@ -687,7 +687,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump fun. */
-	temp = strobject_new (BINARY (code->fun), sizeof (int), NULL);
+	temp = strobject_new (BINARY (code->fun), sizeof (int), 1, NULL);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -699,7 +699,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump lineno. */
-	temp = strobject_new (BINARY (code->lineno), sizeof (int), NULL);
+	temp = strobject_new (BINARY (code->lineno), sizeof (int), 1, NULL);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -711,7 +711,7 @@ code_binary (code_t *code)
 	}
 
 	/* Dump ret_type. */
-	temp = strobject_new (BINARY (code->ret_type), sizeof (object_type_t), NULL);
+	temp = strobject_new (BINARY (code->ret_type), sizeof (object_type_t), 1, NULL);
 	if (temp == NULL) {
 		object_free (cur);
 

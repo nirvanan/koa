@@ -84,7 +84,7 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 static object_t *
 nullobject_op_dump (object_t *obj)
 {
-	return strobject_new ("<null null>", strlen ("<null null>"), NULL);
+	return strobject_new ("<null null>", strlen ("<null null>"), 1, NULL);
 }
 
 /* Hash. */
@@ -99,7 +99,7 @@ nullobject_op_hash (object_t *obj)
 static object_t *
 nullobject_op_binary (object_t *obj)
 {
-	return strobject_new ("", 0, NULL);
+	return strobject_new ("", 0, 1, NULL);
 }
 
 object_t *

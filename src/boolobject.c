@@ -76,10 +76,10 @@ static object_t *
 boolobject_op_dump (object_t *obj)
 {
 	if (boolobject_get_value (obj)) {
-		return strobject_new ("<bool true>", strlen ("<bool true>"), NULL);
+		return strobject_new ("<bool true>", strlen ("<bool true>"), 1, NULL);
 	}
 
-	return strobject_new ("<bool false>", strlen ("<bool true>"), NULL);
+	return strobject_new ("<bool false>", strlen ("<bool true>"), 1, NULL);
 }
 
 /* Logic Not. */
@@ -154,7 +154,7 @@ static object_t *
 boolobject_op_binary (object_t *obj)
 {
 	return strobject_new (BINARY (((boolobject_t *) obj)->val),
-						  sizeof (bool), NULL);
+						  sizeof (bool), 1, NULL);
 }
 
 object_t *

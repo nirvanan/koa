@@ -89,7 +89,7 @@ floatobject_op_dump (object_t *obj)
 
 	snprintf (buf, DUMP_BUF_SIZE, "<float %f>", floatobject_get_value (obj));
 
-	return strobject_new (buf, strlen (buf), NULL);
+	return strobject_new (buf, strlen (buf), 1, NULL);
 }
 
 /* Negative. */
@@ -220,7 +220,7 @@ static object_t *
 floatobject_op_binary (object_t *obj)
 {
 	return strobject_new (BINARY (((floatobject_t *) obj)->val),
-						  sizeof (float), NULL);
+						  sizeof (float), 1, NULL);
 }
 
 object_t *

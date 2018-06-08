@@ -30,10 +30,12 @@
 #include "intobject.h"
 #include "longobject.h"
 
+#define HASED(x) (((strobject_t*)(x))->hashed)
+
 #define DUMP_HEAD_LENGTH 6
 #define DUMP_TAIL_LENGTH 2
 
-#define INTERNAL_STR_LENGTH 0
+#define INTERNAL_STR_LENGTH 5
 
 #define HASH_M 0xc6a4a7935bd1e995
 
@@ -91,7 +93,7 @@ void
 strobject_op_free (object_t *obj)
 {
 	/* If it's an interned str, delete it. */
-	if (str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH) {
+	if (str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH && HASED (obj)) {
 		hash_fast_remove (g_internal_hash, HASH_HANDLE (obj));
 	}
 	str_free (strobject_get_value (obj));
@@ -298,7 +300,7 @@ strobject_op_binary (object_t *obj)
 	str = strobject_get_value (obj);
 	len = str_len (str);
 
-	len_obj = strobject_new (BINARY (len), sizeof (size_t), NULL);
+	len_obj = strobject_new (BINARY (len), sizeof (size_t), 1, NULL);
 	if (len_obj == NULL) {
 		return NULL;
 	}
@@ -336,14 +338,14 @@ strobject_load_binary (FILE *f)
 		return NULL;
 	}
 
-	obj = strobject_new ((const char *) data, len, NULL);
+	obj = strobject_new ((const char *) data, len, 1, NULL);
 	pool_free (data);
 
 	return obj;
 }
 
 object_t *
-strobject_new (const char *val, size_t len, void *udata)
+strobject_new (const char *val, size_t len, int no_hash, void *udata)
 {
 	strobject_t *obj;
 
@@ -352,7 +354,7 @@ strobject_new (const char *val, size_t len, void *udata)
 	}
 
 	/* If len is small, this object gonna be interned. */
-	if (len <= INTERNAL_STR_LENGTH) {
+	if (len <= INTERNAL_STR_LENGTH && !no_hash) {
 		obj = (strobject_t *) hash_test (g_internal_hash, (void *) val,
 			strobject_murmur (val, len, g_internal_hash_seed));
 		if (obj != NULL) {
@@ -378,7 +380,7 @@ strobject_new (const char *val, size_t len, void *udata)
 	}
 
 	/* Add to internal hash. */
-	if (len <= INTERNAL_STR_LENGTH) {
+	if (len <= INTERNAL_STR_LENGTH && !no_hash) {
 		void *hn;
 
 		hn = hash_add (g_internal_hash, (void *) obj);
@@ -390,6 +392,7 @@ strobject_new (const char *val, size_t len, void *udata)
 		}
 
 		obj->hn = hn;
+		obj->hashed = 1;
 	}
 
 	return (object_t *) obj;

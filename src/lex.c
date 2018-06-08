@@ -796,7 +796,7 @@ lex_read_identifier (reader_t *reader, token_t *token)
 	}
 
 	/* Check whether this token is a reserved word. */
-	word = strobject_new (token->token, strlen (token->token), NULL);
+	word = strobject_new (token->token, strlen (token->token), 1, NULL);
 	res = object_index (g_reserved_tokens, word);
 	if (OBJECT_IS_INT (res)) {
 		/* Ok, a reserved word. */
@@ -890,7 +890,7 @@ lex_init()
 		object_t *word;
 		object_t *suc;
 
-		word = strobject_new (re->word, strlen (re->word), NULL);
+		word = strobject_new (re->word, strlen (re->word), 0, NULL);
 		if (word == NULL) {
 			fatal_error ("failed to generate the reserved word dict.");
 		}

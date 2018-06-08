@@ -89,7 +89,7 @@ doubleobject_op_dump (object_t *obj)
 
 	snprintf (buf, DUMP_BUF_SIZE, "<double %lf>", doubleobject_get_value (obj));
 
-	return strobject_new (buf, strlen (buf), NULL);
+	return strobject_new (buf, strlen (buf), 1, NULL);
 }
 
 /* Negative. */
@@ -220,7 +220,7 @@ static object_t *
 doubleobject_op_binary (object_t *obj)
 {
 	return strobject_new (BINARY (((doubleobject_t *) obj)->val),
-						  sizeof (double), NULL);
+						  sizeof (double), 1, NULL);
 }
 
 object_t *

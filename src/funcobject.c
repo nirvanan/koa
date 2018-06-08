@@ -94,7 +94,7 @@ funcobject_op_dump (object_t *obj)
 	}
 
 	snprintf (buf, size, "<func %s:%s>", filename, name);
-	res = strobject_new (buf, strlen (buf), NULL);
+	res = strobject_new (buf, strlen (buf), 1, NULL);
 	pool_free ((void *) buf);
 
 	return res;

@@ -31,13 +31,14 @@ typedef struct strobject_s
 	object_head_t head;
 	str_t *val;
 	void *hn; /* For quick dehash. */
+	int hashed;
 } strobject_t;
 
 object_t *
 strobject_load_binary (FILE *f);
 
 object_t *
-strobject_new (const char *val, size_t len, void *udata);
+strobject_new (const char *val, size_t len, int no_hash, void *udata);
 
 object_t *
 strobject_str_new (str_t *val, void *udata);

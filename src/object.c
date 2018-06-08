@@ -268,7 +268,7 @@ object_dump (object_t *obj)
 	dump_fun = (OBJECT_OPSET (obj))->dump;
 	if (dump_fun == NULL) {
 		if (OBJECT_IS_DUMMY (obj)) {
-			return strobject_new ("<dummy>", strlen ("<dummy>"), NULL);
+			return strobject_new ("<dummy>", strlen ("<dummy>"), 1, NULL);
 		}
 
 		error ("%s has no dump routine.", TYPE_NAME (obj));
@@ -1027,7 +1027,7 @@ object_binary (object_t *obj)
 	object_t *res;
 
 	head_obj = strobject_new (BINARY (OBJECT_TYPE (obj)),
-							  sizeof (object_type_t), NULL);
+							  sizeof (object_type_t), 1, NULL);
 	if (head_obj == NULL) {
 		return NULL;
 	}
@@ -1077,7 +1077,7 @@ object_get_default (object_type_t type)
 		case OBJECT_TYPE_DOUBLE:
 			return doubleobject_new ((double) 0.0, NULL);
 		case OBJECT_TYPE_STR:
-			return strobject_new ("", 0, NULL);
+			return strobject_new ("", 0, 0, NULL);
 		case OBJECT_TYPE_VEC:
 			return vecobject_new ((size_t) 0, NULL);
 		case OBJECT_TYPE_DICT:

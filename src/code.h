@@ -49,7 +49,8 @@ typedef int32_t para_t;
 
 typedef uint32_t opcode_t;
 
-typedef enum op_e {
+typedef enum op_e 
+{
 	OP_LOAD_CONST = 0x01,
 	OP_STORE_LOCAL,
 	OP_STORE_VAR,

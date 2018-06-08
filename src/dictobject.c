@@ -313,7 +313,7 @@ dictobject_op_binary (object_t *obj)
 	dict = dictobject_get_value (obj);
 	size = dict_size (dict);
 
-	temp = strobject_new (BINARY (size), sizeof (size_t), NULL);
+	temp = strobject_new (BINARY (size), sizeof (size_t), 1, NULL);
 	if (temp == NULL) {
 		return NULL;
 	}
@@ -486,19 +486,19 @@ void
 dictobject_init ()
 {
 	/* Make dump objects. */
-	g_dump_head = strobject_new ("<dict {", strlen ("<dict {"), NULL);
+	g_dump_head = strobject_new ("<dict {", strlen ("<dict {"), 1, NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init dict dump head.");
 	}
-	g_dump_tail = strobject_new ("}>", strlen ("}>"), NULL);
+	g_dump_tail = strobject_new ("}>", strlen ("}>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init dict dump tail.");
 	}
-	g_dump_sep = strobject_new (", ", strlen (", "), NULL);
+	g_dump_sep = strobject_new (", ", strlen (", "), 1, NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init dict dump sep.");
 	}
-	g_dump_map = strobject_new (": ", strlen (": "), NULL);
+	g_dump_map = strobject_new (": ", strlen (": "), 1, NULL);
 	if (g_dump_map == NULL) {
 		fatal_error ("failed to init dict dump map.");
 	}

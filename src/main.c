@@ -71,10 +71,10 @@ int main(int argc, char *argv[])
 		//object_t *str = vecobject_new (40000, NULL);
 		//object_t *bin = object_binary (str);
 		//code_save_binary (code);
-		//code_free (code);
+		code_free (code);
 		//object_free (str);
 		//object_free (bin);
-		break;
+		//break;
 	}
 
 	return 0;

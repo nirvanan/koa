@@ -1966,7 +1966,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			pos = parser_push_const (code,
 									 OBJECT_TYPE_STR, 
 									 strobject_new (TOKEN_ID (parser->token),
-									 strlen (TOKEN_ID (parser->token)),
+									 strlen (TOKEN_ID (parser->token)), 0,
 									 NULL));
 			parser_next_token (parser);
 			if (pos == -1) {

@@ -241,7 +241,7 @@ vecobject_op_binary (object_t *obj)
 	vec = vecobject_get_value (obj);
 	size = vec_size (vec);
 
-	temp = strobject_new (BINARY (size), sizeof (size_t), NULL);
+	temp = strobject_new (BINARY (size), sizeof (size_t), 1, NULL);
 	if (temp == NULL) {
 		return NULL;
 	}
@@ -392,15 +392,15 @@ void
 vecobject_init ()
 {
 	/* Make dump objects. */
-	g_dump_head = strobject_new ("<vec [", strlen ("<vec ["), NULL);
+	g_dump_head = strobject_new ("<vec [", strlen ("<vec ["), 1, NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init vec dump head.");
 	}
-	g_dump_tail = strobject_new ("]>", strlen ("]>"), NULL);
+	g_dump_tail = strobject_new ("]>", strlen ("]>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init vec dump tail.");
 	}
-	g_dump_sep = strobject_new (", ", strlen (", "), NULL);
+	g_dump_sep = strobject_new (", ", strlen (", "), 1, NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init vec dump sep.");
 	}
