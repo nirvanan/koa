@@ -63,18 +63,18 @@ int main(int argc, char *argv[])
 		code_t *code = parser_load_file ("/home/nirvanan/test.k");
 		if (code) {
 			code_print (code);
+			//object_t *str = code_binary (code);
+			//object_t *str = vecobject_new (40000, NULL);
+			//object_t *bin = object_binary (str);
+			//code_save_binary (code);
+			code_free (code);
+			//object_free (str);
+			//object_free (bin);
 		}
 		else {
 			printf ("wrong\n");
 		}
-		//object_t *str = code_binary (code);
-		//object_t *str = vecobject_new (40000, NULL);
-		//object_t *bin = object_binary (str);
-		//code_save_binary (code);
-		code_free (code);
-		//object_free (str);
-		//object_free (bin);
-		//break;
+		break;
 	}
 
 	return 0;

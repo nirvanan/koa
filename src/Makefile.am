@@ -16,6 +16,8 @@ doubleobject.c \
 doubleobject.h \
 floatobject.c \
 floatobject.h \
+frame.c \
+frame.h \
 funcobject.c \
 funcobject.h \
 error.c \
@@ -44,6 +46,8 @@ parser.c \
 parser.h \
 pool.c \
 pool.h \
+stack.c \
+stack.h \
 str.c \
 str.h \
 strobject.c \

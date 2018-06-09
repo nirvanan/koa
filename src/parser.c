@@ -1161,6 +1161,13 @@ parser_jump_statement (parser_t *parser, code_t *code,
 	else if (parser_check (parser, TOKEN_RETURN)) {
 		parser_next_token (parser);
 		if (parser_check (parser, TOKEN (';'))) {
+			/* Check return type. */
+			if (FUNC_RET_TYPE (code) != OBJECT_TYPE_VOID) {
+				parser_syntax_error (parser, "non-void func need return a value.");
+
+				return 0;
+			}
+
 			/* Push a dummy object. */
 			return parser_push_dummy_return (parser, code);
 		}
@@ -2422,7 +2429,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 		return 0;
 	}
 
-	code_set_fun (code, line, ret_type);
+	code_set_func (func_code, line, ret_type);
 
 	/* Push func name. */
 	var_pos = code_push_varname (code, id, OBJECT_TYPE_FUNC);

@@ -159,7 +159,7 @@ code_new (const char *filename, const char *name)
 }
 
 void
-code_set_fun (code_t *code, uint32_t line, object_type_t ret_type)
+code_set_func (code_t *code, uint32_t line, object_type_t ret_type)
 {
 	code->fun = 1;
 	code->lineno = line;
@@ -431,12 +431,24 @@ code_get_pos (code_t *code, para_t pos)
 	opcode_t *opcode;
 
 	opcode = (opcode_t *) vec_pos (code->opcodes, (integer_value_t) pos);
-
 	if (opcode == NULL) {
 		return (opcode_t) 0;
 	}
 
 	return *opcode;
+}
+
+uint32_t
+code_get_line (code_t *code, para_t pos)
+{
+	uint32_t *line;
+
+	line = (uint32_t *) vec_pos (code->lineinfo, (integer_value_t) pos);
+	if (line == NULL) {
+		return 0;
+	}
+
+	return *line;
 }
 
 int

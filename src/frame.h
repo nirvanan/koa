@@ -1,5 +1,5 @@
 /*
- * list.h
+ * frame.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,40 +18,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIST_H
-#define LIST_H
+#ifndef FRAME_H
+#define FRAME_H
 
 #include "koa.h"
+#include "list.h"
+#include "dict.h"
+#include "code.h"
+#include "stack.h"
 
-#define LIST(x) ((list_t *)x)
-
-#define LIST_NEXT(x) (((list_t *)(x))->next)
-
-#define LIDT_PREV(x) (((list_t *)(x))->prev)
-
-typedef struct list_s
+typedef struct block_s
 {
-	struct list_s *prev;
-	struct list_s *next;
-} list_t;
+	list_t link;
+	dict_t *ns;
+} block_t;
 
-typedef int (*list_del_f) (list_t *list, void *data);
+typedef struct frame_s
+{
+	list_t link;
+	block_t *current;
+	code_t *code;
+	para_t esp;
+	sp_t bottom;
+} frame_t;
 
-typedef int (*list_for_f) (list_t *list, void *data);
+frame_t *
+frame_new (code_t *code, frame_t *current, sp_t top);
 
-list_t *
-list_append (list_t *list, list_t *n);
+frame_t *
+frame_free (frame_t *frame);
 
-list_t *
-list_remove (list_t *list, list_t *n);
-
-int
-list_find (list_t *list, void *data);
-
-list_t *
-list_cleanup (list_t *list, list_del_f df, int need_free, void *udata);
+opcode_t
+frame_next_opcode (frame_t *frame);
 
 void
-list_foreach (list_t *list, list_for_f ff, void *udata);
+frame_jump (frame_t *frame, para_t pos);
 
-#endif /* LIST_H */
+void
+frame_traceback (frame_t *frame);
+
+int
+frame_make_block (frame_t *frame);
+
+#endif /* FRAME_H */
+

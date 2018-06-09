@@ -1,5 +1,5 @@
 /*
- * list.h
+ * stack.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,40 +18,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIST_H
-#define LIST_H
+#ifndef STACK_H
+#define STACK_H
 
 #include "koa.h"
+#include "vec.h"
 
-#define LIST(x) ((list_t *)x)
+typedef integer_value_t sp_t;
 
-#define LIST_NEXT(x) (((list_t *)(x))->next)
-
-#define LIDT_PREV(x) (((list_t *)(x))->prev)
-
-typedef struct list_s
+typedef struct stack_s
 {
-	struct list_s *prev;
-	struct list_s *next;
-} list_t;
+	vec_t *v;
+	sp_t sp;
+} stack_t;
 
-typedef int (*list_del_f) (list_t *list, void *data);
-
-typedef int (*list_for_f) (list_t *list, void *data);
-
-list_t *
-list_append (list_t *list, list_t *n);
-
-list_t *
-list_remove (list_t *list, list_t *n);
-
-int
-list_find (list_t *list, void *data);
-
-list_t *
-list_cleanup (list_t *list, list_del_f df, int need_free, void *udata);
+stack_t *
+stack_new ();
 
 void
-list_foreach (list_t *list, list_for_f ff, void *udata);
+stack_free (stack_t *stack);
 
-#endif /* LIST_H */
+int
+stack_push (stack_t *stack, void *data);
+
+void *
+stack_pop (stack_t *stack);
+
+void *
+stack_top (stack_t *stack);
+
+#endif /* STACK_H */
+

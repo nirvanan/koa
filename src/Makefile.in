@@ -101,12 +101,12 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
 	code.$(OBJEXT) dict.$(OBJEXT) dictobject.$(OBJEXT) \
-	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) \
+	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) frame.$(OBJEXT) \
 	funcobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
 	intobject.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
 	longobject.$(OBJEXT) main.$(OBJEXT) modobject.$(OBJEXT) \
 	misc.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
-	parser.$(OBJEXT) pool.$(OBJEXT) str.$(OBJEXT) \
+	parser.$(OBJEXT) pool.$(OBJEXT) stack.$(OBJEXT) str.$(OBJEXT) \
 	strobject.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
@@ -276,6 +276,8 @@ doubleobject.c \
 doubleobject.h \
 floatobject.c \
 floatobject.h \
+frame.c \
+frame.h \
 funcobject.c \
 funcobject.h \
 error.c \
@@ -304,6 +306,8 @@ parser.c \
 parser.h \
 pool.c \
 pool.h \
+stack.c \
+stack.h \
 str.c \
 str.h \
 strobject.c \
@@ -407,6 +411,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doubleobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/floatobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/frame.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/funcobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intobject.Po@am__quote@
@@ -420,6 +425,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stack.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vec.Po@am__quote@

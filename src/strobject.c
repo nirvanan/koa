@@ -372,6 +372,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
 
 	obj->hn = NULL;
+	obj->hashed = 0;
 	obj->val = str_new (val, len);
 	if (obj->val == NULL) {
 		pool_free ((void *) obj);

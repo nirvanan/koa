@@ -45,6 +45,8 @@
 	OPCODE_OP(x)==OP_JUMP_CASE||\
 	OPCODE_OP(x)==OP_JUMP_DEFAULT)
 
+#define FUNC_RET_TYPE(x) ((x)->ret_type)
+
 typedef int32_t para_t;
 
 typedef uint32_t opcode_t;
@@ -155,7 +157,7 @@ code_t *
 code_new (const char *filename, const char *name);
 
 void
-code_set_fun (code_t *code, uint32_t line, object_type_t ret_type);
+code_set_func (code_t *code, uint32_t line, object_type_t ret_type);
 
 void
 code_free (code_t *code);
@@ -188,6 +190,9 @@ code_current_pos (code_t *code);
 
 opcode_t
 code_get_pos (code_t *code, para_t pos);
+
+uint32_t
+code_get_line (code_t *code, para_t pos);
 
 int
 code_remove_pos (code_t *code, para_t pos);
