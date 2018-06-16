@@ -57,7 +57,6 @@ typedef enum op_e
 	OP_STORE_LOCAL,
 	OP_STORE_VAR,
 	OP_LOAD_VAR,
-	OP_FUNC_RETURN,
 	OP_TYPE_CAST,
 	OP_VAR_INC,
 	OP_VAR_DEC,
@@ -214,5 +213,11 @@ code_save_binary (code_t *code);
 
 code_t *
 code_load_binary (const char *path, FILE *f);
+
+object_t *
+code_get_const (code_t *code, para_t pos);
+
+object_t *
+code_get_varname (code_t *code, para_t pos);
 
 #endif /* CODE_H */

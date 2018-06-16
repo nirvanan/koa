@@ -24,6 +24,8 @@
 #include "koa.h"
 #include "vec.h"
 
+#define STACK_SP(x) ((x)->sp)
+
 typedef integer_value_t sp_t;
 
 typedef struct stack_s

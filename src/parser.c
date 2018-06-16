@@ -564,6 +564,23 @@ parser_adjust_default (code_t *code, para_t start_pos,
 									 insert_pos - start_pos, 2);
 }
 
+static int
+parser_adjust_assignment (code_t *code, para_t start_pos,
+						  para_t assign_pos, para_t end_pos)
+{
+	for (para_t i = start_pos; i < (start_pos + assign_pos) / 2; i++) {
+		code_switch_opcode (code, i, start_pos + assign_pos - i - 1);
+	}
+	for (para_t i = assign_pos; i < (assign_pos + end_pos) / 2; i++) {
+		code_switch_opcode (code, i, assign_pos + end_pos - i - 1);
+	}
+	for (para_t i = start_pos; i < (start_pos + end_pos) / 2; i++) {
+		code_switch_opcode (code, i, start_pos + end_pos - i - 1);
+	}
+
+	return 1;
+}
+
 /* for-statement:
  * for ( expressionopt ; expressionopt ; expressionopt ) statement
  * for ( declaration expressionopt ; expressionopt ) statement */
@@ -1172,6 +1189,13 @@ parser_jump_statement (parser_t *parser, code_t *code,
 			return parser_push_dummy_return (parser, code);
 		}
 		else {
+			/* Check return type. */
+			if (FUNC_RET_TYPE (code) == OBJECT_TYPE_VOID) {
+				parser_syntax_error (parser, "void func can not return a value.");
+
+				return 0;
+			}
+
 			line = TOKEN_LINE (parser->token);
 			if (!parser_expression (parser, code)) {
 				return 0;
@@ -1724,7 +1748,12 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 	}
 	
 	/* Emit a MAKE_VEC. */
-	return code_push_opcode (code, OPCODE (OP_MAKE_VEC, size), line);
+	if (size > 0 &&
+		!code_push_opcode (code, OPCODE (OP_MAKE_VEC, size), line)) {
+		return 0;
+	}
+
+	return 1;
 }
 
 /* expression-postfix:
@@ -1757,11 +1786,11 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 	else if (parser_check (parser, TOKEN ('('))) {
 		parser_next_token (parser);
 		if (parser_check (parser, TOKEN (')'))) {
-			/* Empty argument list, emit a zero MAKE_VEC and CALL_FUNC. */
+			/* Empty argument list, emit a CALL_FUNC, no need to Emit
+			 * a MAKE_VEC. */
 			parser_next_token (parser);
 
-			return code_push_opcode (code, OPCODE (OP_MAKE_VEC, 0), line) &&
-				code_push_opcode (code, OPCODE (OP_CALL_FUNC, 0), line);
+			return code_push_opcode (code, OPCODE (OP_CALL_FUNC, 0), line);
 		}
 
 		if (!parser_argument_expression_list (parser, code)) {
@@ -2145,7 +2174,10 @@ parser_cast_expression (parser_t *parser, code_t *code)
 static int
 parser_assignment_expression (parser_t *parser, code_t *code)
 {
+	para_t start_pos;
+
 	/* The first part is always a cast-expression. */
+	start_pos = code_current_pos (code) + 1;
 	if (!parser_cast_expression (parser, code)) {
 		return 0;
 	}
@@ -2157,6 +2189,8 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		opcode_t last;
 		token_type_t type;
 		op_t op;
+		para_t assign_pos;
+		para_t end_pos;
 		uint32_t line;
 
 		/* The last opcode must be a LOAD_VAR or LOAD_INDEX,
@@ -2171,12 +2205,18 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 
 		/* Recursion needed. */
 		parser_next_token (parser);
+		assign_pos = code_current_pos (code) + 1;
 		if (!parser_assignment_expression (parser, code)) {
+			return 0;
+		}
+
+		end_pos = code_current_pos (code) + 1;
+		if (!parser_adjust_assignment (code, start_pos, assign_pos, end_pos)) {
 			return 0;
 		}
 		
 		/* Need to remove that LOAD_* opcode and emit an assignment. */
-		op = OPCODE_OP (last) != OP_LOAD_VAR?
+		op = OPCODE_OP (last) == OP_LOAD_VAR?
 			parser_get_var_assign_op (type):
 			parser_get_index_assign_op (type);
 		if (!op) {

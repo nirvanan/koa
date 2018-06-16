@@ -462,6 +462,36 @@ strobject_cleanup_fun (void *value)
 	object_free (value);
 }
 
+uint64_t
+strobject_get_hash (object_t *obj)
+{
+	str_t *str;
+
+	str = strobject_get_value (obj);
+
+	return strobject_murmur (str_c_str (str),
+							 str_len (str),
+							 g_internal_hash_seed);
+}
+
+int
+strobject_equal (object_t *obj1, object_t *obj2)
+{
+	str_t *str1;
+	str_t *str2;
+
+	str1 = strobject_get_value (obj1);
+	str2 = strobject_get_value (obj2);
+
+	return str_cmp (str1, str2) == 0;
+}
+
+const char *
+strobject_c_str (object_t *obj)
+{
+	return str_c_str (strobject_get_value (obj));
+}
+
 void
 strobject_init ()
 {

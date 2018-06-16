@@ -37,13 +37,15 @@ typedef struct frame_s
 {
 	list_t link;
 	block_t *current;
+	dict_t *global; /* Link to the first block. */
+	int is_global;
 	code_t *code;
 	para_t esp;
 	sp_t bottom;
 } frame_t;
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t top);
+frame_new (code_t *code, frame_t *current, sp_t top, int global);
 
 frame_t *
 frame_free (frame_t *frame);
@@ -59,6 +61,12 @@ frame_traceback (frame_t *frame);
 
 int
 frame_make_block (frame_t *frame);
+
+int
+frame_store_local (frame_t *frame, object_t *name, object_t *value);
+
+object_t *
+frame_get_var (frame_t *frame, object_t *name);
 
 #endif /* FRAME_H */
 

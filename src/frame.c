@@ -22,12 +22,13 @@
 #include "pool.h"
 #include "dict.h"
 #include "object.h"
+#include "strobject.h"
 #include "error.h"
 
 #define FRAME_UPPER(x) ((frame_t *)LIST_NEXT(x))
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t top)
+frame_new (code_t *code, frame_t *current, sp_t top, int global)
 {
 	frame_t *frame;
 
@@ -42,6 +43,8 @@ frame_new (code_t *code, frame_t *current, sp_t top)
 	frame->code = code;
 	frame->bottom = top;
 	frame_make_block (frame);
+	frame->global = global? frame->global: FRAME_UPPER (frame)->global;
+	frame->is_global = global;
 
 	return frame;
 }
@@ -99,13 +102,13 @@ frame_traceback (frame_t *frame)
 static uint64_t
 frame_varname_hash_fun (void *data)
 {
-	return object_address_hash (data);
+	return strobject_get_hash ((object_t *) data);
 }
 
 static int
 frame_varname_test_fun (void *value, void *hd)
 {
-	return value == hd;
+	return strobject_equal ((object_t *) value, (object_t *) hd);
 }
 
 int
@@ -131,5 +134,74 @@ frame_make_block (frame_t *frame)
 	frame->current = (block_t *) list_append (LIST (frame->current), LIST (block));
 
 	return 1;
+}
+
+int
+frame_store_local (frame_t *frame, object_t *name, object_t *value)
+{
+	dict_t *ns;
+
+	ns = frame->current->ns;
+	/* Check whether this var has alreay declared. */
+	if (dict_get (ns, name) != NULL) {
+		error ("try redefine variable.");
+
+		return 0;
+	}
+
+	return dict_set (ns, name, value) != NULL;
+}
+
+object_t *
+frame_store_var (frame_t *frame, object_t *name, object_t *value)
+{
+	block_t *block;
+
+	block = frame->current;
+	while (block != NULL) {
+		if (dict_get (block->ns, name) != NULL) {
+			return (object_t *) dict_set (block->ns, name, value);
+		}
+
+		block = (block_t *) LIST_NEXT (LIST (block));
+	}
+
+	/* Lookup global. */
+	if (!frame->is_global) {
+		if (dict_get (frame->global, name) != NULL) {
+			return (object_t *) dict_set (frame->global, name, value);
+		}
+	}
+
+	error ("variable undefined: %s.", strobject_c_str (name));
+
+	return NULL;
+}
+
+object_t *
+frame_get_var (frame_t *frame, object_t *name)
+{
+	block_t *block;
+	void *var;
+
+	block = frame->current;
+	while (block != NULL) {
+		if ((var = dict_get (block->ns, name)) != NULL) {
+			return (object_t *) var;
+		}
+
+		block = (block_t *) LIST_NEXT (LIST (block));
+	}
+
+	/* Lookup global. */
+	if (!frame->is_global) {
+		if ((var = dict_get (frame->global, name)) != NULL) {
+			return (object_t *) var;
+		}
+	}
+
+	error ("variable undefined: %s.", strobject_c_str (name));
+
+	return NULL;
 }
 

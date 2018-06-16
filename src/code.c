@@ -40,7 +40,6 @@ static const char *g_code_names[] =
 	"OP_STORE_LOCAL",
 	"OP_STORE_VAR",
 	"OP_LOAD_VAR",
-	"OP_FUNC_RETURN",
 	"OP_TYPE_CAST",
 	"OP_VAR_INC",
 	"OP_VAR_DEC",
@@ -976,4 +975,16 @@ code_load_binary (const char *path, FILE *f)
 	}
 
 	return code;
+}
+
+object_t *
+code_get_const (code_t *code, para_t pos)
+{
+	return (object_t *) vec_pos (code->consts, (integer_value_t) pos);
+}
+
+object_t *
+code_get_varname (code_t *code, para_t pos)
+{
+	return (object_t *) vec_pos (code->varnames, (integer_value_t) pos);
 }

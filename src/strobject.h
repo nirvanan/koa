@@ -46,6 +46,15 @@ strobject_str_new (str_t *val, void *udata);
 str_t *
 strobject_get_value (object_t *obj);
 
+uint64_t
+strobject_get_hash (object_t *obj);
+
+int
+strobject_equal (object_t *obj1, object_t *obj2);
+
+const char *
+strobject_c_str (object_t *obj);
+
 void
 strobject_init ();
 

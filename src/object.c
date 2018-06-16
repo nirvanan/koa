@@ -1033,8 +1033,11 @@ object_binary (object_t *obj)
 	}
 
 	binary_fun = (OBJECT_OPSET (obj))->binary;
-	/* At this stage, this is impossible, =_=. */
 	if (binary_fun == NULL) {
+		if (OBJECT_TYPE (obj) == OBJECT_TYPE_VOID) {
+			return head_obj;
+		}
+
 		object_free (head_obj);
 
 		error ("type %s has no binary routine.", TYPE_NAME (obj));
