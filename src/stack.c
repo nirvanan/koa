@@ -72,7 +72,7 @@ stack_pop (stack_t *stack)
 
 	ret = vec_last (stack->v);
 	if (vec_pop_back (stack->v)) {
-		stack->sp++;
+		stack->sp--;
 
 		return ret;
 	}

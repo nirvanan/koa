@@ -31,6 +31,7 @@
 #include "lex.h"
 #include "code.h"
 #include "parser.h"
+#include "interpreter.h"
 #include <time.h>
 
 int main(int argc, char *argv[])
@@ -41,6 +42,9 @@ int main(int argc, char *argv[])
 	object_init ();
 	/* Init lex module. */
 	lex_init ();
+	/* Init interpreter. */
+	interpreter_init ();
+
 	int c = 0;
 
 	while (0) {
@@ -59,7 +63,7 @@ int main(int argc, char *argv[])
 			printf ("%d\n", c);
 	}
 
-	while (1) {
+	while (0) {
 		code_t *code = parser_load_file ("/home/nirvanan/test.k");
 		if (code) {
 			code_print (code);
@@ -75,6 +79,10 @@ int main(int argc, char *argv[])
 			printf ("wrong\n");
 		}
 		break;
+	}
+
+	while (1) {
+		interpreter_execute ("/home/nirvanan/test.k");
 	}
 
 	return 0;
