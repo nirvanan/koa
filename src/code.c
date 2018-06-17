@@ -45,7 +45,7 @@ static const char *g_code_names[] =
 	"OP_VAR_DEC",
 	"OP_VAR_POINC",
 	"OP_VAR_PODEC",
-	"OP_VALUE_NEG",
+	"OP_NEGATIVE",
 	"OP_BIT_NOT",
 	"OP_LOGIC_NOT",
 	"OP_POP_STACK",
@@ -67,9 +67,9 @@ static const char *g_code_names[] =
 	"OP_EQUAL",
 	"OP_NOT_EQUAL",
 	"OP_LESS_THAN",
-	"OP_LARGE_THAN",
+	"OP_LARGER_THAN",
 	"OP_LESS_EQUAL",
-	"OP_LARGE_EQUAL",
+	"OP_LARGER_EQUAL",
 	"OP_LEFT_SHIFT",
 	"OP_RIGHT_SHIFT",
 	"OP_ADD",
@@ -160,7 +160,7 @@ code_new (const char *filename, const char *name)
 void
 code_set_func (code_t *code, uint32_t line, object_type_t ret_type)
 {
-	code->fun = 1;
+	code->func = 1;
 	code->lineno = line;
 	code->ret_type = ret_type;
 }
@@ -329,7 +329,7 @@ code_push_const (code_t *code, object_t *var, int *exist)
 }
 
 para_t
-code_push_varname (code_t *code, const char *var, object_type_t type)
+code_push_varname (code_t *code, const char *var, object_type_t type, int para)
 {
 	object_t *name;
 	size_t pos;
@@ -361,7 +361,6 @@ code_push_varname (code_t *code, const char *var, object_type_t type)
 		return -1;
 	}
 
-	/* Is this var a parameter? */
 	var_type = (object_type_t *) pool_alloc (sizeof (object_type_t));
 	if (var_type == NULL) {
 		return -1;
@@ -372,6 +371,10 @@ code_push_varname (code_t *code, const char *var, object_type_t type)
 		pool_free ((void *) var_type);
 
 		return -1;
+	}
+
+	if (para) {
+		code->paras++;
 	}
 
 	object_ref (name);
@@ -489,6 +492,10 @@ void
 code_print (code_t *code)
 {
 	size_t size;
+
+	if (code->func) {
+		printf ("parameters: %d\n", code->paras);
+	}
 
 	/* Print consts. */
 	printf ("consts:\n");
@@ -697,8 +704,8 @@ code_binary (code_t *code)
 		return cur;
 	}
 
-	/* Dump fun. */
-	temp = strobject_new (BINARY (code->fun), sizeof (int), 1, NULL);
+	/* Dump func. */
+	temp = strobject_new (BINARY (code->func), sizeof (int), 1, NULL);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -711,6 +718,18 @@ code_binary (code_t *code)
 
 	/* Dump lineno. */
 	temp = strobject_new (BINARY (code->lineno), sizeof (int), 1, NULL);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	if (cur == NULL) {
+		return cur;
+	}
+
+	/* Dump paras. */
+	temp = strobject_new (BINARY (code->paras), sizeof (int), 1, NULL);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -959,8 +978,9 @@ code_load_binary (const char *path, FILE *f)
 		return NULL;
 	}
 
-	if (fread (&code->fun, sizeof (int), 1, b) != 1 ||
+	if (fread (&code->func, sizeof (int), 1, b) != 1 ||
 		fread (&code->lineno, sizeof (int), 1, b) != 1 ||
+		fread (&code->paras, sizeof (int), 1, b) != 1 ||
 		fread (&code->ret_type, sizeof (object_type_t), 1, b) != 1) {
 		code_free (code);
 		if (f == NULL) {
@@ -987,4 +1007,31 @@ object_t *
 code_get_varname (code_t *code, para_t pos)
 {
 	return (object_t *) vec_pos (code->varnames, (integer_value_t) pos);
+}
+
+int
+code_check_args (code_t *code, vec_t *args)
+{
+	size_t size;
+
+	size = vec_size (args);
+	if (size != code->paras) {
+		error ("wrong number of arguments.");
+
+		return 0;
+	}
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *arg;
+		object_type_t *type;
+
+		arg = (object_t *) vec_pos (args, i);
+		type = (object_type_t *) vec_pos (code->types, i);
+		if (OBJECT_TYPE (arg) != *type) {
+			error ("wrong argument type for pos %d", i + 1);
+
+			return 0;
+		}
+	}
+
+	return 1;
 }

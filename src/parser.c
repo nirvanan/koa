@@ -293,7 +293,7 @@ static op_t
 parser_get_unary_op (token_type_t type)
 {
 	if (type == TOKEN ('-')) {
-		return OP_VALUE_NEG;
+		return OP_NEGATIVE;
 	}
 	else if (type == TOKEN ('~')) {
 		return OP_BIT_NOT;
@@ -325,13 +325,13 @@ parser_get_relational_op (parser_t *parser)
 		return OP_LESS_THAN;
 	}
 	else if (parser_check (parser, TOKEN ('>'))) {
-		return OP_LARGE_THAN;
+		return OP_LARGER_THAN;
 	}
 	else if (parser_check (parser, TOKEN_LEEQ)) {
 		return OP_LESS_EQUAL;
 	}
 	else if (parser_check (parser, TOKEN_LAEQ)) {
-		return OP_LARGE_EQUAL;
+		return OP_LARGER_EQUAL;
 	}
 
 	return (op_t) 0;
@@ -1914,7 +1914,8 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 	line = TOKEN_LINE (parser->token);
 	switch (TOKEN_TYPE (parser->token)) {
 		case TOKEN_IDENTIFIER:
-			pos = code_push_varname (code,TOKEN_ID (parser->token), OBJECT_TYPE_VOID);
+			pos = code_push_varname (code,TOKEN_ID (parser->token),
+									 OBJECT_TYPE_VOID, 0);
 			parser_next_token (parser);
 			if (pos == -1) {
 				return 0;
@@ -2252,7 +2253,7 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		var = TOKEN_ID (parser->token);
 	}
 
-	var_pos = code_push_varname (code, var, type);
+	var_pos = code_push_varname (code, var, type, 0);
 	if (var_pos == -1) {
 		return 0;
 	}
@@ -2407,7 +2408,7 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	/* Insert a default value for this parameter, this is used while
 	 * checking arguments. */
 	/* Insert parameter local var and const. */
-	if (code_push_varname (code, TOKEN_ID (parser->token), type) == -1) {
+	if (code_push_varname (code, TOKEN_ID (parser->token), type, 1) == -1) {
 		return 0;
 	}
 
@@ -2472,7 +2473,7 @@ parser_function_definition (parser_t *parser, code_t *code,
 	code_set_func (func_code, line, ret_type);
 
 	/* Push func name. */
-	var_pos = code_push_varname (code, id, OBJECT_TYPE_FUNC);
+	var_pos = code_push_varname (code, id, OBJECT_TYPE_FUNC, 0);
 	if (var_pos == -1) {
 		return 0;
 	}

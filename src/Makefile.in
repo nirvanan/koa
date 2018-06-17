@@ -103,11 +103,12 @@ am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
 	code.$(OBJEXT) dict.$(OBJEXT) dictobject.$(OBJEXT) \
 	doubleobject.$(OBJEXT) floatobject.$(OBJEXT) frame.$(OBJEXT) \
 	funcobject.$(OBJEXT) error.$(OBJEXT) hash.$(OBJEXT) \
-	intobject.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
-	longobject.$(OBJEXT) main.$(OBJEXT) modobject.$(OBJEXT) \
-	misc.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
-	parser.$(OBJEXT) pool.$(OBJEXT) stack.$(OBJEXT) str.$(OBJEXT) \
-	strobject.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
+	interpreter.$(OBJEXT) intobject.$(OBJEXT) lex.$(OBJEXT) \
+	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
+	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
+	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
+	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
+	vec.$(OBJEXT) vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -209,9 +210,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 POW_LIB = @POW_LIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -284,6 +282,8 @@ error.c \
 error.h \
 hash.c \
 hash.h \
+interpreter.c \
+interpreter.h \
 intobject.c \
 intobject.h \
 koa.h \
@@ -414,6 +414,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/frame.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/funcobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interpreter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@

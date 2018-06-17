@@ -23,6 +23,7 @@
 #include "dict.h"
 #include "object.h"
 #include "strobject.h"
+#include "vecobject.h"
 #include "error.h"
 
 #define FRAME_UPPER(x) ((frame_t *)LIST_NEXT(x))
@@ -143,34 +144,69 @@ frame_store_local (frame_t *frame, object_t *name, object_t *value)
 
 	ns = frame->current->ns;
 	/* Check whether this var has alreay declared. */
-	if (dict_get (ns, name) != NULL) {
+	if (dict_get (ns, (void *) name) != NULL) {
 		error ("try redefine variable.");
 
 		return 0;
 	}
 
-	return dict_set (ns, name, value) != NULL;
+	if (dict_set (ns, (void *) name, (void *) value) != (void *) value) {
+		return 0;
+	}
+
+	object_ref (value);
+
+	return 1;
 }
 
 object_t *
 frame_store_var (frame_t *frame, object_t *name, object_t *value)
 {
 	block_t *block;
+	object_t *prev;
 
 	block = frame->current;
 	while (block != NULL) {
-		if (dict_get (block->ns, name) != NULL) {
-			return (object_t *) dict_set (block->ns, name, value);
+		prev = (object_t *) dict_get (block->ns, (void *) name);
+		if (prev != NULL) {
+			break;
 		}
 
 		block = (block_t *) LIST_NEXT (LIST (block));
 	}
 
 	/* Lookup global. */
-	if (!frame->is_global) {
-		if (dict_get (frame->global, name) != NULL) {
-			return (object_t *) dict_set (frame->global, name, value);
+	if (prev == NULL && !frame->is_global) {
+		prev = (object_t *) dict_get (frame->global, (void *) name);
+	}
+
+	if (prev != NULL) {
+		if (OBJECT_TYPE (value) != OBJECT_TYPE (prev)) {
+			/* Try cast. */
+			object_t *casted;
+
+			casted = object_cast (value, OBJECT_TYPE (prev));
+			if (casted == NULL) {
+				return NULL;
+			}
+
+
+			if (dict_set (block->ns, (void *) name, (void *) casted) != prev) {
+				return NULL;
+			}
+
+			object_ref (casted);
+
+			return prev;
 		}
+
+		if (dict_set (block->ns, (void *) name, (void *) value) != prev) {
+			return NULL;
+		}
+
+		object_ref (value);
+
+		return prev;
 	}
 
 	error ("variable undefined: %s.", strobject_c_str (name));
@@ -205,3 +241,28 @@ frame_get_var (frame_t *frame, object_t *name)
 	return NULL;
 }
 
+int
+frame_bind_args (frame_t *frame, object_t *args)
+{
+	vec_t *v;
+	size_t size;
+
+	v = vecobject_get_value (args);
+	if (!code_check_args (frame->code, v)) {
+		return 0;
+	}
+
+	size = vec_size (v);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *arg;
+		object_t *name;
+
+		arg = (object_t *) vec_pos (v, i);
+		name = code_get_varname (frame->code, (para_t) i);
+		if (!frame_store_local (frame, name, arg)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}

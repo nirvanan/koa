@@ -66,7 +66,13 @@ int
 frame_store_local (frame_t *frame, object_t *name, object_t *value);
 
 object_t *
+frame_store_var (frame_t *frame, object_t *name, object_t *value);
+
+object_t *
 frame_get_var (frame_t *frame, object_t *name);
+
+int
+frame_bind_args (frame_t *frame, object_t *args);
 
 #endif /* FRAME_H */
 

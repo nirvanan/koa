@@ -24,6 +24,8 @@ error.c \
 error.h \
 hash.c \
 hash.h \
+interpreter.c \
+interpreter.h \
 intobject.c \
 intobject.h \
 koa.h \

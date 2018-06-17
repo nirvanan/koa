@@ -62,7 +62,7 @@ typedef enum op_e
 	OP_VAR_DEC,
 	OP_VAR_POINC,
 	OP_VAR_PODEC,
-	OP_VALUE_NEG,
+	OP_NEGATIVE,
 	OP_BIT_NOT,
 	OP_LOGIC_NOT,
 	OP_POP_STACK,
@@ -84,9 +84,9 @@ typedef enum op_e
 	OP_EQUAL,
 	OP_NOT_EQUAL,
 	OP_LESS_THAN,
-	OP_LARGE_THAN,
+	OP_LARGER_THAN,
 	OP_LESS_EQUAL,
-	OP_LARGE_EQUAL,
+	OP_LARGER_EQUAL,
 	OP_LEFT_SHIFT,
 	OP_RIGHT_SHIFT,
 	OP_ADD,
@@ -135,11 +135,12 @@ typedef struct code_s {
 	vec_t *lineinfo; /* Line numbers of all codes. */
 	vec_t *types; /* Type of local variables. */
 	vec_t *consts; /* All consts appears in this block. */
-	vec_t *varnames; /* The names of local variables (args included). */
+	vec_t *varnames; /* The names of local variables (parameters included). */
 	str_t *name; /* Reference name of this block (or function name). */
 	str_t *filename; /* File name of this block. */
-	int fun; /* Is this code representing a function? */
+	int func; /* Is this code representing a function? */
 	int lineno; /* The first line number of this block. */
+	int paras; /* Number of parameters. */
 	object_type_t ret_type; /* Return type of function. */
 } code_t;
 
@@ -175,7 +176,7 @@ para_t
 code_push_const (code_t *code, object_t *var, int *exist);
 
 para_t
-code_push_varname (code_t *code, const char *var, object_type_t type);
+code_push_varname (code_t *code, const char *var, object_type_t type, int arg);
 
 opcode_t
 code_last_opcode (code_t *code);
@@ -219,5 +220,8 @@ code_get_const (code_t *code, para_t pos);
 
 object_t *
 code_get_varname (code_t *code, para_t pos);
+
+int
+code_check_args (code_t *code, vec_t *args);
 
 #endif /* CODE_H */

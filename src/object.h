@@ -164,6 +164,9 @@ object_ref (object_t *obj);
 void
 object_unref (object_t *obj);
 
+void
+object_unref_without_free (object_t *obj);
+
 integer_value_t
 object_get_integer (object_t *obj);
 
