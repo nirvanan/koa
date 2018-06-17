@@ -2503,9 +2503,15 @@ parser_function_definition (parser_t *parser, code_t *code,
 
 	/* Check the last opcode, if it's not a RETURN, we need to push one. */
 	last = code_last_opcode (func_code);
-	if (OPCODE_OP (last) != OP_RETURN &&
-		!parser_push_dummy_return (parser, func_code)) {
-		return 0;
+	if (OPCODE_OP (last) != OP_RETURN) {
+		if (ret_type != OBJECT_TYPE_VOID) {
+			return parser_syntax_error (parser,
+										"non-void func must return a value.");
+		}
+
+		if (!parser_push_dummy_return (parser, func_code)) {
+			return 0;
+		}
 	}
 
 	/* Make a new funcobject and push this const. */

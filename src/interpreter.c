@@ -947,12 +947,99 @@ interpreter_play (code_t *code, int global)
 			object_free (b);
 			object_unref (d);
 			break;
+		case OP_JUMP_FALSE:
+			a = (object_t *) stack_pop (g_s);
+			if (object_is_zero (a)) {
+				frame_jump (g_current, para);
+			}
+			object_free (a);
+			break;
+		case OP_JUMP_FORCE:
+		case OP_JUMP_CONTINUE:
+		case OP_JUMP_BREAK:
+			frame_jump (g_current, para);
+			break;
+		case OP_ENTER_BLOCK:
+			if (!frame_enter_block (g_current)) {
+				return 0;
+			}
+			break;
+		case OP_LEAVE_BLOCK:
+			if (!frame_leave_block (g_current)) {
+				return 0;
+			}
+			break;
+		case OP_RETURN:
+			a = (object_t *) stack_pop (g_s);
+			/* Check return type and try cast. */
+			if (OBJECT_TYPE (a) != FUNC_RET_TYPE (code)) {
+				b = object_cast (a, FUNC_RET_TYPE (code));
+				if (b == NULL) {
+					return 0;
+				}
+
+				r = b;
+				object_free (a);
+			}
+			else {
+				r = a;
+			}
+			g_current = frame_free (g_current);
+			return stack_push (g_s, (void *) r);
+		case OP_PUSH_BLOCKS:
+			for (para_t i = 0; i < para; i++) {
+				if (!frame_enter_block (g_current)) {
+					return 0;
+				}
+			}
+			break;
+		case OP_POP_BLOCKS:
+			for (para_t i = 0; i < para; i++) {
+				if (!frame_leave_block (g_current)) {
+					return 0;
+				}
+			}
+			break;
+		case OP_JUMP_CASE:
+			b = (object_t *) stack_pop (g_s);
+			a = (object_t *) stack_pop (g_s);
+			c = object_equal (a, b);
+			object_free (b);
+			if (c == NULL) {
+				return 0;
+			}
+			if (object_is_zero (c)) {
+				frame_jump (g_current, para);
+				if (!stack_push (g_s, (void *) a)) {
+					return 0;
+				}
+			}
+			else {
+				object_free (a);
+			}
+			break;
+		case OP_JUMP_DEFAULT:
+			a = (object_t *) stack_pop (g_s);
+			object_free (a);
+			frame_jump (g_current, para);
+			break;
+		case OP_JUMP_TRUE:
+			a = (object_t *) stack_pop (g_s);
+			if (!object_is_zero (a)) {
+				frame_jump (g_current, para);
+			}
+			object_free (a);
+			break;
+		case OP_END_PROGRAM:
+			return 1;
 		}
 
 		if (r != NULL && !stack_push (g_s, (void *) r)) {
 			return 0;
 		}
 	}
+
+	return 1;
 }
 
 void

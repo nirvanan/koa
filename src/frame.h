@@ -60,7 +60,10 @@ void
 frame_traceback (frame_t *frame);
 
 int
-frame_make_block (frame_t *frame);
+frame_enter_block (frame_t *frame);
+
+int
+frame_leave_block (frame_t *frame);
 
 int
 frame_store_local (frame_t *frame, object_t *name, object_t *value);

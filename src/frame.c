@@ -43,7 +43,7 @@ frame_new (code_t *code, frame_t *current, sp_t top, int global)
 	frame = (frame_t *) list_append (LIST (current), LIST (frame));
 	frame->code = code;
 	frame->bottom = top;
-	frame_make_block (frame);
+	frame_enter_block (frame);
 	frame->global = global? frame->global: FRAME_UPPER (frame)->global;
 	frame->is_global = global;
 
@@ -54,9 +54,26 @@ static int
 frame_block_cleanup_fun (list_t *list, void *data)
 {
 	block_t *block;
+	vec_t *pairs;
+	size_t size;
 
 	UNUSED (data);
 	block = (block_t *) list;
+	pairs = dict_pairs (block->ns);
+	if (pairs == NULL) {
+		return 0;
+	}
+
+	size = vec_size (pairs);
+	/* Unref all pairs. */
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *value;
+
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
+		object_unref (value);
+	}
+
+	vec_free (pairs);
 	dict_free (block->ns);
 
 	return 1;
@@ -113,7 +130,7 @@ frame_varname_test_fun (void *value, void *hd)
 }
 
 int
-frame_make_block (frame_t *frame)
+frame_enter_block (frame_t *frame)
 {
 	dict_t *ns;
 	block_t *block;
@@ -133,6 +150,38 @@ frame_make_block (frame_t *frame)
 
 	block->ns = ns;
 	frame->current = (block_t *) list_append (LIST (frame->current), LIST (block));
+
+	return 1;
+}
+	
+int
+frame_leave_block (frame_t *frame)
+{
+	dict_t *ns;
+	block_t *block;
+	vec_t *pairs;
+	size_t size;
+
+	block = frame->current;
+	frame->current = (block_t *) list_remove (LIST (block), LIST (block));
+	ns = block->ns;
+	pairs = dict_pairs (ns);
+	if (pairs == NULL) {
+		return 0;
+	}
+
+	size = vec_size (pairs);
+	/* Unref all pairs. */
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *value;
+
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
+		object_unref (value);
+	}
+
+	vec_free (pairs);
+	dict_free (ns);
+	pool_free ((void *) block);
 
 	return 1;
 }
