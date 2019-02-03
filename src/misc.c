@@ -63,8 +63,13 @@ misc_file_is_older (const char *s, const char *b)
 	if (stat (s, &s_stat) || stat (b, &b_stat)) {
 		return -1;
 	}
-
+#if defined(__APPLE__) && defined(__MACH__)
+	return b_stat.st_mtimespec.tv_sec > s_stat.st_mtimespec.tv_sec ||
+		(b_stat.st_mtimespec.tv_sec == s_stat.st_mtimespec.tv_sec &&
+		 b_stat.st_mtimespec.tv_nsec > s_stat.st_mtimespec.tv_nsec);
+#else
 	return b_stat.st_mtim.tv_sec > s_stat.st_mtim.tv_sec ||
 		(b_stat.st_mtim.tv_sec == s_stat.st_mtim.tv_sec &&
 		 b_stat.st_mtim.tv_nsec > s_stat.st_mtim.tv_nsec);
+#endif
 }

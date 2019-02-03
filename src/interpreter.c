@@ -126,7 +126,7 @@ interpreter_play (code_t *code, int global)
 		case OP_NEGATIVE:
 			a = (object_t *) stack_pop (g_s);
 			if ((r = object_neg (a)) == NULL) {
-				object_free (b);
+				object_free (a);
 
 				return 0;
 			}
@@ -135,7 +135,7 @@ interpreter_play (code_t *code, int global)
 		case OP_BIT_NOT:
 			a = (object_t *) stack_pop (g_s);
 			if ((r = object_bit_not (a)) == NULL) {
-				object_free (b);
+				object_free (a);
 
 				return 0;
 			}

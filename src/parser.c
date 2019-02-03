@@ -227,7 +227,7 @@ parser_token_object_type (parser_t *parser)
 {
 	/* token can be NULL if lex error occurred. */
 	if (parser->token == NULL) {
-		return (object_type_t) -1;
+		return OBJECT_TYPE_ERR;
 	}
 
 	switch (TOKEN_TYPE (parser->token)) {
@@ -259,7 +259,7 @@ parser_token_object_type (parser_t *parser)
 			break;
 	}
 
-	return (object_type_t) -1;
+	return OBJECT_TYPE_ERR;
 }
 
 static int
@@ -2141,7 +2141,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		type = parser_token_object_type (parser);
 		/* Oops, it's an unary-expression,
 		 * and we skipped its leading parenthese. */
-		if (type == -1) {
+		if (type == OBJECT_TYPE_ERR) {
 			return parser_unary_expression (parser, code, 1);
 		}
 		else if (type == OBJECT_TYPE_VOID) {
@@ -2393,7 +2393,7 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	object_type_t type;
 	type = parser_token_object_type (parser);
 
-	if (type == -1) {
+	if (type == OBJECT_TYPE_ERR) {
 		return parser_syntax_error (parser, "unknown parameter type.");
 	}
 	else if (type == OBJECT_TYPE_VOID) {
@@ -2541,7 +2541,7 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	token_t *temp;
 
 	type = parser_token_object_type (parser);
-	if (type == -1) {
+	if (type == OBJECT_TYPE_ERR) {
 		return parser_syntax_error (parser, "unknown type.");
 	}
 

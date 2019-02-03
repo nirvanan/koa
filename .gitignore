@@ -7,3 +7,4 @@ src/Makefile
 src/*.o
 src/koa
 stamp-h1
+tags
