@@ -170,6 +170,9 @@ parser_free (parser_t *parser)
 static int
 parser_syntax_error (parser_t *parser, const char *err)
 {
+	if (lex_reader_broken (parser->reader)) {
+		return 0;
+	}
 	error ("syntax error: %s:%d: %s",
 		parser->path, TOKEN_LINE (parser->token), err);
 

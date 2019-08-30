@@ -31,11 +31,11 @@
 
 #define LOADED_BUF_SIZE 20
 
-#define TOKEN_TYPE(x) ((x)->type)
+#define TOKEN_TYPE(x) ((x)?(x)->type:TOKEN_BROKEN)
 
-#define TOKEN_ID(x) ((x)->token)
+#define TOKEN_ID(x) ((x)?(x)->token:"")
 
-#define TOKEN_LINE(x) ((x)->lineno)
+#define TOKEN_LINE(x) ((x)?(x)->lineno:0)
 
 #define TOKEN(x) ((token_type_t)(x))
 
@@ -43,6 +43,7 @@
  * Those are not listed here. */
 typedef enum token_type_e
 {
+	TOKEN_BROKEN = -2, /* Broken token stream. */
 	TOKEN_END = -1, /* End mark of token stream. */
 	TOKEN_UNKNOWN = 0, /* Unknown token. */
 	TOKEN_STATIC = TOKEN_MIN, /* Storage-class-specifier: static. */
@@ -125,6 +126,7 @@ typedef struct reader_s
 	size_t loaded_len;
 	size_t next_loaded;
 	char loaded[LOADED_BUF_SIZE + 1];
+	int broken;
 } reader_t;
 
 reader_t *
@@ -132,6 +134,9 @@ lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata);
 
 void
 lex_reader_free (reader_t *reader);
+
+int
+lex_reader_broken (reader_t *reader);
 
 void
 lex_token_free (token_t *token);

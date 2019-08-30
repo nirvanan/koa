@@ -151,6 +151,7 @@ lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata)
 	reader->rd = udata;
 	reader->current = 0;
 	reader->line = 1;
+	reader->broken = 0;
 
 	if (lex_skip_utf8_bom (reader) == 0) {
 		lex_reader_free (reader);
@@ -161,6 +162,12 @@ lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata)
 	lex_next_char (reader);
 
 	return reader;
+}
+
+int
+lex_reader_broken (reader_t *reader)
+{
+	return reader->broken;
 }
 
 void
@@ -362,6 +369,7 @@ lex_token_error (reader_t *reader, token_t *token, const char *err)
 {
 	error ("lex error: %s:%d: %s", reader->path, reader->line, err);
 	lex_token_free (token);
+	reader->broken = 1;
 
 	return NULL;
 }
