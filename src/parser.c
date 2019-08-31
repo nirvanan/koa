@@ -2580,6 +2580,40 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	return 1;
 }
 
+static int
+parser_insert_main_code (parser_t *parser, code_t *code)
+{
+	/* Try find main func object. */
+	for (para_t i = 0; ; i++) {
+		object_t *obj;
+
+		obj = code_get_const (code, i);
+		if (obj == NULL) {
+			break;
+		}
+		if (OBJECT_IS_FUNC (obj)) {
+			code_t *func_code;
+
+			func_code = funcobject_get_value (obj);
+			if (func_code != NULL && strcmp (code_get_name (func_code), "main") == 0) {
+				uint32_t line;
+
+				line = TOKEN_LINE (parser->token);
+				/* Emit a OP_LOAD_CONST and OP_CALL_FUNC. */
+				if (code_push_opcode (code, OPCODE (OP_LOAD_CONST, i), line) == 0) {
+					return 0;
+				}
+				if (code_push_opcode (code, OPCODE (OP_CALL_FUNC, 0), line) == 0) {
+					return 0;
+				}
+				break;
+			}
+		}
+	}
+
+	return 1;
+}
+
 /* translation-unit:
  * external-declaration
  * external-declaration translation-unit */
@@ -2592,6 +2626,11 @@ parser_translation_unit (parser_t *parser, code_t *code)
 		if (!parser_external_declaration (parser, code)) {
 			return 0;
 		}
+	}
+
+	/* Try insert main func exec code if exists. */
+	if (!parser_insert_main_code (parser, code)) {
+		return 0;
 	}
 
 	/* Emit a END_PROGRAM. */

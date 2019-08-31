@@ -44,7 +44,7 @@ frame_new (code_t *code, frame_t *current, sp_t top, int global)
 	frame->code = code;
 	frame->bottom = top;
 	frame_enter_block (frame);
-	frame->global = global? frame->global: FRAME_UPPER (frame)->global;
+	frame->global = global? frame->current->ns: FRAME_UPPER (frame)->global;
 	frame->is_global = global;
 
 	return frame;
@@ -213,7 +213,9 @@ frame_store_var (frame_t *frame, object_t *name, object_t *value)
 {
 	block_t *block;
 	object_t *prev;
+	int in_global;
 
+	in_global = 0;
 	block = frame->current;
 	while (block != NULL) {
 		prev = (object_t *) dict_get (block->ns, (void *) name);
@@ -227,9 +229,17 @@ frame_store_var (frame_t *frame, object_t *name, object_t *value)
 	/* Lookup global. */
 	if (prev == NULL && !frame->is_global) {
 		prev = (object_t *) dict_get (frame->global, (void *) name);
+		in_global = 1;
 	}
 
 	if (prev != NULL) {
+		dict_t *to_set;
+
+		if (in_global) {
+			to_set = frame->global;
+		} else {
+			to_set = block->ns;
+		}
 		if (OBJECT_TYPE (value) != OBJECT_TYPE (prev)) {
 			/* Try cast. */
 			object_t *casted;
@@ -239,8 +249,7 @@ frame_store_var (frame_t *frame, object_t *name, object_t *value)
 				return NULL;
 			}
 
-
-			if (dict_set (block->ns, (void *) name, (void *) casted) != prev) {
+			if (dict_set (to_set, (void *) name, (void *) casted) != prev) {
 				return NULL;
 			}
 
@@ -249,7 +258,7 @@ frame_store_var (frame_t *frame, object_t *name, object_t *value)
 			return prev;
 		}
 
-		if (dict_set (block->ns, (void *) name, (void *) value) != prev) {
+		if (dict_set (to_set, (void *) name, (void *) value) != prev) {
 			return NULL;
 		}
 

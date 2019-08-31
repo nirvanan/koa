@@ -240,11 +240,15 @@ interpreter_play (code_t *code, int global)
 			if (OBJECT_TYPE (a) != OBJECT_TYPE_FUNC) {
 				if (OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
 					error ("only func object is callable.");
+
+					return 0;
 				}
 				b = a;
 				a = (object_t *) stack_pop (g_s);
 				if (OBJECT_TYPE (a) != OBJECT_TYPE_FUNC) {
 					error ("only func object is callable.");
+
+					return 0;
 				}
 				if (!stack_push (g_s, (void *) b)) {
 					return 0;
@@ -1063,6 +1067,10 @@ interpreter_execute (const char *path)
 
 	if (!interpreter_play (code, 1)) {
 		interpreter_traceback ();
+	}
+
+	while (g_current) {
+		g_current = frame_free (g_current);
 	}
 
 	code_free (code);

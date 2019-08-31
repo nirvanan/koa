@@ -37,7 +37,7 @@ typedef struct frame_s
 {
 	list_t link;
 	block_t *current;
-	dict_t *global; /* Link to the first block. */
+	dict_t *global; /* Link to the first block of top frame. */
 	int is_global;
 	code_t *code;
 	para_t esp;

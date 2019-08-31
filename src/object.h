@@ -268,6 +268,9 @@ object_t *
 object_load_binary (FILE *f);
 
 void
+object_print (object_t *obj);
+
+void
 object_init ();
 
 #endif /* OBJECT_H */
