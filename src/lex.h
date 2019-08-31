@@ -24,20 +24,69 @@
 #include <stdint.h>
 
 #include "koa.h"
+#include "object.h"
 
 #define TOKEN_MIN 257
-
 #define TOKEN_LEN_STEP 200 /* Step size for token expansion. */
-
 #define LOADED_BUF_SIZE 20
 
 #define TOKEN_TYPE(x) ((x)?(x)->type:TOKEN_BROKEN)
-
 #define TOKEN_ID(x) ((x)?(x)->token:"")
-
 #define TOKEN_LINE(x) ((x)?(x)->lineno:0)
-
 #define TOKEN(x) ((token_type_t)(x))
+
+#define TOKEN_IS_TYPE(x) (TOKEN_TYPE((x))==TOKEN_VOID||\
+	TOKEN_TYPE((x))==TOKEN_NULL||\
+	TOKEN_TYPE((x))==TOKEN_BOOL||\
+	TOKEN_TYPE((x))==TOKEN_CHAR||\
+	TOKEN_TYPE((x))==TOKEN_INT||\
+	TOKEN_TYPE((x))==TOKEN_LONG||\
+	TOKEN_TYPE((x))==TOKEN_INT8||\
+	TOKEN_TYPE((x))==TOKEN_UINT8||\
+	TOKEN_TYPE((x))==TOKEN_INT16||\
+	TOKEN_TYPE((x))==TOKEN_UINT16||\
+	TOKEN_TYPE((x))==TOKEN_INT32||\
+	TOKEN_TYPE((x))==TOKEN_UINT32||\
+	TOKEN_TYPE((x))==TOKEN_INT64||\
+	TOKEN_TYPE((x))==TOKEN_UINT64||\
+	TOKEN_TYPE((x))==TOKEN_FLOAT||\
+	TOKEN_TYPE((x))==TOKEN_DOUBLE||\
+	TOKEN_TYPE((x))==TOKEN_STR||\
+	TOKEN_TYPE((x))==TOKEN_VEC||\
+	TOKEN_TYPE((x))==TOKEN_DICT||\
+	TOKEN_TYPE((x))==TOKEN_FUNC)
+
+#define TOKEN_IS_CON(x) (TOKEN_TYPE((x))==TOKEN('?')||\
+	TOKEN_TYPE((x))==TOKEN_LOR||\
+	TOKEN_TYPE((x))==TOKEN_LAND||\
+	TOKEN_TYPE((x))==TOKEN('|')||\
+	TOKEN_TYPE((x))==TOKEN('^')||\
+	TOKEN_TYPE((x))==TOKEN('&')||\
+	TOKEN_TYPE((x))==TOKEN_EQ||\
+	TOKEN_TYPE((x))==TOKEN_NEQ||\
+	TOKEN_TYPE((x))==TOKEN('<')||\
+	TOKEN_TYPE((x))==TOKEN('>')||\
+	TOKEN_TYPE((x))==TOKEN_LEEQ||\
+	TOKEN_TYPE((x))==TOKEN_LAEQ||\
+	TOKEN_TYPE((x))==TOKEN_LSHFT||\
+	TOKEN_TYPE((x))==TOKEN_RSHFT||\
+	TOKEN_TYPE((x))==TOKEN('+')||\
+	TOKEN_TYPE((x))==TOKEN('-')||\
+	TOKEN_TYPE((x))==TOKEN('*')||\
+	TOKEN_TYPE((x))==TOKEN('/')||\
+	TOKEN_TYPE((x))==TOKEN('%'))
+
+#define TOKEN_IS_ASSIGN(x) (TOKEN_TYPE((x))==TOKEN('=')||\
+	TOKEN_TYPE((x))==TOKEN_IPMUL||\
+	TOKEN_TYPE((x))==TOKEN_IPDIV||\
+	TOKEN_TYPE((x))==TOKEN_IPMOD||\
+	TOKEN_TYPE((x))==TOKEN_IPADD||\
+	TOKEN_TYPE((x))==TOKEN_IPSUB||\
+	TOKEN_TYPE((x))==TOKEN_IPLS||\
+	TOKEN_TYPE((x))==TOKEN_IPRS||\
+	TOKEN_TYPE((x))==TOKEN_IPAND||\
+	TOKEN_TYPE((x))==TOKEN_IPXOR||\
+	TOKEN_TYPE((x))==TOKEN_IPOR)
 
 /* Reserved single-char tokens stand for themselves, such as '+', '^', '?'.
  * Those are not listed here. */
@@ -53,6 +102,14 @@ typedef enum token_type_e
 	TOKEN_CHAR, /* Type-specifier: char. */
 	TOKEN_INT, /* Type-specifier: int. */
 	TOKEN_LONG, /* Type-specifier: long. */
+	TOKEN_INT8, /* Type-specifier: int8. */
+	TOKEN_UINT8, /* Type-specifier: uint8. */
+	TOKEN_INT16, /* Type-specifier: int16. */
+	TOKEN_UINT16, /* Type-specifier: uint16. */
+	TOKEN_INT32, /* Type-specifier: int32. */
+	TOKEN_UINT32, /* Type-specifier: uint32. */
+	TOKEN_INT64, /* Type-specifier: int64. */
+	TOKEN_UINT64, /* Type-specifier: uint64. */
 	TOKEN_FLOAT, /* Type-specifier: float. */
 	TOKEN_DOUBLE, /* Type-specifier: double. */
 	TOKEN_STR, /* Type-specifier: str. */
@@ -143,6 +200,9 @@ lex_token_free (token_t *token);
 
 token_t *
 lex_next (reader_t *reader);
+
+object_type_t
+lex_get_token_object_type (token_t *token);
 
 void
 lex_init ();

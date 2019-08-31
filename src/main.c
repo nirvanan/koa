@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/home/likehui/test.k");
+		code_t *code = parser_load_file ("/Users/bytedance/test.k");
 		if (code) {
 			//code_print (code);
 			//object_t *str = code_binary (code);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		interpreter_execute ("/home/likehui/test.k");
+		interpreter_execute ("/Users/bytedance/test.k");
 	}
 
 	return 0;

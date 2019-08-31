@@ -56,6 +56,14 @@ static reserved_word_t g_reserved_list[] =
 	{"char", TOKEN_CHAR},
 	{"int", TOKEN_INT},
 	{"long", TOKEN_LONG},
+	{"int8", TOKEN_INT8},
+	{"uint8", TOKEN_UINT8},
+	{"int16", TOKEN_INT16},
+	{"uint16", TOKEN_UINT16},
+	{"int32", TOKEN_INT32},
+	{"uint32", TOKEN_UINT32},
+	{"int64", TOKEN_INT64},
+	{"uint64", TOKEN_UINT64},
 	{"float", TOKEN_FLOAT},
 	{"double", TOKEN_DOUBLE},
 	{"str", TOKEN_STR},
@@ -80,6 +88,36 @@ static reserved_word_t g_reserved_list[] =
 
 static object_t *g_reserved_tokens;
 
+typedef struct token_object_type_s
+{
+	token_type_t token_type;
+	object_type_t object_type;
+} token_object_type_t;
+
+static token_object_type_t g_object_token_list[] =
+{
+	{TOKEN_VOID, OBJECT_TYPE_VOID},
+	{TOKEN_NULL, OBJECT_TYPE_NULL},
+	{TOKEN_BOOL, OBJECT_TYPE_BOOL},
+	{TOKEN_CHAR, OBJECT_TYPE_CHAR},
+	{TOKEN_INT, OBJECT_TYPE_INT},
+	{TOKEN_LONG, OBJECT_TYPE_LONG},
+	{TOKEN_INT8, OBJECT_TYPE_INT8},
+	{TOKEN_UINT8, OBJECT_TYPE_UINT8},
+	{TOKEN_INT16, OBJECT_TYPE_INT16},
+	{TOKEN_UINT16, OBJECT_TYPE_UINT16},
+	{TOKEN_INT32, OBJECT_TYPE_INT32},
+	{TOKEN_UINT32, OBJECT_TYPE_UINT32},
+	{TOKEN_INT64, OBJECT_TYPE_INT64},
+	{TOKEN_UINT64, OBJECT_TYPE_UINT64},
+	{TOKEN_FLOAT, OBJECT_TYPE_FLOAT},
+	{TOKEN_DOUBLE, OBJECT_TYPE_DOUBLE},
+	{TOKEN_STR, OBJECT_TYPE_STR},
+	{TOKEN_VEC, OBJECT_TYPE_VEC},
+	{TOKEN_DICT, OBJECT_TYPE_DICT},
+	{TOKEN_FUNC, OBJECT_TYPE_FUNC},
+	{TOKEN_UNKNOWN, OBJECT_TYPE_ERR}
+}
 static void
 lex_clear_loaded_buf (reader_t *reader)
 {
@@ -880,6 +918,26 @@ lex_next (reader_t *reader)
 	}
 
 	return token;
+}
+
+object_type_t
+lex_get_token_object_type (token_t *token)
+{
+	token_object_type_t *c;
+
+	if (!TOKEN_IS_TYPE (token)) {
+		return OBJECT_TYPE_ERR;
+	}
+
+	c = &g_object_token_list[0];
+	while (c->token_type != TOKEN_UNKNOWN) {
+		if (c->token_type == TOKEN_TYPE (token)) {
+			return c->object_type;
+		}
+		c++;
+	}
+
+	return OBJECT_TYPE_ERR;
 }
 
 void

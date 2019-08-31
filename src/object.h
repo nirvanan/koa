@@ -36,7 +36,15 @@
 #define INTEGER_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL||\
 	(x)->head.type==OBJECT_TYPE_CHAR||\
 	(x)->head.type==OBJECT_TYPE_INT||\
-	(x)->head.type==OBJECT_TYPE_LONG)
+	(x)->head.type==OBJECT_TYPE_LONG||\
+	(x)->head.type==OBJECT_TYPE_INT8||\
+	(x)->head.type==OBJECT_TYPE_UINT8||\
+	(x)->head.type==OBJECT_TYPE_INT16||\
+	(x)->head.type==OBJECT_TYPE_UINT16||\
+	(x)->head.type==OBJECT_TYPE_INT32||\
+	(x)->head.type==OBJECT_TYPE_UINT32||\
+	(x)->head.type==OBJECT_TYPE_INT64||\
+	(x)->head.type==OBJECT_TYPE_UINT64)
 
 #define FLOATING_TYPE(x) ((x)->head.type==OBJECT_TYPE_FLOAT||\
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
@@ -45,6 +53,14 @@
 	(x)->head.type==OBJECT_TYPE_CHAR||\
 	(x)->head.type==OBJECT_TYPE_INT||\
 	(x)->head.type==OBJECT_TYPE_LONG||\
+	(x)->head.type==OBJECT_TYPE_INT8||\
+	(x)->head.type==OBJECT_TYPE_UINT8||\
+	(x)->head.type==OBJECT_TYPE_INT16||\
+	(x)->head.type==OBJECT_TYPE_UINT16||\
+	(x)->head.type==OBJECT_TYPE_INT32||\
+	(x)->head.type==OBJECT_TYPE_UINT32||\
+	(x)->head.type==OBJECT_TYPE_INT64||\
+	(x)->head.type==OBJECT_TYPE_UINT64||\
 	(x)->head.type==OBJECT_TYPE_FLOAT||\
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
@@ -82,6 +98,14 @@
 #define OBJECT_IS_CHAR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_CHAR)
 #define OBJECT_IS_INT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT)
 #define OBJECT_IS_LONG(x) (OBJECT_TYPE((x))==OBJECT_TYPE_LONG)
+#define OBJECT_IS_INT8(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT8)
+#define OBJECT_IS_UINT8(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UINT8)
+#define OBJECT_IS_INT16(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT16)
+#define OBJECT_IS_UINT16(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UINT16)
+#define OBJECT_IS_INT32(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT)
+#define OBJECT_IS_UINT32(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UINT32)
+#define OBJECT_IS_INT64(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT64)
+#define OBJECT_IS_UINT64(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UINT64)
 #define OBJECT_IS_FLOAT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FLOAT)
 #define OBJECT_IS_DOUBLE(x) (OBJECT_TYPE((x))==OBJECT_TYPE_DOUBLE)
 #define OBJECT_IS_STR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_STR)
@@ -99,14 +123,22 @@ typedef enum object_type_e
 	OBJECT_TYPE_CHAR = 0x03,
 	OBJECT_TYPE_INT = 0x04,
 	OBJECT_TYPE_LONG = 0x05,
-	OBJECT_TYPE_FLOAT = 0x06,
-	OBJECT_TYPE_DOUBLE = 0x07,
-	OBJECT_TYPE_STR = 0x08,
-	OBJECT_TYPE_VEC = 0x09,
-	OBJECT_TYPE_DICT = 0x0a,
-	OBJECT_TYPE_FUNC = 0x0b,
-	OBJECT_TYPE_MOD = 0x0c,
-	OBJECT_TYPE_FRAME = 0x0d,
+	OBJECT_TYPE_INT8 = 0x04,
+	OBJECT_TYPE_UINT8 = 0x05,
+	OBJECT_TYPE_INT16 = 0x06,
+	OBJECT_TYPE_UINT16 = 0x07,
+	OBJECT_TYPE_INT32 = 0x08,
+	OBJECT_TYPE_UINT32 = 0x09,
+	OBJECT_TYPE_INT64 = 0x0a,
+	OBJECT_TYPE_UINT64 = 0x0b,
+	OBJECT_TYPE_FLOAT = 0x0c,
+	OBJECT_TYPE_DOUBLE = 0x0d,
+	OBJECT_TYPE_STR = 0x0e,
+	OBJECT_TYPE_VEC = 0x10,
+	OBJECT_TYPE_DICT = 0x11,
+	OBJECT_TYPE_FUNC = 0x12,
+	OBJECT_TYPE_MOD = 0x13,
+	OBJECT_TYPE_FRAME = 0x14,
 } object_type_t;
 
 typedef struct object_head_s

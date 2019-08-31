@@ -43,51 +43,6 @@
 
 #define TOP_LEVEL_TAG "#"
 
-#define TOKEN_IS_TYPE(x) (TOKEN_TYPE((x))==TOKEN_VOID||\
-	TOKEN_TYPE((x))==TOKEN_NULL||\
-	TOKEN_TYPE((x))==TOKEN_BOOL||\
-	TOKEN_TYPE((x))==TOKEN_CHAR||\
-	TOKEN_TYPE((x))==TOKEN_INT||\
-	TOKEN_TYPE((x))==TOKEN_LONG||\
-	TOKEN_TYPE((x))==TOKEN_FLOAT||\
-	TOKEN_TYPE((x))==TOKEN_DOUBLE||\
-	TOKEN_TYPE((x))==TOKEN_STR||\
-	TOKEN_TYPE((x))==TOKEN_VEC||\
-	TOKEN_TYPE((x))==TOKEN_DICT||\
-	TOKEN_TYPE((x))==TOKEN_FUNC)
-
-#define TOKEN_IS_CON(x) (TOKEN_TYPE((x))==TOKEN('?')||\
-	TOKEN_TYPE((x))==TOKEN_LOR||\
-	TOKEN_TYPE((x))==TOKEN_LAND||\
-	TOKEN_TYPE((x))==TOKEN('|')||\
-	TOKEN_TYPE((x))==TOKEN('^')||\
-	TOKEN_TYPE((x))==TOKEN('&')||\
-	TOKEN_TYPE((x))==TOKEN_EQ||\
-	TOKEN_TYPE((x))==TOKEN_NEQ||\
-	TOKEN_TYPE((x))==TOKEN('<')||\
-	TOKEN_TYPE((x))==TOKEN('>')||\
-	TOKEN_TYPE((x))==TOKEN_LEEQ||\
-	TOKEN_TYPE((x))==TOKEN_LAEQ||\
-	TOKEN_TYPE((x))==TOKEN_LSHFT||\
-	TOKEN_TYPE((x))==TOKEN_RSHFT||\
-	TOKEN_TYPE((x))==TOKEN('+')||\
-	TOKEN_TYPE((x))==TOKEN('-')||\
-	TOKEN_TYPE((x))==TOKEN('*')||\
-	TOKEN_TYPE((x))==TOKEN('/')||\
-	TOKEN_TYPE((x))==TOKEN('%'))
-
-#define TOKEN_IS_ASSIGN(x) (TOKEN_TYPE((x))==TOKEN('=')||\
-	TOKEN_TYPE((x))==TOKEN_IPMUL||\
-	TOKEN_TYPE((x))==TOKEN_IPDIV||\
-	TOKEN_TYPE((x))==TOKEN_IPMOD||\
-	TOKEN_TYPE((x))==TOKEN_IPADD||\
-	TOKEN_TYPE((x))==TOKEN_IPSUB||\
-	TOKEN_TYPE((x))==TOKEN_IPLS||\
-	TOKEN_TYPE((x))==TOKEN_IPRS||\
-	TOKEN_TYPE((x))==TOKEN_IPAND||\
-	TOKEN_TYPE((x))==TOKEN_IPXOR||\
-	TOKEN_TYPE((x))==TOKEN_IPOR)
-
 typedef struct parser_s
 {
 	reader_t *reader; /* Token stream source. */
@@ -233,36 +188,7 @@ parser_token_object_type (parser_t *parser)
 		return OBJECT_TYPE_ERR;
 	}
 
-	switch (TOKEN_TYPE (parser->token)) {
-		case TOKEN_VOID:
-			return OBJECT_TYPE_VOID;
-		case TOKEN_NULL:
-			return OBJECT_TYPE_NULL;
-		case TOKEN_BOOL:
-			return OBJECT_TYPE_BOOL;
-		case TOKEN_CHAR:
-			return OBJECT_TYPE_CHAR;
-		case TOKEN_INT:
-			return OBJECT_TYPE_INT;
-		case TOKEN_LONG:
-			return OBJECT_TYPE_LONG;
-		case TOKEN_FLOAT:
-			return OBJECT_TYPE_FLOAT;
-		case TOKEN_DOUBLE:
-			return OBJECT_TYPE_DOUBLE;
-		case TOKEN_STR:
-			return OBJECT_TYPE_STR;
-		case TOKEN_VEC:
-			return OBJECT_TYPE_VEC;
-		case TOKEN_DICT:
-			return OBJECT_TYPE_DICT;
-		case TOKEN_FUNC:
-			return OBJECT_TYPE_FUNC;
-		default:
-			break;
-	}
-
-	return OBJECT_TYPE_ERR;
+	return lex_get_token_object_type (parser->token);
 }
 
 static int

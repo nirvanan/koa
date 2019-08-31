@@ -1010,11 +1010,7 @@ object_t *
 object_hash (object_t *obj)
 {
 	una_op_f hash_fun;
-	object_t *digest;
 
-	if (OBJECT_DIGEST (obj)) {
-		return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
-	}
 	hash_fun = (OBJECT_OPSET (obj))->hash;
 	/* At this stage, this is impossible, =_=. */
 	if (hash_fun == NULL) {
@@ -1023,10 +1019,7 @@ object_hash (object_t *obj)
 		return NULL;
 	}
 
-	digest = hash_fun (obj);
-	obj->head.digest = (uint64_t) longobject_get_value (digest);
-
-	return digest;
+	return hash_fun (obj);
 }
 
 /* At this stage, this operation is only used by dumping code.
