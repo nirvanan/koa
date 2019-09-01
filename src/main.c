@@ -51,20 +51,17 @@ int main(int argc, char *argv[])
 		object_t *val = dictobject_new (NULL);
 		object_t *idx = intobject_new (2, NULL);
 		object_t *str = charobject_new ('f', NULL);
-		object_t *dump;
 
 		object_ipindex (val, idx, str);
-		dump = object_dump (val);
-		printf ("%s\n", strobject_get_value(dump)->s);
+		object_print (val);
 		object_free (val);
-		object_free (dump);
 		c++;
 		if (c % 600000 == 0)
 			printf ("%d\n", c);
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/Users/bytedance/test.k");
+		code_t *code = parser_load_file ("/home/likehui/test.k");
 		if (code) {
 			//code_print (code);
 			//object_t *str = code_binary (code);
@@ -81,8 +78,10 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	while (1) {
-		interpreter_execute ("/Users/bytedance/test.k");
+	int e = -5;
+	while (e--) {
+		interpreter_execute ("/home/likehui/test.k");
+		break;
 	}
 
 	return 0;

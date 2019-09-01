@@ -440,6 +440,7 @@ strobject_str_new (str_t *val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+	OBJECT_DIGEST_FUN (obj) = strobject_digest_fun;
 
 	obj->val = val;
 

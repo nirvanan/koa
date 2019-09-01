@@ -18,6 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdarg.h>
+#include <string.h>
+
 #include "interpreter.h"
 #include "stack.h"
 #include "frame.h"
@@ -27,11 +30,28 @@
 #include "intobject.h"
 #include "vecobject.h"
 #include "funcobject.h"
+#include "exceptionobject.h"
 #include "error.h"
 
-static frame_t *g_current;
+#define EXCEPTION_MAX_LENGTH 1023
 
+static char g_exception_buf[EXCEPTION_MAX_LENGTH + 1];
+static frame_t *g_current;
 static stack_t *g_s;
+static int g_runtime_started;
+
+static void
+interpreter_stack_rollback ()
+{
+	sp_t bottom;
+	object_t *obj;
+
+	bottom = frame_buttom (g_current);
+	while (stack_sp (g_s) > bottom + 1) {
+		obj = (object_t *) stack_pop (g_s);
+		object_free (obj);
+	}
+}
 
 static int
 interpreter_play (code_t *code, int global)
@@ -255,6 +275,11 @@ interpreter_play (code_t *code, int global)
 				}
 			}
 			if (!interpreter_play (funcobject_get_value (a), 0)) {
+				interpreter_stack_rollback ();
+				g_current = frame_free (g_current);
+				/* Now the top object of stack must be an exception. */
+				stack_set (g_s, frame_bottom (g_current), stack_pop(g_s));
+
 				return 0;
 			}
 			break;
@@ -996,9 +1021,11 @@ interpreter_play (code_t *code, int global)
 			else {
 				r = a;
 			}
+			if (!stack_push (g_s, (void *) r)) {
+				return 0;
+			}
 			g_current = frame_free (g_current);
-			interpreter_print_stack ();
-			return stack_push (g_s, (void *) r);
+			return 1;
 		case OP_PUSH_BLOCKS:
 			for (para_t i = 0; i < para; i++) {
 				if (!frame_enter_block (g_current)) {
@@ -1066,9 +1093,8 @@ interpreter_execute (const char *path)
 		return;
 	}
 
-	if (!interpreter_play (code, 1)) {
-		interpreter_traceback ();
-	}
+	g_runtime_started = 1;
+	UNUSED (interpreter_play (code, 1));
 
 	while (g_current) {
 		g_current = frame_free (g_current);
@@ -1082,6 +1108,7 @@ void
 interpreter_traceback ()
 {
 	if (g_current != NULL) {
+		printf ("Traceback:\n");
 		frame_traceback (g_current);
 	}
 }
@@ -1098,6 +1125,45 @@ interpreter_print_stack ()
 {
 	stack_foreach (g_s, interpreter_stack_print_fun);
 }
+
+int
+interpreter_started ()
+{
+	return g_runtime_started;
+}
+
+void
+interpreter_set_exception (const char *exception, ...)
+{
+	sp_t stack_sp;
+	sp_t bottom;
+	object_t *exception;
+	va_list args;
+
+	va_start (args, error);
+	vsnprintf (g_exception_buf, error, args);
+	va_end (args);
+	
+	exception = exception_new (g_exception_buf, strlen (g_exception_buf), NULL);
+	if (exception == NULL) {
+		fatal_error ("out of memory.");
+	}
+	
+	stack_sp = stack_sp (g_s);
+	bottom = frame_buttom (g_current);
+	if (stack_sp <= frame_buttom (g_current)) {
+		stack_push (g_s, (void () exception);
+	}
+	else {
+		object_t *prev;
+
+		prev = stack_set (g_s, (integer_value_t) bottom, (void *) exception);
+		if (prev != NULL) {
+			object_free (prev);
+		}
+	}
+}
+
 void
 interpreter_init ()
 {

@@ -106,7 +106,7 @@ frame_jump (frame_t *frame, para_t pos)
 void
 frame_traceback (frame_t *frame)
 {
-	printf ("\t%s in %s: line %d\n",
+	printf ("    %s in %s: line %d\n",
 			code_get_name (frame->code),
 			code_get_filename (frame->code),
 			code_get_line (frame->code, frame->esp));
@@ -323,4 +323,10 @@ frame_bind_args (frame_t *frame, object_t *args)
 	}
 
 	return 1;
+}
+
+sp_t
+frame_get_bottom (frame_t *frame)
+{
+	return frame->bottom;
 }

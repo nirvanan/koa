@@ -28,11 +28,15 @@
 void
 fatal_error (const char *error, ...)
 {
+	if (interpreter_started ()) {
+		fprintf (stderr, "fatal runtime error: ");
+	}
 	if (error != NULL) {
 		va_list args;
 
 		va_start (args, error);
 		vfprintf (stderr, error, args);
+		va_end (args);
 		fprintf (stderr, "\n");
 	}
 
@@ -43,11 +47,15 @@ void
 error (const char *error, ...)
 {
 	interpreter_traceback ();
+	if (interpreter_started ()) {
+		fprintf (stderr, "runtime error: ");
+	}
 	if (error != NULL) {
 		va_list args;
 
 		va_start (args, error);
 		vfprintf (stderr, error, args);
+		va_end (args);
 		fprintf (stderr, "\n");
 	}
 }
@@ -60,6 +68,7 @@ warning (const char *error, ...)
 
 		va_start (args, error);
 		vfprintf (stderr, error, args);
+		va_end (args);
 		fprintf (stderr, "\n");
 	}
 }
@@ -72,6 +81,7 @@ message (const char *error, ...)
 
 		va_start (args, error);
 		vfprintf (stdout, error, args);
+		va_end (args);
 		fprintf (stdout, "\n");
 	}
 }

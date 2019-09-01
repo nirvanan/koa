@@ -77,5 +77,8 @@ frame_get_var (frame_t *frame, object_t *name);
 int
 frame_bind_args (frame_t *frame, object_t *args);
 
+sp_t
+frame_get_bottom (frame_t *frame);
+
 #endif /* FRAME_H */
 

@@ -54,5 +54,11 @@ stack_top (stack_t *stack);
 void
 stack_foreach (stack_t *stack, stack_foreach_f fun);
 
+sp_t
+stack_sp (stack_t *stack);
+
+void *
+stack_set (stack_t *stack, integer_value_t pos, void *data);
+
 #endif /* STACK_H */
 

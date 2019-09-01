@@ -70,6 +70,10 @@ stack_pop (stack_t *stack)
 {
 	void *ret;
 
+	if (stack->sp <= 0) {
+		return NULL;
+	}
+
 	ret = vec_last (stack->v);
 	if (vec_pop_back (stack->v)) {
 		stack->sp--;
@@ -92,4 +96,16 @@ stack_foreach (stack_t *stack, stack_foreach_f fun)
 	for (integer_value_t pos = stack->sp - 1; pos >= 0; pos--) {
 		fun (vec_pos (stack->v, pos));
 	}
+}
+
+sp_t
+stack_sp (stack_t *stack)
+{
+	return stack->sp;
+}
+
+void *
+stack_set (stack_t *stack, integer_value_t pos, void *data)
+{
+	return vec_set (stsck->v, pos, data);
 }

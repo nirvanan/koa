@@ -109,6 +109,7 @@
 #define OBJECT_IS_DICT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_DICT)
 #define OBJECT_IS_FUNC(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FUNC)
 #define OBJECT_IS_FRAME(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FRAME)
+#define OBJECT_IS_EXCEPTION(x) (OBJECT_TYPE((x))==OBJECT_TYPE_EXCEPTION)
 
 typedef enum object_type_e
 {
@@ -135,6 +136,7 @@ typedef enum object_type_e
 	OBJECT_TYPE_FUNC = 0x13,
 	OBJECT_TYPE_MOD = 0x14,
 	OBJECT_TYPE_FRAME = 0x15,
+	OBJECT_TYPE_EXCEPTION = 0x16,
 } object_type_t;
 
 typedef uint64_t (*digest_f) (void *obj);

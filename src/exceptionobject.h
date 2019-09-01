@@ -1,5 +1,5 @@
 /*
- * interpreter.h
+ * exceptionobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,27 +18,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef INTERPRETER_H
-#define INTERPRETER_H
+#ifndef EXCEPTIONOBJECT_H
+#define EXCEPTIONOBJECT_H
 
 #include "koa.h"
+#include "object.h"
+#include "str.h"
+
+typedef struct exceptionobject_s
+{
+	object_head_t head;
+	str_t *val;
+} exceptionobject_t;
+
+object_t *
+exceptionobject_load_binary (FILE *f);
+
+object_t *
+exceptionobject_new (const char *val, size_t len, void *udata);
+
+object_t *
+exceptionobject_str_new (str_t *val, void *udata);
+
+str_t *
+exceptionobject_get_value (object_t *obj);
+
+uint64_t
+exceptionobject_get_hash (object_t *obj);
 
 void
-interpreter_execute (const char *path);
+exceptionobject_init ();
 
-void
-interpreter_traceback ();
-
-void
-interpreter_print_stack ();
-
-int
-interpreter_started ();
-
-void
-interpreter_set_exception ();
-
-void
-interpreter_init ();
-
-#endif /* INTERPRETER_H */
+#endif /* EXCEPTIONOBJECT_H */

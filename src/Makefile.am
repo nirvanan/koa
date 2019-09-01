@@ -14,6 +14,8 @@ dictobject.c \
 dictobject.h \
 doubleobject.c \
 doubleobject.h \
+exceptionobject.c \
+exceptionobject.h \
 floatobject.c \
 floatobject.h \
 frame.c \
