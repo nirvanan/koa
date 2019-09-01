@@ -117,7 +117,8 @@ static token_object_type_t g_object_token_list[] =
 	{TOKEN_DICT, OBJECT_TYPE_DICT},
 	{TOKEN_FUNC, OBJECT_TYPE_FUNC},
 	{TOKEN_UNKNOWN, OBJECT_TYPE_ERR}
-}
+};
+
 static void
 lex_clear_loaded_buf (reader_t *reader)
 {

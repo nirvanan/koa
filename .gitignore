@@ -5,6 +5,9 @@ config.status
 src/.deps
 src/Makefile
 src/*.o
+src/#
+src/am--include-marker
 src/koa
 stamp-h1
 tags
+autom4te.cache/

@@ -25,6 +25,7 @@
 #include "pool.h"
 #include "error.h"
 #include "boolobject.h"
+#include "intobject.h"
 #include "longobject.h"
 #include "strobject.h"
 
@@ -93,7 +94,7 @@ uint64object_op_dump (object_t *obj)
 {
 	char buf[DUMP_BUF_SIZE];
 
-	snprintf (buf, DUMP_BUF_SIZE, "<uint64 %d>", uint64object_get_value (obj));
+	snprintf (buf, DUMP_BUF_SIZE, "<uint64 %llu>", uint64object_get_value (obj));
 
 	return strobject_new (buf, strlen (buf), 1, NULL);
 }

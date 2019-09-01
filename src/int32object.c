@@ -25,6 +25,7 @@
 #include "pool.h"
 #include "error.h"
 #include "boolobject.h"
+#include "intobject.h"
 #include "longobject.h"
 #include "strobject.h"
 
