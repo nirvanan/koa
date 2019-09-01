@@ -26,7 +26,7 @@
 #include "error.h"
 #include "str.h"
 #include "intobject.h"
-#include "longobject.h"
+#include "uint64object.h"
 #include "strobject.h"
 
 /* Note that the 'true' and 'false' objects are shared everywhere. */
@@ -155,7 +155,7 @@ boolobject_op_hash(object_t *obj)
 	}
 
 	/* The digest is already computed. */
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */

@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
 	int e = -5;
 	while (e--) {
 		interpreter_execute ("/home/likehui/test.k");
-		break;
 	}
 
 	return 0;

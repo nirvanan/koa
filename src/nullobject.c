@@ -25,7 +25,7 @@
 #include "pool.h"
 #include "error.h"
 #include "boolobject.h"
-#include "longobject.h"
+#include "uint64object.h"
 #include "strobject.h"
 
 /* Note that the 'null' object is shared everywhere. */
@@ -101,7 +101,7 @@ static object_t *
 nullobject_op_hash (object_t *obj)
 {
 	/* The digest is already computed. */
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */

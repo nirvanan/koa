@@ -28,7 +28,7 @@
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
-#include "longobject.h"
+#include "uint64object.h"
 
 #define HASED(x) (((strobject_t*)(x))->hashed)
 
@@ -301,7 +301,7 @@ strobject_op_hash(object_t *obj)
 												g_internal_hash_seed);
 	}
 
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */

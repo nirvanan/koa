@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * adouble with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -26,7 +26,7 @@
 #include "error.h"
 #include "boolobject.h"
 #include "intobject.h"
-#include "longobject.h"
+#include "uint64object.h"
 #include "strobject.h"
 
 #define DUMP_BUF_SIZE 1400
@@ -221,7 +221,7 @@ doubleobject_op_hash(object_t *obj)
 		OBJECT_DIGEST (obj) = object_floating_hash (object_get_floating (obj));
 	}
 
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */

@@ -28,7 +28,7 @@
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
-#include "longobject.h"
+#include "uint64object.h"
 
 #define DUMP_HEAD_LENGTH 12
 #define DUMP_TAIL_LENGTH 2
@@ -124,7 +124,7 @@ exceptionobject_op_hash(object_t *obj)
 		OBJECT_DIGEST (obj) = object_address_hash ((void *) obj);
 	}
 
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */

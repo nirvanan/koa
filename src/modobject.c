@@ -26,7 +26,7 @@
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
-#include "longobject.h"
+#include "uint64object.h"
 #include "strobject.h"
 
 #define DUMP_BUF_EXTRA 8
@@ -125,7 +125,7 @@ modobject_op_hash(object_t *obj)
 		OBJECT_DIGEST (obj) = object_address_hash ((void *) obj);
 	}
 
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */

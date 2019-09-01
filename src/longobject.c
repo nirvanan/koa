@@ -26,6 +26,7 @@
 #include "error.h"
 #include "boolobject.h"
 #include "intobject.h"
+#include "uint64object.h"
 #include "strobject.h"
 
 #define DUMP_BUF_SIZE 28
@@ -327,7 +328,7 @@ longobject_op_hash(object_t *obj)
 		OBJECT_DIGEST (obj) = object_integer_hash (object_get_integer (obj));
 	}
 
-	return longobject_new ((long) OBJECT_DIGEST (obj), NULL);
+	return uint64object_new (OBJECT_DIGEST (obj), NULL);
 }
 
 /* Binary. */
