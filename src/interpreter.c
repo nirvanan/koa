@@ -997,6 +997,7 @@ interpreter_play (code_t *code, int global)
 				r = a;
 			}
 			g_current = frame_free (g_current);
+			interpreter_print_stack ();
 			return stack_push (g_s, (void *) r);
 		case OP_PUSH_BLOCKS:
 			for (para_t i = 0; i < para; i++) {
@@ -1073,6 +1074,7 @@ interpreter_execute (const char *path)
 		g_current = frame_free (g_current);
 	}
 
+	UNUSED (stack_pop (g_s));
 	code_free (code);
 }
 
@@ -1084,6 +1086,18 @@ interpreter_traceback ()
 	}
 }
 
+static void
+interpreter_stack_print_fun (void *data)
+{
+	object_print ((object_t *) data);
+}
+
+
+void
+interpreter_print_stack ()
+{
+	stack_foreach (g_s, interpreter_stack_print_fun);
+}
 void
 interpreter_init ()
 {

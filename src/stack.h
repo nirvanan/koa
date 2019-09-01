@@ -34,6 +34,8 @@ typedef struct stack_s
 	sp_t sp;
 } stack_t;
 
+typedef void (*stack_foreach_f) (void *data);
+
 stack_t *
 stack_new ();
 
@@ -48,6 +50,9 @@ stack_pop (stack_t *stack);
 
 void *
 stack_top (stack_t *stack);
+
+void
+stack_foreach (stack_t *stack, stack_foreach_f fun);
 
 #endif /* STACK_H */
 

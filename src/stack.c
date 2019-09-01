@@ -85,3 +85,11 @@ stack_top (stack_t *stack)
 {
 	return vec_last (stack->v);
 }
+
+void
+stack_foreach (stack_t *stack, stack_foreach_f fun)
+{
+	for (integer_value_t pos = stack->sp - 1; pos >= 0; pos--) {
+		fun (vec_pos (stack->v, pos));
+	}
+}

@@ -30,6 +30,9 @@ void
 interpreter_traceback ();
 
 void
+interpreter_print_stack ();
+
+void
 interpreter_init ();
 
 #endif /* INTERPRETER_H */
