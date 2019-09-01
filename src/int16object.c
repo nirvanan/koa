@@ -33,6 +33,7 @@
 
 /* Object ops. */
 static object_t *int16object_op_lnot (object_t *obj);
+static void int16object_op_print (object_t *obj);
 static object_t *int16object_op_dump (object_t *obj);
 static object_t *int16object_op_neg (object_t *obj);
 static object_t *int16object_op_add (object_t *obj1, object_t *obj2);
@@ -57,6 +58,7 @@ static object_opset_t g_object_ops =
 {
 	int16object_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	int16object_op_print, /* Print. */
 	int16object_op_dump, /* Dump. */
 	int16object_op_neg, /* Negative. */
 	NULL, /* Call. */
@@ -88,13 +90,20 @@ int16object_op_lnot (object_t *obj)
 	return boolobject_new (!int16object_get_value (obj), NULL);
 }
 
+/* Print. */
+static void
+int16object_op_print (object_t *obj)
+{
+	printf ("%" PRId16, int16object_get_value (obj));
+}
+
 /* Dump. */
 static object_t *
 int16object_op_dump (object_t *obj)
 {
 	char buf[DUMP_BUF_SIZE];
 
-	snprintf (buf, DUMP_BUF_SIZE, "<int16 %d>", int16object_get_value (obj));
+	snprintf (buf, DUMP_BUF_SIZE, "<int16 %" PRId16 ">", int16object_get_value (obj));
 
 	return strobject_new (buf, strlen (buf), 1, NULL);
 }

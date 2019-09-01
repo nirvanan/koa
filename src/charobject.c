@@ -46,6 +46,7 @@ static object_t *g_char_cache[CHAR_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *charobject_op_lnot (object_t *obj);
+static void charobject_op_print (object_t *obj);
 static object_t *charobject_op_dump (object_t *obj);
 static object_t *charobject_op_land (object_t *obj1, object_t *obj2);
 static object_t *charobject_op_lor (object_t *obj1, object_t *obj2);
@@ -58,6 +59,7 @@ static object_opset_t g_object_ops =
 {
 	charobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	charobject_op_print, /* Print. */
 	charobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -87,6 +89,13 @@ static object_t *
 charobject_op_lnot (object_t *obj)
 {
 	return boolobject_new (!charobject_get_value (obj), NULL);
+}
+
+/* Print. */
+static void
+charobject_op_print (object_t *obj)
+{
+	printf ("%c", charobject_get_value (obj));
 }
 
 /* Dump. */

@@ -33,6 +33,7 @@
 
 /* Object ops. */
 static void modobject_op_free (object_t *obj);
+static void modobject_op_print (object_t *obj);
 static object_t *modobject_op_dump (object_t *obj);
 static object_t *modobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *modobject_op_hash (object_t *obj);
@@ -42,6 +43,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	modobject_op_free, /* Free. */
+	modobject_op_print, /* Print. */
 	modobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -71,6 +73,16 @@ void
 modobject_op_free (object_t *obj)
 {
 	code_free (modobject_get_value (obj));
+}
+
+/* Print. */
+static void
+modobject_op_print (object_t *obj)
+{
+	const char *filename;
+
+	filename = code_get_filename (modobject_get_value (obj));
+	printf ("<%s>", filename);
 }
 
 /* Dump. */

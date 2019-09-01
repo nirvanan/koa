@@ -1258,17 +1258,22 @@ object_load_binary (FILE *f)
 void
 object_print (object_t *obj)
 {
-	object_t *dump;
+	void_una_op_f print_fun;
 
-	if (obj == NULL) {
+	print_fun = (OBJECT_OPSET (obj))->print;
+	if (print_fun == NULL) {
+		if (OBJECT_IS_DUMMY (obj)) {
+			printf ("dummy");
+
+			return;
+		}
+
+		error ("%s has no print routine.", TYPE_NAME (obj));
+
 		return;
-	}
+	}	
 
-	dump = object_dump (obj);
-	if (dump != NULL) {
-		printf ("%s\n", strobject_c_str (dump));
-		object_free (dump);
-	}
+	print_fun (obj);
 }
 
 void

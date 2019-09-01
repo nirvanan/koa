@@ -29,6 +29,7 @@
 
 /* Object ops. */
 static void vecobject_op_free (object_t *obj);
+static void vecobject_op_print (object_t *obj);
 static object_t *vecobject_op_dump (object_t *obj);
 static object_t *vecobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *vecobject_op_eq (object_t *obj1, object_t *obj2);
@@ -46,6 +47,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	vecobject_op_free, /* Free. */
+	vecobject_op_print, /* Print. */
 	vecobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -85,6 +87,27 @@ vecobject_op_free (object_t *obj)
 	}
 
 	vec_free (vec);
+}
+
+/* Print. */
+static void
+vecobject_op_print (object_t *obj)
+{
+	object_t *element;
+	vec_t *vec;
+	size_t size;
+
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+	printf ("[");
+	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+		element = (object_t *) vec_pos (vec, i);
+		object_print (element);
+		if (i != (integer_value_t) size - 1) {
+			printf (",");
+		}
+	}
+	printf ("[");
 }
 
 static object_t *

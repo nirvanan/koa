@@ -52,6 +52,7 @@ static str_t *g_dump_tail;
 
 /* Object ops. */
 static void strobject_op_free (object_t *obj);
+static void strobject_op_print (object_t *obj);
 static object_t *strobject_op_dump (object_t *obj);
 static object_t *strobject_op_add (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_eq (object_t *obj1, object_t *obj2);
@@ -64,6 +65,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	strobject_op_free, /* Free. */
+	strobject_op_print, /* Print. */
 	strobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -97,6 +99,20 @@ strobject_op_free (object_t *obj)
 		hash_fast_remove (g_internal_hash, HASH_HANDLE (obj));
 	}
 	str_free (strobject_get_value (obj));
+}
+
+/* Print. */
+static void
+strobject_op_print (object_t *obj)
+{
+	str_t *str;
+	size_t len;
+
+	str = strobject_get_value (obj);
+	len = str_len (str);
+	for (size_t i = 0; i < len; i++) {
+		printf ("%c", str_pos (str, (integer_value_t) i));
+	}
 }
 
 /* Dump. */

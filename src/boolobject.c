@@ -35,6 +35,7 @@ static object_t *g_false_object;
 
 /* Object ops. */
 static object_t *boolobject_op_lnot (object_t *obj);
+static void boolobject_op_print (object_t *obj);
 static object_t *boolobject_op_dump (object_t *obj);
 static object_t *boolobject_op_land (object_t *obj1, object_t *obj2);
 static object_t *boolobject_op_lor (object_t *obj1, object_t *obj2);
@@ -47,6 +48,7 @@ static object_opset_t g_object_ops =
 {
 	boolobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	boolobject_op_print, /* Print. */
 	boolobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -70,6 +72,13 @@ static object_opset_t g_object_ops =
 	boolobject_op_hash, /* Hash. */
 	boolobject_op_binary /* Binary. */
 };
+
+/* Print. */
+static void
+boolobject_op_print (object_t *obj)
+{
+	printf ("%s", boolobject_get_value (obj)? "true": "false");
+}
 
 /* Dump. */
 static object_t *

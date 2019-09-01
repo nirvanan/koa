@@ -166,6 +166,7 @@ typedef struct object_opset_s
 {
 	una_op_f lnot;
 	void_una_op_f free;
+	void_una_op_f print;
 	una_op_f dump;
 	una_op_f neg;
 	una_op_f call;

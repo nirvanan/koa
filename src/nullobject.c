@@ -32,6 +32,7 @@
 static object_t *g_null_object;
 
 /* Object ops. */
+static void nullobject_op_print (object_t *obj);
 static object_t *nullobject_op_dump (object_t *obj);
 static object_t *nullobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *nullobject_op_hash (object_t *obj);
@@ -41,6 +42,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	NULL, /* Free. */
+	nullobject_op_print, /* Print. */
 	nullobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -80,11 +82,18 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 	return boolobject_new (false, NULL);
 }
 
+/* Print. */
+static void
+nullobject_op_print (object_t *obj)
+{
+	printf ("null");
+}
+
 /* Dump. */
 static object_t *
 nullobject_op_dump (object_t *obj)
 {
-	return strobject_new ("<null null>", strlen ("<null null>"), 1, NULL);
+	return strobject_new ("<null>", strlen ("<null>"), 1, NULL);
 }
 
 /* Hash. */

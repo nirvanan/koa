@@ -33,6 +33,7 @@
 
 /* Object ops. */
 static object_t *uint32object_op_lnot (object_t *obj);
+static void uint32object_op_print (object_t *obj);
 static object_t *uint32object_op_dump (object_t *obj);
 static object_t *uint32object_op_neg (object_t *obj);
 static object_t *uint32object_op_add (object_t *obj1, object_t *obj2);
@@ -57,6 +58,7 @@ static object_opset_t g_object_ops =
 {
 	uint32object_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	uint32object_op_print, /* Print. */
 	uint32object_op_dump, /* Dump. */
 	uint32object_op_neg, /* Negative. */
 	NULL, /* Call. */
@@ -88,13 +90,20 @@ uint32object_op_lnot (object_t *obj)
 	return boolobject_new (!uint32object_get_value (obj), NULL);
 }
 
+/* Print. */
+static void
+uint32object_op_print (object_t *obj)
+{
+	printf ("%" PRIu32, uint32object_get_value (obj));
+}
+
 /* Dump. */
 static object_t *
 uint32object_op_dump (object_t *obj)
 {
 	char buf[DUMP_BUF_SIZE];
 
-	snprintf (buf, DUMP_BUF_SIZE, "<uint32 %d>", uint32object_get_value (obj));
+	snprintf (buf, DUMP_BUF_SIZE, "<uint32 %" PRIu32 ">", uint32object_get_value (obj));
 
 	return strobject_new (buf, strlen (buf), 1, NULL);
 }

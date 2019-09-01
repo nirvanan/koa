@@ -43,6 +43,7 @@ static object_t *g_int_cache[INT_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *intobject_op_lnot (object_t *obj);
+static void intobject_op_print (object_t *obj);
 static object_t *intobject_op_dump (object_t *obj);
 static object_t *intobject_op_neg (object_t *obj);
 static object_t *intobject_op_add (object_t *obj1, object_t *obj2);
@@ -67,6 +68,7 @@ static object_opset_t g_object_ops =
 {
 	intobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	intobject_op_print, /* Print. */
 	intobject_op_dump, /* Dump. */
 	intobject_op_neg, /* Negative. */
 	NULL, /* Call. */
@@ -96,6 +98,13 @@ static object_t *
 intobject_op_lnot (object_t *obj)
 {
 	return boolobject_new (!intobject_get_value (obj), NULL);
+}
+
+/* Print. */
+static void
+intobject_op_print (object_t *obj)
+{
+	printf ("%d", intobject_get_value (obj));
 }
 
 /* Dump. */

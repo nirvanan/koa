@@ -31,6 +31,7 @@
 
 /* Object ops. */
 static void dictobject_op_free (object_t *obj);
+static void dictobject_op_print (object_t *obj);
 static object_t *dictobject_op_dump (object_t *obj);
 static object_t *dictobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *dictobject_op_index (object_t *obj1, object_t *obj2);
@@ -48,6 +49,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	dictobject_op_free, /* Free. */
+	dictobject_op_print, /* Print. */
 	dictobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -100,6 +102,40 @@ dictobject_op_free (object_t *obj)
 
 	vec_free (pairs);
 	dict_free (dict);
+}
+
+/* Print. */
+static void
+dictobject_op_print (object_t *obj)
+{
+	dict_t *dict;
+	vec_t *pairs;
+	size_t size;
+	object_t *key;
+	object_t *value;
+
+	dict = dictobject_get_value (obj);
+	pairs = dict_pairs (dict);
+	if (pairs == NULL) {
+		error ("failed to get dict pairs while printing.");
+
+		return;
+	}
+
+	size = vec_size (pairs);
+	printf ("{");
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, 0));
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, 0));
+		object_print (key);
+		printf (":");
+		object_print (value);
+		if (i != (integer_value_t) size - 1) {
+			printf (",");
+		}
+	}
+	printf ("}");
+	vec_free (pairs);
 }
 
 static object_t *

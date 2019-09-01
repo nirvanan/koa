@@ -33,6 +33,7 @@
 
 /* Object ops. */
 static object_t *doubleobject_op_lnot (object_t *obj);
+static void doubleobject_op_print (object_t *obj);
 static object_t *doubleobject_op_dump (object_t *obj);
 static object_t *doubleobject_op_neg (object_t *obj);
 static object_t *doubleobject_op_add (object_t *obj1, object_t *obj2);
@@ -50,6 +51,7 @@ static object_opset_t g_object_ops =
 {
 	doubleobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	doubleobject_op_print, /* Print. */
 	doubleobject_op_dump, /* Dump. */
 	doubleobject_op_neg, /* Negative. */
 	NULL, /* Call. */
@@ -79,6 +81,13 @@ static object_t *
 doubleobject_op_lnot (object_t *obj)
 {
 	return boolobject_new (!doubleobject_get_value (obj), NULL);
+}
+
+/* Print. */
+static void
+doubleobject_op_print (object_t *obj)
+{
+	printf ("%f", doubleobject_get_value (obj));
 }
 
 /* Dump. */

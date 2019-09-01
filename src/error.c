@@ -23,6 +23,7 @@
 #include <stdarg.h>
 
 #include "error.h"
+#include "interpreter.h"
 
 void
 fatal_error (const char *error, ...)
@@ -41,6 +42,7 @@ fatal_error (const char *error, ...)
 void
 error (const char *error, ...)
 {
+	interpreter_traceback ();
 	if (error != NULL) {
 		va_list args;
 

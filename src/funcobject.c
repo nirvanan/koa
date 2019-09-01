@@ -33,6 +33,7 @@
 
 /* Object ops. */
 static void funcobject_op_free (object_t *obj);
+static void funcobject_op_print (object_t *obj);
 static object_t *funcobject_op_dump (object_t *obj);
 static object_t *funcobject_op_eq (object_t *obj1, object_t *obj2);
 static object_t *funcobject_op_hash (object_t *obj);
@@ -42,6 +43,7 @@ static object_opset_t g_object_ops =
 {
 	NULL, /* Logic Not. */
 	funcobject_op_free, /* Free. */
+	funcobject_op_print, /* Print. */
 	funcobject_op_dump, /* Dump. */
 	NULL, /* Negative. */
 	NULL, /* Call. */
@@ -71,6 +73,18 @@ void
 funcobject_op_free (object_t *obj)
 {
 	code_free (funcobject_get_value (obj));
+}
+
+/* Print. */
+static void
+funcobject_op_print (object_t *obj)
+{
+	const char *filename;
+	const char *name;
+
+	filename = code_get_filename (funcobject_get_value (obj));
+	name = code_get_name (funcobject_get_value (obj));
+	printf ("(%s:%s)", filename, name);
 }
 
 /* Dump. */

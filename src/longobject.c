@@ -43,6 +43,7 @@ static object_t *g_long_cache[LONG_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *longobject_op_lnot (object_t *obj);
+static void longobject_op_print (object_t *obj);
 static object_t *longobject_op_dump (object_t *obj);
 static object_t *longobject_op_neg (object_t *obj);
 static object_t *longobject_op_add (object_t *obj1, object_t *obj2);
@@ -67,6 +68,7 @@ static object_opset_t g_object_ops =
 {
 	longobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	longobject_op_print, /* Print. */
 	longobject_op_dump, /* Dump. */
 	longobject_op_neg, /* Negative. */
 	NULL, /* Call. */
@@ -96,6 +98,13 @@ static object_t *
 longobject_op_lnot (object_t *obj)
 {
 	return boolobject_new (!longobject_get_value (obj), NULL);
+}
+
+/* Print. */
+static void
+longobject_op_print (object_t *obj)
+{
+	printf ("%ld", longobject_get_value (obj));
 }
 
 /* Dump. */

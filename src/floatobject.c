@@ -33,6 +33,7 @@
 
 /* Object ops. */
 static object_t *floatobject_op_lnot (object_t *obj);
+static void floatobject_op_print (object_t *obj);
 static object_t *floatobject_op_dump (object_t *obj);
 static object_t *floatobject_op_neg (object_t *obj);
 static object_t *floatobject_op_add (object_t *obj1, object_t *obj2);
@@ -50,6 +51,7 @@ static object_opset_t g_object_ops =
 {
 	floatobject_op_lnot, /* Logic Not. */
 	NULL, /* Free. */
+	floatobject_op_print, /* Print. */
 	floatobject_op_dump, /* Dump. */
 	floatobject_op_neg, /* Negative. */
 	NULL, /* Call. */
@@ -79,6 +81,13 @@ static object_t *
 floatobject_op_lnot (object_t *obj)
 {
 	return boolobject_new (!floatobject_get_value (obj), NULL);
+}
+
+/* Print. */
+static void
+floatobject_op_print (object_t *obj)
+{
+	printf ("%f", floatobject_get_value (obj));
 }
 
 /* Dump. */
