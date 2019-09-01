@@ -483,7 +483,7 @@ code_print_object_vec (vec_t *vec)
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		obj = (object_t *) vec_pos (vec, i);
 		dump = object_dump (obj);
-		printf ("%ld\t%s\n", i, str_c_str (strobject_get_value (dump)));
+		printf ("%lld\t%s\n", i, str_c_str (strobject_get_value (dump)));
 		object_free (dump);
 	}
 }
@@ -514,7 +514,7 @@ code_print (code_t *code)
 
 		opcode = (opcode_t *) vec_pos (code->opcodes, i);
 		line = (uint32_t *) vec_pos (code->lineinfo, i);
-		printf ("%ld\t%u\t%-16s\t%d\n",
+		printf ("%lld\t%u\t%-16s\t%d\n",
 				i, *line, g_code_names[OPCODE_OP (*opcode)],
 				OPCODE_PARA (*opcode));
 	}

@@ -344,6 +344,17 @@ strobject_load_binary (FILE *f)
 	return obj;
 }
 
+static uint64_t
+strobject_digest_fun (void *obj)
+{
+	str_t *str;
+
+	str = strobject_get_value (obj);
+
+	return strobject_murmur (str_c_str (str), str_len (str),
+							 g_internal_hash_seed);
+}
+
 object_t *
 strobject_new (const char *val, size_t len, int no_hash, void *udata)
 {
@@ -370,6 +381,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+	OBJECT_DIGEST_FUN (obj) = strobject_digest_fun;
 
 	obj->hn = NULL;
 	obj->hashed = 0;

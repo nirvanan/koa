@@ -351,18 +351,10 @@ static uint64_t
 dictobject_hash_fun (void *data)
 {
 	object_t *obj;
-	object_t *digest;
 
 	obj = (object_t *) data;
-	if (OBJECT_DIGEST (obj) > 0) {
-		return OBJECT_DIGEST (obj);
-	}
 
-	digest = object_hash (obj);
-
-	object_free (digest);
-
-	return OBJECT_DIGEST (obj);
+	return object_digest (obj);
 }
 
 static int
@@ -429,6 +421,12 @@ dictobject_load_binary (FILE *f)
 
 }
 
+static uint64_t
+dictobject_digest_fun (void *obj)
+{
+	return object_address_hash (obj);
+}
+
 object_t *
 dictobject_new (void *udata)
 {
@@ -442,6 +440,7 @@ dictobject_new (void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT);
+	OBJECT_DIGEST_FUN (obj) = dictobject_digest_fun;
 
 	obj->val = dict_new (dictobject_hash_fun, dictobject_test_fun);
 	if (obj->val == NULL) {
@@ -466,6 +465,7 @@ dictobject_dict_new (dict_t *val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT);
+	OBJECT_DIGEST_FUN (obj) = dictobject_digest_fun;
 
 	obj->val = val;
 

@@ -65,15 +65,11 @@
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
 #define OBJECT_REF(x) ((x)->head.ref)
-
 #define OBJECT_TYPE(x) ((x)->head.type)
-
 #define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))
-
 #define OBJECT_OPSET_P(x) ((x)->head.ops)
-
 #define OBJECT_DIGEST(x) ((x)->head.digest)
-
+#define OBJECT_DIGEST_FUN(x) ((x)->head.digest_fun)
 #define OBJECT_UDATA(x) ((x)->head.udata)
 
 #define OBJECT_NEW_INIT(x, t) OBJECT_REF ((x)) = 0;\
@@ -123,29 +119,32 @@ typedef enum object_type_e
 	OBJECT_TYPE_CHAR = 0x03,
 	OBJECT_TYPE_INT = 0x04,
 	OBJECT_TYPE_LONG = 0x05,
-	OBJECT_TYPE_INT8 = 0x04,
-	OBJECT_TYPE_UINT8 = 0x05,
-	OBJECT_TYPE_INT16 = 0x06,
-	OBJECT_TYPE_UINT16 = 0x07,
-	OBJECT_TYPE_INT32 = 0x08,
-	OBJECT_TYPE_UINT32 = 0x09,
-	OBJECT_TYPE_INT64 = 0x0a,
-	OBJECT_TYPE_UINT64 = 0x0b,
-	OBJECT_TYPE_FLOAT = 0x0c,
-	OBJECT_TYPE_DOUBLE = 0x0d,
-	OBJECT_TYPE_STR = 0x0e,
-	OBJECT_TYPE_VEC = 0x10,
-	OBJECT_TYPE_DICT = 0x11,
-	OBJECT_TYPE_FUNC = 0x12,
-	OBJECT_TYPE_MOD = 0x13,
-	OBJECT_TYPE_FRAME = 0x14,
+	OBJECT_TYPE_INT8 = 0x06,
+	OBJECT_TYPE_UINT8 = 0x07,
+	OBJECT_TYPE_INT16 = 0x08,
+	OBJECT_TYPE_UINT16 = 0x09,
+	OBJECT_TYPE_INT32 = 0x0a,
+	OBJECT_TYPE_UINT32 = 0x0b,
+	OBJECT_TYPE_INT64 = 0x0c,
+	OBJECT_TYPE_UINT64 = 0x0d,
+	OBJECT_TYPE_FLOAT = 0x0e,
+	OBJECT_TYPE_DOUBLE = 0x0f,
+	OBJECT_TYPE_STR = 0x10,
+	OBJECT_TYPE_VEC = 0x11,
+	OBJECT_TYPE_DICT = 0x12,
+	OBJECT_TYPE_FUNC = 0x13,
+	OBJECT_TYPE_MOD = 0x14,
+	OBJECT_TYPE_FRAME = 0x15,
 } object_type_t;
+
+typedef uint64_t (*digest_f) (void *obj);
 
 typedef struct object_head_s
 {
 	int ref;
 	object_type_t type;
 	uint64_t digest;
+	digest_f digest_fun;
 	void *ops;
 	void *udata;
 } object_head_t;
@@ -289,6 +288,9 @@ object_address_hash (void *val);
 
 object_t *
 object_hash (object_t *obj);
+
+uint64_t
+object_digest (object_t *obj);
 
 object_t *
 object_binary (object_t *obj);

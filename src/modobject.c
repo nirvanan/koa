@@ -136,6 +136,12 @@ modobject_load_binary (FILE *f)
 	return modobject_code_new (code, NULL);
 }
 
+static uint64_t
+modobject_digest_fun (void *obj)
+{
+	return object_address_hash (obj);
+}
+
 /* This is a null mod object, which means it has nothing. */
 object_t *
 modobject_new (void *udata)
@@ -150,6 +156,7 @@ modobject_new (void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
+	OBJECT_DIGEST_FUN (obj) = modobject_digest_fun;
 
 	obj->val = NULL;
 
@@ -169,6 +176,7 @@ modobject_code_new (code_t *val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
+	OBJECT_DIGEST_FUN (obj) = modobject_digest_fun;
 
 	obj->val = val;
 

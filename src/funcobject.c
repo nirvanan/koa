@@ -138,6 +138,12 @@ funcobject_load_binary (FILE *f)
 	return funcobject_code_new (code, NULL);
 }
 
+static uint64_t
+funcobject_digest_fun (void *obj)
+{
+	return object_address_hash (obj);
+}
+
 /* This is a null func object, which means it is not callable. */
 object_t *
 funcobject_new (void *udata)
@@ -152,6 +158,7 @@ funcobject_new (void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
 	obj->val = NULL;
 
@@ -171,6 +178,7 @@ funcobject_code_new (code_t *val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
 	obj->val = val;
 

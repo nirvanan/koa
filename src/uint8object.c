@@ -316,7 +316,7 @@ static object_t *
 uint8object_op_binary (object_t *obj)
 {
 	return strobject_new (BINARY (((uint8object_t *) obj)->val),
-						  sizeof (int), 1, NULL);
+						  sizeof (uint8_t), 1, NULL);
 }
 
 object_t *
@@ -333,6 +333,12 @@ uint8object_load_binary (FILE *f)
 	return uint8object_new (val, NULL);
 }
 
+static uint64_t
+uint8object_digest_fun (void *obj)
+{
+	return object_integer_hash (object_get_integer ((object_t *) obj));
+}
+
 object_t *
 uint8object_new (uint8_t val, void *udata)
 {
@@ -346,6 +352,7 @@ uint8object_new (uint8_t val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_UINT8);
+	OBJECT_DIGEST_FUN (obj) = uint8object_digest_fun;
 
 	obj->val = val;
 

@@ -237,6 +237,12 @@ floatobject_load_binary (FILE *f)
 	return floatobject_new (val, NULL);
 }
 
+static uint64_t
+floatobject_digest_fun (void *obj)
+{
+	return object_floating_hash (object_get_floating ((object_t *) obj));
+}
+
 object_t *
 floatobject_new (float val, void *udata)
 {
@@ -250,6 +256,7 @@ floatobject_new (float val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FLOAT);
+	OBJECT_DIGEST_FUN (obj) = floatobject_digest_fun;
 
 	obj->val = val;
 

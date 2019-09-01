@@ -316,7 +316,7 @@ static object_t *
 uint16object_op_binary (object_t *obj)
 {
 	return strobject_new (BINARY (((uint16object_t *) obj)->val),
-						  sizeof (int), 1, NULL);
+						  sizeof (uint16_t), 1, NULL);
 }
 
 object_t *
@@ -333,6 +333,12 @@ uint16object_load_binary (FILE *f)
 	return uint16object_new (val, NULL);
 }
 
+static uint64_t
+uint16object_digest_fun (void *obj)
+{
+	return object_integer_hash (object_get_integer ((object_t *) obj));
+}
+
 object_t *
 uint16object_new (uint16_t val, void *udata)
 {
@@ -346,6 +352,7 @@ uint16object_new (uint16_t val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_UINT16);
+	OBJECT_DIGEST_FUN (obj) = uint16object_digest_fun;
 
 	obj->val = val;
 

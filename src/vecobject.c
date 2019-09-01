@@ -328,6 +328,12 @@ vecobject_empty_init (vecobject_t *obj)
 	return 1;
 }
 
+static uint64_t
+vecobject_digest_fun (void *obj)
+{
+	return object_address_hash (obj);
+}
+
 object_t *
 vecobject_new (size_t len, void *udata)
 {
@@ -341,6 +347,7 @@ vecobject_new (size_t len, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
+	OBJECT_DIGEST_FUN (obj) = vecobject_digest_fun;
 
 	obj->val = vec_new (len);
 	if (obj->val == NULL) {
@@ -372,6 +379,7 @@ vecobject_vec_new (vec_t *val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
+	OBJECT_DIGEST_FUN (obj) = vecobject_digest_fun;
 
 	obj->val = val;
 

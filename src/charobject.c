@@ -182,6 +182,12 @@ charobject_load_binary (FILE *f)
 	return charobject_new (val, NULL);
 }
 
+static uint64_t
+charobject_digest_fun (void *obj)
+{
+	return object_integer_hash (object_get_integer ((object_t *) obj));
+}
+
 object_t *
 charobject_new (char val, void *udata)
 {
@@ -200,6 +206,7 @@ charobject_new (char val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_CHAR);
+	OBJECT_DIGEST_FUN (obj) = charobject_digest_fun;
 
 	obj->val = val;
 

@@ -237,6 +237,12 @@ doubleobject_load_binary (FILE *f)
 	return doubleobject_new (val, NULL);
 }
 
+static uint64_t
+doubleobject_digest_fun (void *obj)
+{
+	return object_floating_hash (object_get_floating ((object_t *) obj));
+}
+
 object_t *
 doubleobject_new (double val, void *udata)
 {
@@ -250,6 +256,7 @@ doubleobject_new (double val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DOUBLE);
+	OBJECT_DIGEST_FUN (obj) = doubleobject_digest_fun;
 
 	obj->val = val;
 

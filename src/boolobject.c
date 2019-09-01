@@ -171,6 +171,12 @@ boolobject_load_binary (FILE *f)
 	return boolobject_new (val, NULL);
 }
 
+static uint64_t
+boolobject_digest_fun (void *obj)
+{
+	return object_integer_hash (object_get_integer ((object_t *) obj));
+}
+
 object_t *
 boolobject_new (bool val, void *udata)
 {
@@ -191,6 +197,7 @@ boolobject_new (bool val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_BOOL);
+	OBJECT_DIGEST_FUN (obj) = boolobject_digest_fun;
 
 	obj->val = val;
 

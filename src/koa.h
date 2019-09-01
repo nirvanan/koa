@@ -24,7 +24,7 @@
 #define UNUSED(x) (void)(x)
 
 /* This type can hold all integer values of koa objects. */
-typedef long integer_value_t;
+typedef long long integer_value_t;
 
 /* This type can hold all floating values of koa objects. */
 typedef double floating_value_t;

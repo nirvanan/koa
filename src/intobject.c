@@ -343,6 +343,12 @@ intobject_load_binary (FILE *f)
 	return intobject_new (val, NULL);
 }
 
+static uint64_t
+intobject_digest_fun (void *obj)
+{
+	return object_integer_hash (object_get_integer ((object_t *) obj));
+}
+
 object_t *
 intobject_new (int val, void *udata)
 {
@@ -361,6 +367,7 @@ intobject_new (int val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT);
+	OBJECT_DIGEST_FUN (obj) = intobject_digest_fun;
 
 	obj->val = val;
 

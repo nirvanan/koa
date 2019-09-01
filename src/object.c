@@ -30,6 +30,14 @@
 #include "charobject.h"
 #include "intobject.h"
 #include "longobject.h"
+#include "int8object.h"
+#include "uint8object.h"
+#include "int16object.h"
+#include "uint16object.h"
+#include "int32object.h"
+#include "uint32object.h"
+#include "int64object.h"
+#include "uint64object.h"
 #include "floatobject.h"
 #include "doubleobject.h"
 #include "strobject.h"
@@ -77,6 +85,7 @@ static object_t g_dummy_object =
 		1,
 		OBJECT_TYPE_VOID,
 		0,
+		NULL,
 		&g_dummy_ops,
 		NULL
 	},
@@ -115,6 +124,22 @@ object_get_integer (object_t *obj)
 			return (integer_value_t) intobject_get_value (obj);
 		case OBJECT_TYPE_LONG:
 			return (integer_value_t) longobject_get_value (obj);
+		case OBJECT_TYPE_INT8:
+			return (integer_value_t) int8object_get_value (obj);
+		case OBJECT_TYPE_UINT8:
+			return (integer_value_t) uint8object_get_value (obj);
+		case OBJECT_TYPE_INT16:
+			return (integer_value_t) int16object_get_value (obj);
+		case OBJECT_TYPE_UINT16:
+			return (integer_value_t) uint16object_get_value (obj);
+		case OBJECT_TYPE_INT32:
+			return (integer_value_t) int32object_get_value (obj);
+		case OBJECT_TYPE_UINT32:
+			return (integer_value_t) uint32object_get_value (obj);
+		case OBJECT_TYPE_INT64:
+			return (integer_value_t) int64object_get_value (obj);
+		case OBJECT_TYPE_UINT64:
+			return (integer_value_t) uint64object_get_value (obj);
 		/* Never reachable. */
 		default:
 			error ("try to get integer value from %s.", TYPE_NAME (obj));
@@ -163,6 +188,22 @@ object_cast (object_t *obj, object_type_t type)
 				return intobject_new ((int) val, NULL);
 			case OBJECT_TYPE_LONG:
 				return longobject_new ((long) val, NULL);
+			case OBJECT_TYPE_INT8:
+				return int8object_new ((int8_t) val, NULL);
+			case OBJECT_TYPE_UINT8:
+				return uint8object_new ((uint8_t) val, NULL);
+			case OBJECT_TYPE_INT16:
+				return int16object_new ((int16_t) val, NULL);
+			case OBJECT_TYPE_UINT16:
+				return uint16object_new ((uint16_t) val, NULL);
+			case OBJECT_TYPE_INT32:
+				return int32object_new ((int32_t) val, NULL);
+			case OBJECT_TYPE_UINT32:
+				return uint32object_new ((uint32_t) val, NULL);
+			case OBJECT_TYPE_INT64:
+				return int64object_new ((int64_t) val, NULL);
+			case OBJECT_TYPE_UINT64:
+				return uint64object_new ((uint64_t) val, NULL);
 			case OBJECT_TYPE_FLOAT:
 				return floatobject_new ((float) val, NULL);
 			case OBJECT_TYPE_DOUBLE:
@@ -186,6 +227,22 @@ object_cast (object_t *obj, object_type_t type)
 				return intobject_new ((int) val, NULL);
 			case OBJECT_TYPE_LONG:
 				return longobject_new ((long) val, NULL);
+			case OBJECT_TYPE_INT8:
+				return int8object_new ((int8_t) val, NULL);
+			case OBJECT_TYPE_UINT8:
+				return uint8object_new ((uint8_t) val, NULL);
+			case OBJECT_TYPE_INT16:
+				return int16object_new ((int16_t) val, NULL);
+			case OBJECT_TYPE_UINT16:
+				return uint16object_new ((uint16_t) val, NULL);
+			case OBJECT_TYPE_INT32:
+				return int32object_new ((int32_t) val, NULL);
+			case OBJECT_TYPE_UINT32:
+				return uint32object_new ((uint32_t) val, NULL);
+			case OBJECT_TYPE_INT64:
+				return int64object_new ((int64_t) val, NULL);
+			case OBJECT_TYPE_UINT64:
+				return uint64object_new ((uint64_t) val, NULL);
 			case OBJECT_TYPE_FLOAT:
 				return floatobject_new ((float) val, NULL);
 			case OBJECT_TYPE_DOUBLE:
@@ -1022,6 +1079,25 @@ object_hash (object_t *obj)
 	return hash_fun (obj);
 }
 
+uint64_t
+object_digest (object_t *obj)
+{
+	digest_f digest_fun;
+
+	if (OBJECT_DIGEST (obj)) {
+		return OBJECT_DIGEST (obj);
+	}
+
+	digest_fun = obj->head.digest_fun;
+	if (digest_fun == NULL) {
+		error ("type %s has no hash routine.", TYPE_NAME (obj));
+		
+		return 0;
+	}
+
+	return digest_fun (obj);
+}
+
 /* At this stage, this operation is only used by dumping code.
  * TODO: Check loop refererence. */
 object_t *
@@ -1081,6 +1157,22 @@ object_get_default (object_type_t type)
 			return intobject_new (0, NULL);
 		case OBJECT_TYPE_LONG:
 			return longobject_new ((long) 0, NULL);
+		case OBJECT_TYPE_INT8:
+			return int8object_new ((int8_t) 0, NULL);
+		case OBJECT_TYPE_UINT8:
+			return uint8object_new ((uint8_t) 0, NULL);
+		case OBJECT_TYPE_INT16:
+			return int16object_new ((int16_t) 0, NULL);
+		case OBJECT_TYPE_UINT16:
+			return uint16object_new ((uint16_t) 0, NULL);
+		case OBJECT_TYPE_INT32:
+			return int32object_new ((int32_t) 0, NULL);
+		case OBJECT_TYPE_UINT32:
+			return uint32object_new ((uint32_t) 0, NULL);
+		case OBJECT_TYPE_INT64:
+			return int64object_new ((int64_t) 0, NULL);
+		case OBJECT_TYPE_UINT64:
+			return uint64object_new ((uint64_t) 0, NULL);
 		case OBJECT_TYPE_FLOAT:
 			return floatobject_new ((float) 0.0, NULL);
 		case OBJECT_TYPE_DOUBLE:
@@ -1126,6 +1218,22 @@ object_load_binary (FILE *f)
 			return intobject_load_binary (f);
 		case OBJECT_TYPE_LONG:
 			return longobject_load_binary (f);
+		case OBJECT_TYPE_INT8:
+			return int8object_load_binary (f);
+		case OBJECT_TYPE_UINT8:
+			return uint8object_load_binary (f);
+		case OBJECT_TYPE_INT16:
+			return int16object_load_binary (f);
+		case OBJECT_TYPE_UINT16:
+			return uint16object_load_binary (f);
+		case OBJECT_TYPE_INT32:
+			return int8object_load_binary (f);
+		case OBJECT_TYPE_UINT32:
+			return uint8object_load_binary (f);
+		case OBJECT_TYPE_INT64:
+			return int64object_load_binary (f);
+		case OBJECT_TYPE_UINT64:
+			return uint64object_load_binary (f);
 		case OBJECT_TYPE_FLOAT:
 			return floatobject_load_binary (f);
 		case OBJECT_TYPE_DOUBLE:

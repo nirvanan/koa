@@ -108,6 +108,12 @@ nullobject_load_binary (FILE *f)
 	return nullobject_new (NULL);
 }
 
+static uint64_t
+nullobject_digest_fun (void *obj)
+{
+	return OBJECT_DIGEST ((object_t *) obj);
+}
+
 /* This object is known as 'null'. */
 object_t *
 nullobject_new (void *udata)
@@ -126,6 +132,7 @@ nullobject_new (void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_NULL);
+	OBJECT_DIGEST_FUN (obj) = nullobject_digest_fun;
 
 	return (object_t *) obj;
 }
