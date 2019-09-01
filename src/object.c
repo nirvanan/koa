@@ -1227,9 +1227,9 @@ object_load_binary (FILE *f)
 		case OBJECT_TYPE_UINT16:
 			return uint16object_load_binary (f);
 		case OBJECT_TYPE_INT32:
-			return int8object_load_binary (f);
+			return int32object_load_binary (f);
 		case OBJECT_TYPE_UINT32:
-			return uint8object_load_binary (f);
+			return uint32object_load_binary (f);
 		case OBJECT_TYPE_INT64:
 			return int64object_load_binary (f);
 		case OBJECT_TYPE_UINT64:

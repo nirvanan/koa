@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 		else {
 			printf ("wrong\n");
 		}
-		//break;
+		break;
 	}
 
 	while (1) {
