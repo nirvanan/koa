@@ -43,9 +43,6 @@ exceptionobject_str_new (str_t *val, void *udata);
 str_t *
 exceptionobject_get_value (object_t *obj);
 
-uint64_t
-exceptionobject_get_hash (object_t *obj);
-
 void
 exceptionobject_init ();
 

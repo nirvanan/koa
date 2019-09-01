@@ -139,7 +139,7 @@ exceptionobject_op_binary (object_t *obj)
 	str = exceptionobject_get_value (obj);
 	len = str_len (str);
 
-	len_obj = exceptionobject_new (BINARY (len), sizeof (size_t), 1, NULL);
+	len_obj = exceptionobject_new (BINARY (len), sizeof (size_t), NULL);
 	if (len_obj == NULL) {
 		return NULL;
 	}
@@ -177,7 +177,7 @@ exceptionobject_load_binary (FILE *f)
 		return NULL;
 	}
 
-	obj = exceptionobject_new ((const char *) data, len, 1, NULL);
+	obj = exceptionobject_new ((const char *) data, len, NULL);
 	pool_free (data);
 
 	return obj;
@@ -245,64 +245,6 @@ exceptionobject_get_value (object_t *obj)
 	ob = (exceptionobject_t *) obj;
 
 	return ob->val;
-}
-
-/* For hash table. */
-static uint64_t
-exceptionobject_hash_fun (void *data)
-{
-	object_t *obj;
-	str_t *str;
-	size_t len;
-	unsigned int seed;
-
-	obj = (object_t *) data;
-	str = exceptionobject_get_value (obj);
-	len = str_len (str);
-	seed = g_internal_hash_seed;
-
-	return exceptionobject_murmur (str_c_str (str), len, seed);
-}
-
-static int
-exceptionobject_test_fun (void *value, void *hd)
-{
-	object_t *obj;
-
-	obj = (object_t *) value;
-
-	return (int) str_cmp_c_str (exceptionobject_get_value (obj),
-		(const char *) hd) == 0;
-}
-
-static void
-exceptionobject_cleanup_fun (void *value)
-{
-	object_free (value);
-}
-
-uint64_t
-exceptionobject_get_hash (object_t *obj)
-{
-	str_t *str;
-
-	str = exceptionobject_get_value (obj);
-
-	return exceptionobject_murmur (str_c_str (str),
-							 str_len (str),
-							 g_internal_hash_seed);
-}
-
-int
-exceptionobject_equal (object_t *obj1, object_t *obj2)
-{
-	str_t *str1;
-	str_t *str2;
-
-	str1 = exceptionobject_get_value (obj1);
-	str2 = exceptionobject_get_value (obj2);
-
-	return str_cmp (str1, str2) == 0;
 }
 
 const char *

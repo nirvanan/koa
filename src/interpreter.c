@@ -46,8 +46,8 @@ interpreter_stack_rollback ()
 	sp_t bottom;
 	object_t *obj;
 
-	bottom = frame_buttom (g_current);
-	while (stack_sp (g_s) > bottom + 1) {
+	bottom = frame_get_bottom (g_current);
+	while (stack_get_sp (g_s) > bottom + 1) {
 		obj = (object_t *) stack_pop (g_s);
 		object_free (obj);
 	}
@@ -278,7 +278,7 @@ interpreter_play (code_t *code, int global)
 				interpreter_stack_rollback ();
 				g_current = frame_free (g_current);
 				/* Now the top object of stack must be an exception. */
-				stack_set (g_s, frame_bottom (g_current), stack_pop(g_s));
+				stack_set (g_s, frame_get_bottom (g_current), stack_pop(g_s));
 
 				return 0;
 			}
@@ -1137,27 +1137,27 @@ interpreter_set_exception (const char *exception, ...)
 {
 	sp_t stack_sp;
 	sp_t bottom;
-	object_t *exception;
+	object_t *exception_obj;
 	va_list args;
 
-	va_start (args, error);
-	vsnprintf (g_exception_buf, error, args);
+	va_start (args, exception);
+	vsnprintf (g_exception_buf, EXCEPTION_MAX_LENGTH, exception, args);
 	va_end (args);
 	
-	exception = exception_new (g_exception_buf, strlen (g_exception_buf), NULL);
-	if (exception == NULL) {
+	exception_obj = exceptionobject_new (g_exception_buf, strlen (g_exception_buf), NULL);
+	if (exception_obj == NULL) {
 		fatal_error ("out of memory.");
 	}
 	
-	stack_sp = stack_sp (g_s);
-	bottom = frame_buttom (g_current);
-	if (stack_sp <= frame_buttom (g_current)) {
-		stack_push (g_s, (void () exception);
+	stack_sp = stack_get_sp (g_s);
+	bottom = frame_get_bottom (g_current);
+	if (stack_sp <= frame_get_bottom (g_current)) {
+		stack_push (g_s, (void *) exception_obj);
 	}
 	else {
 		object_t *prev;
 
-		prev = stack_set (g_s, (integer_value_t) bottom, (void *) exception);
+		prev = stack_set (g_s, (integer_value_t) bottom, (void *) exception_obj);
 		if (prev != NULL) {
 			object_free (prev);
 		}
