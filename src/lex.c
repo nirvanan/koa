@@ -70,6 +70,7 @@ static reserved_word_t g_reserved_list[] =
 	{"vec", TOKEN_VEC},
 	{"dict", TOKEN_DICT},
 	{"func", TOKEN_FUNC},
+	{"exception", TOKEN_EXCEPTION},
 	{"case", TOKEN_CASE},
 	{"default", TOKEN_DEFAULT},
 	{"if", TOKEN_IF},
@@ -81,6 +82,8 @@ static reserved_word_t g_reserved_list[] =
 	{"continue", TOKEN_CONTINUE},
 	{"break", TOKEN_BREAK},
 	{"return", TOKEN_RETURN},
+	{"try", TOKEN_TRY},
+	{"catch", TOKEN_CATCH},
 	{"true", TOKEN_TRUE},
 	{"false", TOKEN_FALSE},
 	{NULL, 0}

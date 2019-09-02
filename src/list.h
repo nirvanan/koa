@@ -21,6 +21,8 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include <stddef.h>
+
 #include "koa.h"
 
 #define LIST(x) ((list_t *)x)
@@ -53,5 +55,8 @@ list_cleanup (list_t *list, list_del_f df, int need_free, void *udata);
 
 void
 list_foreach (list_t *list, list_for_f ff, void *udata);
+
+size_t
+list_len (list_t *list);
 
 #endif /* LIST_H */

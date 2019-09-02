@@ -169,6 +169,7 @@ statement:
 	selection-statement
 	iteration-statement
 	jump-statement
+	try-statement
 
 labeled-statement:
 	case conditional-expression : statement
@@ -207,3 +208,6 @@ for-statement:
 	for ( expressionopt ; expressionopt ; expressionopt ) statement
 	for ( declaration expressionopt ; expressionopt ) statement
 
+try-statement:
+	try compound-statement
+	try compound-statement catch ( exception identifier ) compound-statement

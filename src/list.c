@@ -110,3 +110,18 @@ list_foreach (list_t *list, list_for_f ff, void *udata)
 	}
 }
 
+size_t
+list_len (list_t *list)
+{
+	list_t *l;
+	size_t size;
+
+	size = 0;
+	l = list;
+	while (l != NULL) {
+		size++;
+		l = l->next;
+	}
+
+	return size;
+}

@@ -18,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdarg.h>
 #include <string.h>
 
 #include "interpreter.h"
@@ -33,9 +32,13 @@
 #include "exceptionobject.h"
 #include "error.h"
 
-#define EXCEPTION_MAX_LENGTH 1023
+#define HANDLE_EXCEPTION if (interpreter_recover_exception ()) {\
+	goto recover;\
+}\
+else {\
+	return 0;\
+}\
 
-static char g_exception_buf[EXCEPTION_MAX_LENGTH + 1];
 static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
@@ -54,6 +57,28 @@ interpreter_stack_rollback ()
 }
 
 static int
+interpreter_recover_exception ()
+{
+	sp_t bottom;
+	object_t *obj;
+
+	if (!frame_is_catched (g_current)) {
+		return 0;
+	}
+
+	if (stack_top (g_s) != NULL) {
+		frame_set_exception (g_current, (object_t *) stack_top (g_s));
+	}
+	bottom = frame_recover_exception (g_current);
+	while (stack_get_sp (g_s) > bottom) {
+		obj = (object_t *) stack_pop (g_s);
+		object_free (obj);
+	}
+
+	return 1;
+}
+
+static int
 interpreter_play (code_t *code, int global)
 {
 	opcode_t opcode;
@@ -66,11 +91,12 @@ interpreter_play (code_t *code, int global)
 	object_t *e;
 	object_t *r;
 
-	g_current = frame_new (code, g_current, STACK_SP (g_s), global);
+	g_current = frame_new (code, g_current, stack_get_sp (g_s), global);
 	if (g_current == NULL) {
 		fatal_error ("failed to play code.");
 	}
 
+recover:
 	while ((opcode = frame_next_opcode (g_current))) {
 		op = OPCODE_OP (opcode);
 		para = OPCODE_PARA (opcode);
@@ -83,21 +109,28 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if (!frame_store_local (g_current, a, b)) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_STORE_VAR:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_top (g_s);
 			if ((c = frame_store_var (g_current, a, b)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (c);
+			break;
+		case OP_STORE_EXCEPTION:
+			a = code_get_varname (code, para);
+			b = frame_get_exception (g_current);
+			if (!frame_store_local (g_current, a, b)) {
+				HANDLE_EXCEPTION;
+			}
 			break;
 		case OP_LOAD_VAR:
 			a = code_get_varname (code, para);
 			if ((r = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_TYPE_CAST:
@@ -105,7 +138,7 @@ interpreter_play (code_t *code, int global)
 			if ((r = object_cast (a, (object_type_t) para)) == NULL) {
 				object_free (a);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			break;
@@ -115,7 +148,7 @@ interpreter_play (code_t *code, int global)
 		case OP_VAR_PODEC:
 			a = code_get_varname (code, para);
 			if ((b = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (op == OP_VAR_INC || op == OP_VAR_POINC) {
 				c = intobject_new (1, NULL);
@@ -124,15 +157,15 @@ interpreter_play (code_t *code, int global)
 				c = intobject_new (-1, NULL);
 			}
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			d = object_add (b, c);
 			object_free (c);
 			if (d == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (frame_store_var (g_current, a, d) != b) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (op == OP_VAR_INC || op == OP_VAR_DEC) {
 				object_unref (b);
@@ -148,7 +181,7 @@ interpreter_play (code_t *code, int global)
 			if ((r = object_neg (a)) == NULL) {
 				object_free (a);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			break;
@@ -157,7 +190,7 @@ interpreter_play (code_t *code, int global)
 			if ((r = object_bit_not (a)) == NULL) {
 				object_free (a);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			break;
@@ -166,7 +199,7 @@ interpreter_play (code_t *code, int global)
 			if ((r = object_logic_not (a)) == NULL) {
 				object_free (a);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			break;
@@ -181,7 +214,7 @@ interpreter_play (code_t *code, int global)
 			if ((r = object_index (a, b)) == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			break;
@@ -192,7 +225,7 @@ interpreter_play (code_t *code, int global)
 			if ((r = object_ipindex (a, b, c)) == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			break;
@@ -209,7 +242,7 @@ interpreter_play (code_t *code, int global)
 				c = intobject_new (-1, NULL);
 			}
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			d = object_index (a, b);
 			if (OBJECT_TYPE (d) == OBJECT_TYPE_NULL) {
@@ -217,19 +250,19 @@ interpreter_play (code_t *code, int global)
 				object_free (c);
 				error ("null object can not be modified.");
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((e = object_add (d, c)) == NULL) {
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((r = object_ipindex (a, b, e)) == NULL) {
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_free (c);
@@ -250,7 +283,7 @@ interpreter_play (code_t *code, int global)
 				if (object_ipindex (r, b, c) == NULL) {
 					object_free (b);
 
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 				object_free (b);
 			}
@@ -261,26 +294,32 @@ interpreter_play (code_t *code, int global)
 				if (OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
 					error ("only func object is callable.");
 
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 				b = a;
 				a = (object_t *) stack_pop (g_s);
 				if (OBJECT_TYPE (a) != OBJECT_TYPE_FUNC) {
 					error ("only func object is callable.");
 
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 				if (!stack_push (g_s, (void *) b)) {
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 			}
 			if (!interpreter_play (funcobject_get_value (a), 0)) {
-				interpreter_stack_rollback ();
-				g_current = frame_free (g_current);
-				/* Now the top object of stack must be an exception. */
-				stack_set (g_s, frame_get_bottom (g_current), stack_pop(g_s));
+				if (!frame_is_catched (g_current)) {
+					if (stack_get_sp (g_s) != frame_get_bottom (g_current) + 1) {
+						a = stack_pop (g_s);
+						r = stack_set (g_s, frame_get_bottom (g_current), a);
+						if (r != a && r != NULL) {
+							object_free (r);
+						}
+					}
+					interpreter_stack_rollback ();
+				}
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_BIND_ARGS:
@@ -289,12 +328,12 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				error ("no argument passed.");
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (!frame_bind_args (g_current, a)) {
 				object_free (a);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			break;
@@ -320,7 +359,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -332,7 +371,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -344,7 +383,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -356,7 +395,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -368,7 +407,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -380,7 +419,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -392,14 +431,14 @@ interpreter_play (code_t *code, int global)
 			object_free (a);
 			object_free (b);
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_is_zero (c)?
 				boolobject_new (true, NULL):
 				boolobject_new (false, NULL);
 			object_free (c);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_LESS_THAN:
@@ -409,14 +448,14 @@ interpreter_play (code_t *code, int global)
 			object_free (a);
 			object_free (b);
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_get_integer (c) < 0?
 				boolobject_new (true, NULL):
 				boolobject_new (false, NULL);
 			object_free (c);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_LARGER_THAN:
@@ -426,14 +465,14 @@ interpreter_play (code_t *code, int global)
 			object_free (a);
 			object_free (b);
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_get_integer (c) > 0?
 				boolobject_new (true, NULL):
 				boolobject_new (false, NULL);
 			object_free (c);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_LESS_EQUAL:
@@ -443,14 +482,14 @@ interpreter_play (code_t *code, int global)
 			object_free (a);
 			object_free (b);
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_get_integer (c) <= 0?
 				boolobject_new (true, NULL):
 				boolobject_new (false, NULL);
 			object_free (c);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_LARGER_EQUAL:
@@ -460,14 +499,14 @@ interpreter_play (code_t *code, int global)
 			object_free (a);
 			object_free (b);
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_get_integer (c) >= 0?
 				boolobject_new (true, NULL):
 				boolobject_new (false, NULL);
 			object_free (c);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_LEFT_SHIFT:
@@ -477,7 +516,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -489,7 +528,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -501,7 +540,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -513,7 +552,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -525,7 +564,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -537,7 +576,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -549,7 +588,7 @@ interpreter_play (code_t *code, int global)
 				object_free (a);
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (a);
 			object_free (b);
@@ -558,15 +597,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_mul (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -574,15 +613,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_div (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -590,15 +629,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_mod (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -606,15 +645,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_add (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -622,15 +661,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_sub (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -638,15 +677,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_left_shift (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -654,15 +693,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_right_shift (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -670,15 +709,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_bit_and (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -686,15 +725,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_bit_xor (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -702,15 +741,15 @@ interpreter_play (code_t *code, int global)
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_bit_or (c, b);
 			object_free (b);
 			if (r == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if ((b = frame_store_var (g_current, a, r)) == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
 			break;
@@ -723,20 +762,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_mul (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -750,20 +789,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_div (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -777,20 +816,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_mod (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -804,20 +843,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_add (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -831,20 +870,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_sub (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -858,20 +897,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_left_shift (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -885,20 +924,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_right_shift (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -912,20 +951,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_bit_and (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -939,20 +978,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_bit_xor (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -966,20 +1005,20 @@ interpreter_play (code_t *code, int global)
 				object_free (b);
 				object_free (c);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			r = object_bit_or (d, c);
 			object_free (c);
 			if (r == NULL) {
 				object_free (b);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_ipindex (a, b, r) != d) {
 				object_free (b);
 				object_free (r);
 
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			object_free (b);
 			object_unref (d);
@@ -997,13 +1036,13 @@ interpreter_play (code_t *code, int global)
 			frame_jump (g_current, para);
 			break;
 		case OP_ENTER_BLOCK:
-			if (!frame_enter_block (g_current)) {
-				return 0;
+			if (!frame_enter_block (g_current, para, stack_get_sp (g_s))) {
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_LEAVE_BLOCK:
 			if (!frame_leave_block (g_current)) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			break;
 		case OP_RETURN:
@@ -1012,7 +1051,7 @@ interpreter_play (code_t *code, int global)
 			if (OBJECT_TYPE (a) != FUNC_RET_TYPE (code)) {
 				b = object_cast (a, FUNC_RET_TYPE (code));
 				if (b == NULL) {
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 
 				r = b;
@@ -1022,21 +1061,21 @@ interpreter_play (code_t *code, int global)
 				r = a;
 			}
 			if (!stack_push (g_s, (void *) r)) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			g_current = frame_free (g_current);
 			return 1;
 		case OP_PUSH_BLOCKS:
 			for (para_t i = 0; i < para; i++) {
-				if (!frame_enter_block (g_current)) {
-					return 0;
+				if (!frame_enter_block (g_current, 0, stack_get_sp (g_s))) {
+					HANDLE_EXCEPTION;
 				}
 			}
 			break;
 		case OP_POP_BLOCKS:
 			for (para_t i = 0; i < para; i++) {
 				if (!frame_leave_block (g_current)) {
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 			}
 			break;
@@ -1046,12 +1085,12 @@ interpreter_play (code_t *code, int global)
 			c = object_equal (a, b);
 			object_free (b);
 			if (c == NULL) {
-				return 0;
+				HANDLE_EXCEPTION;
 			}
 			if (object_is_zero (c)) {
 				frame_jump (g_current, para);
 				if (!stack_push (g_s, (void *) a)) {
-					return 0;
+					HANDLE_EXCEPTION;
 				}
 			}
 			else {
@@ -1087,6 +1126,7 @@ void
 interpreter_execute (const char *path)
 {
 	code_t *code;
+	object_t *obj;
 
 	code = parser_load_file (path);
 	if (code == NULL) {
@@ -1100,15 +1140,19 @@ interpreter_execute (const char *path)
 		g_current = frame_free (g_current);
 	}
 
-	UNUSED (stack_pop (g_s));
+	while (stack_get_sp (g_s) > 0) {
+		obj = stack_pop (g_s);
+		object_free (obj);
+	}
 	code_free (code);
+	g_runtime_started = 0;
 }
 
 void
 interpreter_traceback ()
 {
 	if (g_current != NULL) {
-		printf ("Traceback:\n");
+		fprintf (stderr, "Traceback:\n");
 		frame_traceback (g_current);
 	}
 }
@@ -1133,22 +1177,25 @@ interpreter_started ()
 }
 
 void
-interpreter_set_exception (const char *exception, ...)
+interpreter_set_exception (const char *exception)
 {
 	sp_t stack_sp;
 	sp_t bottom;
 	object_t *exception_obj;
-	va_list args;
 
-	va_start (args, exception);
-	vsnprintf (g_exception_buf, EXCEPTION_MAX_LENGTH, exception, args);
-	va_end (args);
-	
-	exception_obj = exceptionobject_new (g_exception_buf, strlen (g_exception_buf), NULL);
+	exception_obj = exceptionobject_new (exception, strlen (exception), NULL);
 	if (exception_obj == NULL) {
 		fatal_error ("out of memory.");
 	}
-	
+
+	if (frame_is_catched (g_current)) {
+		frame_set_exception (g_current, exception_obj);
+
+		return;
+	}
+
+	interpreter_traceback ();
+	fprintf (stderr, "runtime error: %s\n", exception);
 	stack_sp = stack_get_sp (g_s);
 	bottom = frame_get_bottom (g_current);
 	if (stack_sp <= frame_get_bottom (g_current)) {
@@ -1162,6 +1209,8 @@ interpreter_set_exception (const char *exception, ...)
 			object_free (prev);
 		}
 	}
+	interpreter_stack_rollback ();
+	g_current = frame_free (g_current);
 }
 
 void

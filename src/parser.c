@@ -41,7 +41,7 @@
 #include "strobject.h"
 #include "funcobject.h"
 
-#define TOP_LEVEL_TAG "#"
+#define TOP_LEVEL_TAG "#GLOBAL"
 
 typedef struct parser_s
 {
@@ -55,6 +55,16 @@ typedef struct buf_read_s
 	str_t *buf;
 	size_t p;
 } buf_read_t;
+
+typedef enum upper_type_e
+{
+	UPPER_TYPE_PLAIN,
+	UPPER_TYPE_FOR,
+	UPPER_TYPE_DO,
+	UPPER_TYPE_WHILE,
+	UPPER_TYPE_SWITCH,
+	UPPER_TYPE_TRY
+} upper_type_t;
 
 static int parser_cast_expression (parser_t *parser, code_t *code);
 static int parser_assignment_expression (parser_t *parser, code_t *code);
@@ -598,9 +608,15 @@ parser_for_statement (parser_t *parser, code_t *code)
 
 	/* There is an iteration part? */
 	iter_pos = code_current_pos (code) + 1;
-	if (!parser_check (parser, ')') &&
-		!parser_expression (parser, code)) {
-		return 0;
+	if (!parser_check (parser, ')')) {
+		if (!parser_expression (parser, code)) {
+			return 0;
+		}
+		/* Emit a POP_STACK and JUMP_FORCE. */
+		line = TOKEN_LINE (parser->token);
+		if (!code_push_opcode (code, OPCODE (OP_POP_STACK, 0), line)) {
+			return 0;
+		}
 	}
 
 	/* Emit a JUMP_FORCE. */
@@ -1260,13 +1276,104 @@ parser_labeled_statement (parser_t *parser, code_t *code,
 	return parser_statement (parser, code, ut, upper_pos);
 }
 
+/* try-statement:
+ * try compound-statement
+ * try compound-statement catch ( exception identifier ) compound-statement */
+static int
+parser_try_statement (parser_t *parser, code_t *code)
+{
+	uint32_t line;
+	para_t enter_pos;
+	para_t leave_pos;
+	para_t var_pos;
+
+	/* Emit an ENTER_BLOCK. */
+	enter_pos = code_current_pos (code) + 1;
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_ENTER_BLOCK, 0), line)) {
+		return 0;
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN ('{'))) {
+		return parser_syntax_error (parser, "missing '{' after try statement.");
+	}
+
+	if (!parser_compound_statement (parser, code, UPPER_TYPE_TRY, 0)) {
+		return 0;
+	}
+
+	/* Emit an LEAVE_BLOCK. */
+	leave_pos = code_current_pos (code) + 1;
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_LEAVE_BLOCK, 0), line)) {
+		return 0;
+	}
+
+	/* There is a catch? */
+	if (!parser_check (parser, TOKEN_CATCH)) {
+		return code_modify_opcode (code, enter_pos,
+								   OPCODE (OP_ENTER_BLOCK, leave_pos), 0);
+	}
+
+	parser_next_token (parser);
+	if (!parser_test_and_next (parser, TOKEN ('('), "missing '(' after catch")) {
+		return 0;
+	}
+	if (!parser_test_and_next (parser, TOKEN_EXCEPTION, "missing exception.")) {
+		return 0;
+	}
+	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+		return parser_syntax_error (parser, "missing identifier.");
+	}
+	var_pos = code_push_varname (code, TOKEN_ID (parser->token),
+								 OBJECT_TYPE_EXCEPTION, 0);
+	if (var_pos == -1){
+		return 0;
+	}
+	parser_next_token (parser);
+	if (!parser_test_and_next (parser, TOKEN (')'), "missing matching ')'.")) {
+		return 0;
+	}
+
+	/* Emit an ENTER_BLOCK. */
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_ENTER_BLOCK, 0), line)) {
+		return 0;
+	}
+
+	if (!parser_check (parser, TOKEN ('{'))) {
+		return parser_syntax_error (parser, "missing '{' after catch statement.");
+	}
+
+	/* Emit an STORE_EXCEPTION. */
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_STORE_EXCEPTION, var_pos), line)) {
+		return 0;
+	}
+	if (!parser_compound_statement (parser, code, UPPER_TYPE_TRY, 0)) {
+		return 0;
+	}
+
+	/* Emit an LEAVE_BLOCK. */
+	leave_pos = code_current_pos (code) + 1;
+	line = TOKEN_LINE (parser->token);
+	if (!code_push_opcode (code, OPCODE (OP_LEAVE_BLOCK, 0), line)) {
+		return 0;
+	}
+
+	return code_modify_opcode (code, enter_pos,
+							   OPCODE (OP_ENTER_BLOCK, leave_pos), 0);
+}
+
 /* statement:
  * labeled-statement
  * compound-statement
  * expression-statement
  * selection-statement
  * iteration-statement
- * jump-statement */
+ * jump-statement 
+ * try-statement */
 static int
 parser_statement (parser_t *parser, code_t *code,
 				  upper_type_t ut, para_t upper_pos)
@@ -1286,6 +1393,8 @@ parser_statement (parser_t *parser, code_t *code,
 		case TOKEN_BREAK:
 		case TOKEN_RETURN:
 			return parser_jump_statement (parser, code, ut, upper_pos);
+		case TOKEN_TRY:
+			return parser_try_statement (parser, code);
 		default:
 			if (parser_check (parser, TOKEN ('{'))) {
 				uint32_t line;
@@ -1843,7 +1952,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 	line = TOKEN_LINE (parser->token);
 	switch (TOKEN_TYPE (parser->token)) {
 		case TOKEN_IDENTIFIER:
-			pos = code_push_varname (code,TOKEN_ID (parser->token),
+			pos = code_push_varname (code, TOKEN_ID (parser->token),
 									 OBJECT_TYPE_VOID, 0);
 			parser_next_token (parser);
 			if (pos == -1) {
@@ -2302,7 +2411,7 @@ parser_compound_statement (parser_t *parser, code_t *code,
 	/* Skip '{'. */
 	parser_next_token (parser);
 	
-	/* Check empty function body. */
+	/* Check empty body. */
 	if (!parser_check (parser, TOKEN ('}'))) {
 		if (!parser_block_item_list (parser, code, ut, upper_pos)) {
 			return 0;
@@ -2311,7 +2420,7 @@ parser_compound_statement (parser_t *parser, code_t *code,
 
 	/* Skip '}'. */
 	return parser_test_and_next (parser, TOKEN ('}'),
-		"missing matching '}' for function body.");
+		"missing matching '}'.");
 }
 
 /* parameter-declaration:

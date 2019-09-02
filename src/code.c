@@ -39,6 +39,7 @@ static const char *g_code_names[] =
 	"OP_LOAD_CONST",
 	"OP_STORE_LOCAL",
 	"OP_STORE_VAR",
+	"OP_STORE_EXCEPTION",
 	"OP_LOAD_VAR",
 	"OP_TYPE_CAST",
 	"OP_VAR_INC",

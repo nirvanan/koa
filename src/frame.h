@@ -26,11 +26,15 @@
 #include "dict.h"
 #include "code.h"
 #include "stack.h"
+#include "object.h"
 
 typedef struct block_s
 {
 	list_t link;
 	dict_t *ns;
+	int catched;
+	para_t out;
+	sp_t bottom;
 } block_t;
 
 typedef struct frame_s
@@ -42,10 +46,11 @@ typedef struct frame_s
 	code_t *code;
 	para_t esp;
 	sp_t bottom;
+	object_t *exception;
 } frame_t;
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t top, int global);
+frame_new (code_t *code, frame_t *current, sp_t bottom, int global);
 
 frame_t *
 frame_free (frame_t *frame);
@@ -60,7 +65,7 @@ void
 frame_traceback (frame_t *frame);
 
 int
-frame_enter_block (frame_t *frame);
+frame_enter_block (frame_t *frame, para_t out, sp_t bottom);
 
 int
 frame_leave_block (frame_t *frame);
@@ -79,6 +84,18 @@ frame_bind_args (frame_t *frame, object_t *args);
 
 sp_t
 frame_get_bottom (frame_t *frame);
+
+int
+frame_is_catched (frame_t *frame);
+
+sp_t
+frame_recover_exception (frame_t *frame);
+
+void
+frame_set_exception (frame_t *frame, object_t *exception);
+
+object_t *
+frame_get_exception (frame_t *frame);
 
 #endif /* FRAME_H */
 

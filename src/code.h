@@ -56,6 +56,7 @@ typedef enum op_e
 	OP_LOAD_CONST = 0x01,
 	OP_STORE_LOCAL,
 	OP_STORE_VAR,
+	OP_STORE_EXCEPTION,
 	OP_LOAD_VAR,
 	OP_TYPE_CAST,
 	OP_VAR_INC,
@@ -143,15 +144,6 @@ typedef struct code_s {
 	int paras; /* Number of parameters. */
 	object_type_t ret_type; /* Return type of function. */
 } code_t;
-
-typedef enum upper_type_e
-{
-	UPPER_TYPE_PLAIN,
-	UPPER_TYPE_FOR,
-	UPPER_TYPE_DO,
-	UPPER_TYPE_WHILE,
-	UPPER_TYPE_SWITCH
-} upper_type_t;
 
 code_t *
 code_new (const char *filename, const char *name);

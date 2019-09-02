@@ -116,6 +116,7 @@ typedef enum token_type_e
 	TOKEN_VEC, /* Type-specifier: vec. */
 	TOKEN_DICT, /* Type-specifier: dict. */
 	TOKEN_FUNC, /* Type-specifier: func. */
+	TOKEN_EXCEPTION, /* Type-specifier: exception. */
 	TOKEN_LOR, /* Logic-or-expression: ||. */
 	TOKEN_LAND, /* Logic-and-expression: &&. */
 	TOKEN_EQ, /* Equality-expression: ==. */
@@ -147,6 +148,8 @@ typedef enum token_type_e
 	TOKEN_CONTINUE, /* Jump-statement: continue. */
 	TOKEN_BREAK, /* Jump-statement: break. */
 	TOKEN_RETURN, /* Jump-statement: return. */
+	TOKEN_TRY, /* Try-statement: try. */
+	TOKEN_CATCH, /* Try-statement: catch. */
 	TOKEN_TRUE, /* Constant: true. */
 	TOKEN_FALSE, /* Constant: false. */
 	TOKEN_INTEGER, /* Constant: integer. */

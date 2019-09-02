@@ -25,6 +25,10 @@
 #include "error.h"
 #include "interpreter.h"
 
+#define EXCEPTION_MAX_LENGTH 1023
+
+static char g_exception_buf[EXCEPTION_MAX_LENGTH + 1];
+
 void
 fatal_error (const char *error, ...)
 {
@@ -46,17 +50,19 @@ fatal_error (const char *error, ...)
 void
 error (const char *error, ...)
 {
-	interpreter_traceback ();
-	if (interpreter_started ()) {
-		fprintf (stderr, "runtime error: ");
-	}
 	if (error != NULL) {
 		va_list args;
 
 		va_start (args, error);
-		vfprintf (stderr, error, args);
+		if (interpreter_started ()) {
+			vsnprintf (g_exception_buf, EXCEPTION_MAX_LENGTH, error, args);
+			interpreter_set_exception (g_exception_buf);
+		}
+		else {
+			vfprintf (stderr, error, args);
+			fprintf (stderr, "\n");
+		}
 		va_end (args);
-		fprintf (stderr, "\n");
 	}
 }
 

@@ -29,7 +29,7 @@
 #define FRAME_UPPER(x) ((frame_t *)LIST_NEXT(x))
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t top, int global)
+frame_new (code_t *code, frame_t *current, sp_t bottom, int global)
 {
 	frame_t *frame;
 
@@ -42,8 +42,8 @@ frame_new (code_t *code, frame_t *current, sp_t top, int global)
 
 	frame = (frame_t *) list_append (LIST (current), LIST (frame));
 	frame->code = code;
-	frame->bottom = top;
-	frame_enter_block (frame);
+	frame->bottom = bottom;
+	frame_enter_block (frame, 0, bottom);
 	frame->global = global? frame->current->ns: FRAME_UPPER (frame)->global;
 	frame->is_global = global;
 
@@ -84,6 +84,9 @@ frame_free (frame_t *frame)
 {
 	frame_t *upper;
 
+	if (frame->exception != NULL) {
+		object_unref (frame->exception);
+	}
 	upper = FRAME_UPPER (frame);
 	list_cleanup (LIST (frame->current), frame_block_cleanup_fun, 1, NULL);
 	pool_free ((void *) frame);
@@ -106,16 +109,15 @@ frame_jump (frame_t *frame, para_t pos)
 void
 frame_traceback (frame_t *frame)
 {
-	printf ("    %s in %s: line %d\n",
-			code_get_name (frame->code),
-			code_get_filename (frame->code),
-			code_get_line (frame->code, frame->esp));
+	fprintf (stderr, "    %s in %s: line %d\n",
+			 code_get_name (frame->code),
+			 code_get_filename (frame->code),
+			 code_get_line (frame->code, frame->esp));
 
 	if (FRAME_UPPER (frame) != NULL) {
 		frame_traceback (FRAME_UPPER (frame));
 	}
 }
-
 
 static uint64_t
 frame_varname_hash_fun (void *data)
@@ -130,7 +132,7 @@ frame_varname_test_fun (void *value, void *hd)
 }
 
 int
-frame_enter_block (frame_t *frame)
+frame_enter_block (frame_t *frame, para_t out, sp_t bottom)
 {
 	dict_t *ns;
 	block_t *block;
@@ -149,6 +151,15 @@ frame_enter_block (frame_t *frame)
 	}
 
 	block->ns = ns;
+	block->out = out;
+	block->bottom = bottom;
+	if (out > 0 || (frame->current != NULL && frame->current->catched)) {
+		block->catched = 1;
+	}
+	else {
+		block->catched = 0;
+	}
+
 	frame->current = (block_t *) list_append (LIST (frame->current), LIST (block));
 
 	return 1;
@@ -329,4 +340,38 @@ sp_t
 frame_get_bottom (frame_t *frame)
 {
 	return frame->bottom;
+}
+
+int
+frame_is_catched (frame_t *frame)
+{
+	return frame->current->catched;
+}
+
+sp_t
+frame_recover_exception (frame_t *frame)
+{
+	sp_t bottom;
+
+	while (!frame->current->out) {
+		frame_leave_block (frame);
+	}
+	frame_jump (frame, frame->current->out + 1);
+	bottom = frame->current->bottom;
+	frame_leave_block (frame);
+
+	return bottom;
+}
+
+void
+frame_set_exception (frame_t *frame, object_t *exception)
+{
+	frame->exception = exception;
+	object_ref (exception);
+}
+
+object_t *
+frame_get_exception (frame_t *frame)
+{
+	return frame->exception;
 }

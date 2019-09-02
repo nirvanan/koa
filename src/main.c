@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		code_t *code = parser_load_file ("/home/likehui/test.k");
 		if (code) {
-			//code_print (code);
+			code_print (code);
 			//object_t *str = code_binary (code);
 			//object_t *str = vecobject_new (40000, NULL);
 			//object_t *bin = object_binary (str);

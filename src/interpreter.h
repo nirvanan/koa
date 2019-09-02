@@ -36,7 +36,7 @@ int
 interpreter_started ();
 
 void
-interpreter_set_exception (const char *exception, ...);
+interpreter_set_exception (const char *exception);
 
 void
 interpreter_init ();
