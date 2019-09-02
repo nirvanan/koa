@@ -332,8 +332,8 @@ code_push_const (code_t *code, object_t *var, int *exist)
 para_t
 code_push_varname (code_t *code, const char *var, object_type_t type, int para)
 {
-	para_t pos;
 	object_t *name;
+	size_t pos;
 	object_type_t *var_type;
 
 	/* Check var list size. */
