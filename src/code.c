@@ -332,8 +332,8 @@ code_push_const (code_t *code, object_t *var, int *exist)
 para_t
 code_push_varname (code_t *code, const char *var, object_type_t type, int para)
 {
+	para_t pos;
 	object_t *name;
-	size_t pos;
 	object_type_t *var_type;
 
 	/* Check var list size. */
@@ -349,7 +349,7 @@ code_push_varname (code_t *code, const char *var, object_type_t type, int para)
 	}
 
 	/* Check whether there is already a var. */
-	if ((pos = vec_find (code->varnames,
+	if (type == OBJECT_TYPE_VOID && (pos = vec_find (code->varnames,
 		(void *) name, code_var_find_fun)) != -1) {
 		object_free (name);
 
@@ -1035,4 +1035,10 @@ code_check_args (code_t *code, vec_t *args)
 	}
 
 	return 1;
+}
+
+object_type_t
+code_get_vartype (code_t *code, para_t pos)
+{
+	return *(object_type_t *) vec_pos (code->types, pos);
 }

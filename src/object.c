@@ -63,6 +63,14 @@ static const char *g_type_name[] =
 	"char",
 	"int",
 	"long",
+	"int8",
+	"uint8",
+	"int16",
+	"uint16",
+	"int32",
+	"uint32",
+	"int64",
+	"uint64",
 	"float",
 	"double",
 	"str",
@@ -70,7 +78,8 @@ static const char *g_type_name[] =
 	"dict",
 	"func",
 	"mod",
-	"frame"
+	"frame",
+	"exception"
 };
 
 /* Dummy object, used to represent void values. */

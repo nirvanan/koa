@@ -216,4 +216,7 @@ code_get_varname (code_t *code, para_t pos);
 int
 code_check_args (code_t *code, vec_t *args);
 
+object_type_t
+code_get_vartype (code_t *code, para_t pos);
+
 #endif /* CODE_H */

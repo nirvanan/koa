@@ -108,7 +108,17 @@ recover:
 		case OP_STORE_LOCAL:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
+			if (code_get_vartype (code, para) != OBJECT_TYPE (b)) {
+				c = object_cast (b, code_get_vartype (code, para));
+				if (c == NULL) {
+					HANDLE_EXCEPTION;
+				}
+				object_free (b);
+				b = c;
+			}
 			if (!frame_store_local (g_current, a, b)) {
+				object_free (b);
+
 				HANDLE_EXCEPTION;
 			}
 			break;
@@ -116,6 +126,8 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_top (g_s);
 			if ((c = frame_store_var (g_current, a, b)) == NULL) {
+				object_free (b);
+
 				HANDLE_EXCEPTION;
 			}
 			object_unref (c);
