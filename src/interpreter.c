@@ -299,11 +299,16 @@ recover:
 				b = a;
 				a = (object_t *) stack_pop (g_s);
 				if (OBJECT_TYPE (a) != OBJECT_TYPE_FUNC) {
+					object_free (a);
+					object_free (b);
 					error ("only func object is callable.");
 
 					HANDLE_EXCEPTION;
 				}
 				if (!stack_push (g_s, (void *) b)) {
+					object_free (a);
+					object_free (b);
+
 					HANDLE_EXCEPTION;
 				}
 			}
