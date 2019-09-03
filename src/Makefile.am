@@ -4,6 +4,8 @@ AM_CPPFLAGS =
 AM_LDFLAGS = 
 koa_SOURCES = boolobject.c \
 boolobject.h \
+builtin.c \
+builtin.h \
 charobject.c \
 charobject.h \
 code.c \

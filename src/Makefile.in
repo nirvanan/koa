@@ -99,20 +99,21 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_koa_OBJECTS = boolobject.$(OBJEXT) charobject.$(OBJEXT) \
-	code.$(OBJEXT) dict.$(OBJEXT) dictobject.$(OBJEXT) \
-	doubleobject.$(OBJEXT) exceptionobject.$(OBJEXT) \
-	floatobject.$(OBJEXT) frame.$(OBJEXT) funcobject.$(OBJEXT) \
-	error.$(OBJEXT) hash.$(OBJEXT) interpreter.$(OBJEXT) \
-	intobject.$(OBJEXT) int16object.$(OBJEXT) \
-	int32object.$(OBJEXT) int64object.$(OBJEXT) \
-	int8object.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
-	longobject.$(OBJEXT) main.$(OBJEXT) modobject.$(OBJEXT) \
-	misc.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
-	parser.$(OBJEXT) pool.$(OBJEXT) stack.$(OBJEXT) str.$(OBJEXT) \
-	strobject.$(OBJEXT) uint16object.$(OBJEXT) \
-	uint32object.$(OBJEXT) uint64object.$(OBJEXT) \
-	uint8object.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
+am_koa_OBJECTS = boolobject.$(OBJEXT) builtin.$(OBJEXT) \
+	charobject.$(OBJEXT) code.$(OBJEXT) dict.$(OBJEXT) \
+	dictobject.$(OBJEXT) doubleobject.$(OBJEXT) \
+	exceptionobject.$(OBJEXT) floatobject.$(OBJEXT) \
+	frame.$(OBJEXT) funcobject.$(OBJEXT) error.$(OBJEXT) \
+	hash.$(OBJEXT) interpreter.$(OBJEXT) intobject.$(OBJEXT) \
+	int16object.$(OBJEXT) int32object.$(OBJEXT) \
+	int64object.$(OBJEXT) int8object.$(OBJEXT) lex.$(OBJEXT) \
+	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
+	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
+	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
+	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
+	uint16object.$(OBJEXT) uint32object.$(OBJEXT) \
+	uint64object.$(OBJEXT) uint8object.$(OBJEXT) vec.$(OBJEXT) \
+	vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -130,7 +131,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/boolobject.Po \
+am__depfiles_remade = ./$(DEPDIR)/boolobject.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/charobject.Po ./$(DEPDIR)/code.Po \
 	./$(DEPDIR)/dict.Po ./$(DEPDIR)/dictobject.Po \
 	./$(DEPDIR)/doubleobject.Po ./$(DEPDIR)/error.Po \
@@ -287,6 +288,8 @@ AM_CPPFLAGS =
 AM_LDFLAGS = 
 koa_SOURCES = boolobject.c \
 boolobject.h \
+builtin.c \
+builtin.h \
 charobject.c \
 charobject.h \
 code.c \
@@ -447,6 +450,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boolobject.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/builtin.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/code.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dict.Po@am__quote@ # am--include-marker
@@ -632,6 +636,7 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/boolobject.Po
+	-rm -f ./$(DEPDIR)/builtin.Po
 	-rm -f ./$(DEPDIR)/charobject.Po
 	-rm -f ./$(DEPDIR)/code.Po
 	-rm -f ./$(DEPDIR)/dict.Po
@@ -714,6 +719,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/boolobject.Po
+	-rm -f ./$(DEPDIR)/builtin.Po
 	-rm -f ./$(DEPDIR)/charobject.Po
 	-rm -f ./$(DEPDIR)/code.Po
 	-rm -f ./$(DEPDIR)/dict.Po

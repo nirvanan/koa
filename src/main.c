@@ -33,9 +33,10 @@
 #include "code.h"
 #include "parser.h"
 #include "interpreter.h"
+#include "builtin.h"
 #include <time.h>
 
-int main(int argc, char *argv[])
+void koa_init ()
 {
 	/* Init pool utility. */
 	pool_init ();
@@ -45,7 +46,14 @@ int main(int argc, char *argv[])
 	lex_init ();
 	/* Init interpreter. */
 	interpreter_init ();
+	/* Init builtin. */
+	builtin_init ();
+}
 
+int main(int argc, char *argv[])
+{
+	koa_init ();
+	return 0;
 	int c = 0;
 
 	while (0) {
@@ -62,9 +70,9 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/home/likehui/test.k");
+		code_t *code = parser_load_file ("/Users/bytedance/test.k");
 		if (code) {
-			//code_print (code);
+			code_print (code);
 			//object_t *str = code_binary (code);
 			//object_t *str = vecobject_new (40000, NULL);
 			//object_t *bin = object_binary (str);
@@ -82,7 +90,7 @@ int main(int argc, char *argv[])
 
 	int e = 0;
 	while (e--) {
-		interpreter_execute ("/home/likehui/test.k");
+		interpreter_execute ("/Users/bytedance/test.k");
 	}
 
 	return 0;

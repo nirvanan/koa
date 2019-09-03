@@ -113,6 +113,7 @@
 
 typedef enum object_type_e
 {
+	OBJECT_TYPE_ALL = -0x02,
 	OBJECT_TYPE_ERR = -0x01,
 	OBJECT_TYPE_VOID = 0x00, /* ONLY for function return type. */
 	OBJECT_TYPE_NULL = 0x01,

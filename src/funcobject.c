@@ -170,6 +170,8 @@ funcobject_new (void *udata)
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
+	obj->is_builtin = 1;
+	obj->builtin = NULL;
 	obj->val = NULL;
 
 	return (object_t *) obj;
@@ -188,7 +190,29 @@ funcobject_code_new (code_t *val, void *udata)
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
+	obj->is_builtin = 1;
+	obj->builtin = NULL;
 	obj->val = val;
+
+	return (object_t *) obj;
+}
+
+object_t *
+funcobject_builtin_new (builtin_t *builtin, void *udata)
+{
+	funcobject_t *obj;
+
+	obj = (funcobject_t *) pool_alloc (sizeof (funcobject_t));
+	if (obj == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
+
+	obj->is_builtin = 1;
+	obj->builtin = builtin;
+	obj->val = NULL;
 
 	return (object_t *) obj;
 }
@@ -201,5 +225,15 @@ funcobject_get_value (object_t *obj)
 	ob = (funcobject_t *) obj;
 
 	return ob->val;
+}
+
+builtin_t *
+funcobject_get_builtin (object_t *obj)
+{
+	funcobject_t *ob;
+
+	ob = (funcobject_t *) obj;
+
+	return ob->builtin;
 }
 

@@ -1,5 +1,5 @@
 /*
- * funcobject.h
+ * builtin.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,38 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FUNCOBJECT_H
-#define FUNCOBJECT_H
+#ifndef BUILTIN_H
+#define BUILTIN_H
 
 #include "koa.h"
 #include "object.h"
-#include "code.h"
-#include "builtin.h"
+#include "vec.h"
+#include "str.h"
 
-typedef struct funcobject_s
-{
-	object_head_t head;
-	int is_builtin;
-	builtin_t *builtin;
-	code_t *val;
-} funcobject_t;
+typedef object_t *(*builtin_f) (object_t *args);
+
+typedef struct builtin_s {
+	int slot;
+} builtin_t;
 
 object_t *
-funcobject_load_binary (FILE *f);
+builtin_find (object_t *name);
 
 object_t *
-funcobject_new (void *udata);
+builtin_execute (builtin_t *builtin);
 
-object_t *
-funcobject_code_new (code_t *val, void *udata);
+void
+builtin_init ();
 
-object_t *
-funcobject_builtin_new (builtin_t *builtin, void *udata);
-
-code_t *
-funcobject_get_value (object_t *obj);
-
-builtin_t *
-funcobject_get_builtin (object_t *obj);
-
-#endif /* FUNCOBJECT_H */
+#endif /* BUILTIN_H */

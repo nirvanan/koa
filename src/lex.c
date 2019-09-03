@@ -963,10 +963,6 @@ lex_init()
 		if (word == NULL) {
 			fatal_error ("failed to generate the reserved word dict.");
 		}
-
-		/* These words shall never be freed. */
-		object_ref (word);
-
 		suc = object_ipindex (g_reserved_tokens, word,
 			intobject_new ((int) re->type, NULL));
 		if (suc == NULL) {
