@@ -31,17 +31,13 @@
 #include "uint64object.h"
 
 #define HASED(x) (((strobject_t*)(x))->hashed)
+#define HASH_HANDLE(x) (((strobject_t *)(x))->hn)
 
 #define DUMP_HEAD_LENGTH 6
 #define DUMP_TAIL_LENGTH 2
-
 #define INTERNAL_STR_LENGTH 5
-
 #define HASH_M 0xc6a4a7935bd1e995
-
 #define INTERNAL_HASH_SIZE 4096
-
-#define HASH_HANDLE(x) (((strobject_t *)(x))->hn)
 
 static hash_t *g_internal_hash;
 
@@ -142,33 +138,15 @@ strobject_op_dump (object_t *obj)
 static object_t *
 strobject_op_add (object_t *obj1, object_t *obj2)
 {
-	object_t *right;
+	str_t *cated;
 	str_t *s1;
 	str_t *s2;
-	str_t *cated;
-
-	right = obj2;
-	/* Convert numberical to string. */
-	if (!OBJECT_IS_STR (obj2)) {
-		right = object_dump (obj2);
-		if (right == NULL) {
-			return NULL;
-		}
-	}
 
 	s1 = strobject_get_value (obj1);
-	s2 = strobject_get_value (right);
+	s2 = strobject_get_value (obj2);
 	cated = str_concat (s1, s2);
 	if (cated == NULL) {
-		if (right != obj2) {
-			object_free (right);
-		}
-
 		return NULL;
-	}
-
-	if (right != obj2) {
-		object_free (right);
 	}
 
 	return strobject_str_new (cated, NULL);

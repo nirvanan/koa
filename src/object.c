@@ -389,6 +389,12 @@ object_add (object_t *obj1, object_t *obj2)
 	bin_op_f add_fun;
 
 	if (OBJECT_TYPE (obj1) == OBJECT_TYPE_STR) {
+		if (!OBJECT_IS_STR (obj2)) {
+			error ("can't concat %s to str.", TYPE_NAME (obj2));
+
+			return NULL;
+		}
+
 		add_fun = (OBJECT_OPSET (obj1))->add;
 		
 		return add_fun (obj1, obj2);

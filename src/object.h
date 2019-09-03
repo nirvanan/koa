@@ -46,6 +46,20 @@
 	(x)->head.type==OBJECT_TYPE_INT64||\
 	(x)->head.type==OBJECT_TYPE_UINT64)
 
+#define SIGNED_TYPE(x) ((x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_INT||\
+	(x)->head.type==OBJECT_TYPE_LONG||\
+	(x)->head.type==OBJECT_TYPE_INT8||\
+	(x)->head.type==OBJECT_TYPE_INT16||\
+	(x)->head.type==OBJECT_TYPE_INT32||\
+	(x)->head.type==OBJECT_TYPE_INT64||)
+
+#define UNSIGNED_TYPE (x) ((x)->head.type==OBJECT_TYPE_UINT8||\
+	(x)->head.type==OBJECT_TYPE_UINT16||\
+	(x)->head.type==OBJECT_TYPE_UINT32||\
+	(x)->head.type==OBJECT_TYPE_UINT64)
+
 #define FLOATING_TYPE(x) ((x)->head.type==OBJECT_TYPE_FLOAT||\
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
