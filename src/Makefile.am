@@ -1,7 +1,7 @@
 
 bin_PROGRAMS = koa
 AM_CPPFLAGS =
-AM_LDFLAGS = -lm
+AM_LDFLAGS = 
 koa_SOURCES = boolobject.c \
 boolobject.h \
 charobject.c \
