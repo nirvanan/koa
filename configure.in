@@ -18,6 +18,8 @@ AC_PROG_CC_C99
 PKG_PROG_PKG_CONFIG
 
 # Checks for libraries.
+AC_CHECK_LIB(m, isnan)
+AC_CHECK_LIB(m, isfinite)
 
 # Checks for header files.
 AC_CHECK_HEADERS([inttypes.h limits.h stddef.h stdint.h stdlib.h string.h])
