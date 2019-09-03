@@ -21,6 +21,7 @@
 #include "frame.h"
 #include "pool.h"
 #include "dict.h"
+#include "builtin.h"
 #include "object.h"
 #include "strobject.h"
 #include "vecobject.h"
@@ -96,6 +97,12 @@ opcode_t
 frame_next_opcode (frame_t *frame)
 {
 	return code_get_pos (frame->code, frame->esp++);
+}
+
+opcode_t
+frame_last_opcode (frame_t *frame)
+{
+	return code_get_pos (frame->code, frame->esp - 2);
 }
 
 void
@@ -299,6 +306,12 @@ frame_get_var (frame_t *frame, object_t *name)
 		if ((var = dict_get (frame->global, name)) != NULL) {
 			return (object_t *) var;
 		}
+	}
+
+	/* Lookup buintin. */
+	var = builtin_find (name);
+	if (var != NULL) {
+		return (object_t *) var;
 	}
 
 	error ("variable undefined: %s.", strobject_c_str (name));

@@ -52,4 +52,7 @@ funcobject_get_value (object_t *obj);
 builtin_t *
 funcobject_get_builtin (object_t *obj);
 
+int
+funcobject_is_builtin (object_t *obj);
+
 #endif /* FUNCOBJECT_H */

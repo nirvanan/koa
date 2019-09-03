@@ -21,6 +21,8 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
+#include <stdio.h>
+
 #include "koa.h"
 #include "object.h"
 #include "vec.h"
@@ -36,7 +38,22 @@ object_t *
 builtin_find (object_t *name);
 
 object_t *
-builtin_execute (builtin_t *builtin);
+builtin_execute (builtin_t *builtin, object_t *args);
+
+void
+builtin_free (builtin_t *builtin);
+
+const char *
+builtin_get_name (builtin_t *builtin);
+
+int
+builtin_no_arg (builtin_t *builtin);
+
+object_t *
+builtin_binary (builtin_t *builtin);
+
+builtin_t *
+builtin_load_binary (FILE *f);
 
 void
 builtin_init ();

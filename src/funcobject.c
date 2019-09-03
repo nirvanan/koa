@@ -72,18 +72,40 @@ static object_opset_t g_object_ops =
 void
 funcobject_op_free (object_t *obj)
 {
-	code_free (funcobject_get_value (obj));
+	funcobject_t *func;
+
+	func = (funcobject_t *) obj;
+	if (func->builtin != NULL) {
+		builtin_free (func->builtin);
+	}
+	if (func->val != NULL) { 
+		code_free (func->val);
+	}
 }
 
 /* Print. */
 static void
 funcobject_op_print (object_t *obj)
 {
+	funcobject_t *func;
 	const char *filename;
 	const char *name;
 
-	filename = code_get_filename (funcobject_get_value (obj));
-	name = code_get_name (funcobject_get_value (obj));
+	filename = "unknown";
+	name = "unknown";
+	func = (funcobject_t *) obj;
+	if (func->is_builtin) {
+		filename = "builtin";
+	}
+	else {
+		filename = code_get_filename (func->val);
+	}
+	if (func->is_builtin) {
+		name = builtin_get_name (func->builtin);
+	}
+	else {
+		name = code_get_name (func->val);
+	}
 	printf ("(%s:%s)", filename, name);
 }
 
@@ -91,14 +113,28 @@ funcobject_op_print (object_t *obj)
 static object_t *
 funcobject_op_dump (object_t *obj)
 {
+	funcobject_t *func;
 	const char *filename;
 	const char *name;
 	char *buf;
 	size_t size;
 	object_t *res;
 
-	filename = code_get_filename (funcobject_get_value (obj));
-	name = code_get_name (funcobject_get_value (obj));
+	filename = "unknown";
+	name = "unknown";
+	func = (funcobject_t *) obj;
+	if (func->is_builtin) {
+		filename = "builtin";
+	}
+	else {
+		filename = code_get_filename (func->val);
+	}
+	if (func->is_builtin) {
+		name = builtin_get_name (func->builtin);
+	}
+	else {
+		name = code_get_name (func->val);
+	}
 	size = strlen (filename) + strlen (name) + DUMP_BUF_EXTRA;
 	buf = (char *) pool_calloc (size, sizeof (char));
 	if (buf == NULL) {
@@ -134,13 +170,55 @@ funcobject_op_hash(object_t *obj)
 static object_t *
 funcobject_op_binary (object_t *obj)
 {
-	return code_binary (funcobject_get_value (obj));
+	funcobject_t *func;
+	object_t *type;
+	object_t *bin;
+	object_t *ret;
+
+	func = (funcobject_t *) obj;
+	type = strobject_new (BINARY (func->is_builtin), sizeof (int), 1, NULL);
+	if (type == NULL) {
+		return NULL;
+	}
+	if (func->is_builtin) {
+		bin = builtin_binary (func->builtin);
+	}
+	else {
+		bin = code_binary (funcobject_get_value (obj));
+	}
+	if (bin == NULL) {
+		return NULL;
+	}
+	
+	ret = object_add (type, bin);
+	object_free (type);
+	object_free (bin);
+	
+	return ret;
 }
 
 object_t *
 funcobject_load_binary (FILE *f)
 {
 	code_t *code;
+	int is_builtin;
+
+	if (fread (&is_builtin, sizeof (int), 1, f) != 1) {
+		error ("failed to load func binary.");
+
+		return NULL;
+	}
+
+	if (is_builtin) {
+		builtin_t *builtin;
+
+		builtin = builtin_load_binary (f);
+		if (builtin == NULL) {
+			return NULL;
+		}
+
+		return funcobject_builtin_new (builtin, NULL);
+	}
 
 	code = code_load_binary (NULL, f);
 	if (code == NULL) {
@@ -170,7 +248,7 @@ funcobject_new (void *udata)
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
-	obj->is_builtin = 1;
+	obj->is_builtin = 0;
 	obj->builtin = NULL;
 	obj->val = NULL;
 
@@ -190,7 +268,7 @@ funcobject_code_new (code_t *val, void *udata)
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
-	obj->is_builtin = 1;
+	obj->is_builtin = 0;
 	obj->builtin = NULL;
 	obj->val = val;
 
@@ -237,3 +315,12 @@ funcobject_get_builtin (object_t *obj)
 	return ob->builtin;
 }
 
+int
+funcobject_is_builtin (object_t *obj)
+{
+	funcobject_t *ob;
+
+	ob = (funcobject_t *) obj;
+
+	return ob->is_builtin;
+}

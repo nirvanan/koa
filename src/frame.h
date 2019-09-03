@@ -58,6 +58,9 @@ frame_free (frame_t *frame);
 opcode_t
 frame_next_opcode (frame_t *frame);
 
+opcode_t
+frame_last_opcode (frame_t *frame);
+
 void
 frame_jump (frame_t *frame, para_t pos);
 

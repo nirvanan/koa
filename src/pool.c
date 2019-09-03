@@ -36,8 +36,8 @@
 
 #define POOL_REQUEST_SIZE (1024*1024)
 #define PAGE_SIZE 4096
-#define MAX_CELL_SIZE 256
-#define INIT_POOL_NUM 1
+#define MAX_CELL_SIZE 0
+#define INIT_POOL_NUM 0
 #define RECYCLE_CYCLE 100
 
 #define BLOCK_START(x, s) ((void *)(((intptr_t)(x))&(~((intptr_t)((s)-1)))))

@@ -53,7 +53,6 @@ void koa_init ()
 int main(int argc, char *argv[])
 {
 	koa_init ();
-	return 0;
 	int c = 0;
 
 	while (0) {
@@ -70,7 +69,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/Users/bytedance/test.k");
+		code_t *code = parser_load_file ("/home/likehui/test.k");
 		if (code) {
 			code_print (code);
 			//object_t *str = code_binary (code);
@@ -85,12 +84,12 @@ int main(int argc, char *argv[])
 		else {
 			printf ("wrong\n");
 		}
-		//break;
+		break;
 	}
 
-	int e = 0;
+	int e = -1;
 	while (e--) {
-		interpreter_execute ("/Users/bytedance/test.k");
+		interpreter_execute ("/home/likehui/test.k");
 	}
 
 	return 0;

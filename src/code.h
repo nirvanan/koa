@@ -32,6 +32,8 @@
 #define PARA_BITS 24
 #define PARA_MASK MAX_PARA
 
+#define CODE_NO_ARG(x) ((x)->args==0)
+
 #define OPCODE(o,p) (((o)<<PARA_BITS)|(p))
 
 #define OPCODE_OP(x) ((x)>>PARA_BITS)
@@ -141,7 +143,7 @@ typedef struct code_s {
 	str_t *filename; /* File name of this block. */
 	int func; /* Is this code representing a function? */
 	int lineno; /* The first line number of this block. */
-	int paras; /* Number of parameters. */
+	int args; /* Number of arguments. */
 	object_type_t ret_type; /* Return type of function. */
 } code_t;
 

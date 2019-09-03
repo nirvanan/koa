@@ -23,18 +23,29 @@
 #include "builtin.h"
 #include "pool.h"
 #include "error.h"
+#include "vec.h"
+#include "vecobject.h"
 #include "dictobject.h"
 #include "strobject.h"
 #include "funcobject.h"
+#include "exceptionobject.h"
 
-#define MAX_ARGS 10
+#define MAX_ARGS 256
+
+#define ARG(x, y) ((object_t*)vec_pos(vecobject_get_value((x)),(integer_value_t)y))
+#define DUMMY (object_get_default(OBJECT_TYPE_VOID))
 
 static object_t *g_builtin;
 
 object_t *
 _builtin_print (object_t *args)
 {
-	return NULL;
+	object_t *arg;
+
+	arg = ARG (args, 0);
+	object_print (arg);
+
+	return DUMMY;
 }
 
 typedef struct builtin_slot_s
@@ -56,13 +67,44 @@ static builtin_slot_t g_builtin_slot_list[] =
 object_t *
 builtin_find (object_t *name)
 {
-	return NULL;
+	return object_index (g_builtin, name);
 }
 
 object_t *
-builtin_execute (builtin_t *builtin)
+builtin_execute (builtin_t *builtin, object_t *args)
 {
-	return NULL;
+	builtin_slot_t *slot;
+
+	if (builtin->slot <= 0 || (size_t) builtin->slot > sizeof (g_builtin_slot_list)) {
+		fatal_error ("slot out of bound");
+	}
+
+	slot = &g_builtin_slot_list[builtin->slot - 1];
+	/* Check args. */
+	if (!slot->var_args) {
+		vec_t *v;
+		size_t size;
+
+		v = vecobject_get_value (args);
+		size = vec_size (v);
+		if (size != slot->args) {
+			error ("wrong number of arguments, required: %d, passed: %d.", slot->args, size);
+
+			return NULL; 
+		}
+		for (size_t i = 0; i < size; i++) {
+			object_t *arg;
+
+			arg = vec_pos (v, (integer_value_t) i);
+			if (OBJECT_TYPE (arg) != slot->types[i] && slot->types[i] != OBJECT_TYPE_ALL) {
+				 error ("wrong argument type at position %d.", i + 1);
+
+				 return NULL;
+			}
+		}
+	}
+
+	return slot->fun (args);
 }
 
 static object_t *
@@ -78,6 +120,52 @@ builtin_make (builtin_slot_t *slot)
 	builtin->slot = slot->id;
 
 	return funcobject_builtin_new (builtin, NULL);
+}
+
+void
+builtin_free (builtin_t *builtin)
+{
+	pool_free ((void *) builtin);
+}
+
+const char *
+builtin_get_name (builtin_t *builtin)
+{
+	return g_builtin_slot_list[builtin->slot - 1].name;
+}
+
+int
+builtin_no_arg (builtin_t *builtin)
+{
+	return g_builtin_slot_list[builtin->slot - 1].args == 0;
+}
+
+object_t *
+builtin_binary (builtin_t *builtin)
+{
+	return strobject_new (BINARY (builtin->slot), sizeof (int), 1, NULL);
+}
+
+builtin_t *
+builtin_load_binary (FILE *f)
+{
+	int id;
+	builtin_t *builtin;
+
+	if (fread (&id, sizeof (int), 1, f) != 1) {
+		error ("failed to load builtin binary.");
+
+		return NULL;
+	}
+
+	builtin = (builtin_t *) pool_calloc (1, sizeof (builtin_t));
+	if (builtin == NULL) {
+		return NULL;
+	}
+
+	builtin->slot = id;
+
+	return builtin;
 }
 
 void
@@ -112,5 +200,4 @@ builtin_init ()
 
 		slot++;
 	}
-	object_print (g_builtin);
 }

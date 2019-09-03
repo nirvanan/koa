@@ -367,7 +367,7 @@ code_push_varname (code_t *code, const char *var, object_type_t type, int para)
 	}
 
 	if (para) {
-		code->paras++;
+		code->args++;
 	}
 
 	object_ref (name);
@@ -487,7 +487,7 @@ code_print (code_t *code)
 	size_t size;
 
 	if (code->func) {
-		printf ("parameters: %d\n", code->paras);
+		printf ("parameters: %d\n", code->args);
 	}
 
 	/* Print consts. */
@@ -721,8 +721,8 @@ code_binary (code_t *code)
 		return cur;
 	}
 
-	/* Dump paras. */
-	temp = strobject_new (BINARY (code->paras), sizeof (int), 1, NULL);
+	/* Dump args. */
+	temp = strobject_new (BINARY (code->args), sizeof (int), 1, NULL);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -967,7 +967,7 @@ code_load_binary (const char *path, FILE *f)
 
 	if (fread (&code->func, sizeof (int), 1, b) != 1 ||
 		fread (&code->lineno, sizeof (int), 1, b) != 1 ||
-		fread (&code->paras, sizeof (int), 1, b) != 1 ||
+		fread (&code->args, sizeof (int), 1, b) != 1 ||
 		fread (&code->ret_type, sizeof (object_type_t), 1, b) != 1) {
 		code_free (code);
 		if (f == NULL) {
@@ -1002,19 +1002,19 @@ code_check_args (code_t *code, vec_t *args)
 	size_t size;
 
 	size = vec_size (args);
-	if (size != code->paras) {
-		error ("wrong number of arguments.");
+	if (size != code->args) {
+		error ("wrong number of arguments, required: %d, passed: %d.", code->args, size);
 
 		return 0;
 	}
-	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+	for (size_t i = 0; i < size; i++) {
 		object_t *arg;
 		object_type_t *type;
 
-		arg = (object_t *) vec_pos (args, i);
-		type = (object_type_t *) vec_pos (code->types, i);
+		arg = (object_t *) vec_pos (args, (integer_value_t) i);
+		type = (object_type_t *) vec_pos (code->types, (integer_value_t) i);
 		if (OBJECT_TYPE (arg) != *type) {
-			error ("wrong argument type for pos %d", i + 1);
+			error ("wrong argument type at position %d.", i + 1);
 
 			return 0;
 		}

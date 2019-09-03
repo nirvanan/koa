@@ -25,6 +25,7 @@
 #include "frame.h"
 #include "parser.h"
 #include "code.h"
+#include "builtin.h"
 #include "boolobject.h"
 #include "intobject.h"
 #include "vecobject.h"
@@ -42,6 +43,7 @@ else {\
 static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
+static opcode_t g_opcode_history[2];
 
 static void
 interpreter_stack_rollback ()
@@ -66,7 +68,7 @@ interpreter_recover_exception ()
 		return 0;
 	}
 
-	if (stack_top (g_s) != NULL) {
+	if (stack_top (g_s) != NULL && OBJECT_IS_EXCEPTION ((object_t *) stack_top (g_s))) {
 		frame_set_exception (g_current, (object_t *) stack_top (g_s));
 	}
 	bottom = frame_recover_exception (g_current);
@@ -324,25 +326,64 @@ recover:
 					HANDLE_EXCEPTION;
 				}
 			}
-			if (!interpreter_play (funcobject_get_value (a), 0)) {
-				if (!frame_is_catched (g_current)) {
-					if (stack_get_sp (g_s) != frame_get_bottom (g_current) + 1) {
-						a = stack_pop (g_s);
-						r = stack_set (g_s, frame_get_bottom (g_current), a);
-						if (r != a && r != NULL) {
-							object_free (r);
-						}
-					}
-					interpreter_stack_rollback ();
-				}
+			if (funcobject_is_builtin (a)) {
+				if (OPCODE_OP (frame_last_opcode (g_current)) == OP_MAKE_VEC &&
+					builtin_no_arg (funcobject_get_builtin (a))) {
+					error ("builtin %s requires no argument.", builtin_get_name (funcobject_get_builtin (a)));
+					object_free (a);
 
-				HANDLE_EXCEPTION;
+					HANDLE_EXCEPTION;
+				}
+				if (OPCODE_OP (frame_last_opcode (g_current)) == OP_MAKE_VEC) {
+					b = (object_t *) stack_pop (g_s);
+				}
+				else {
+					b = vecobject_new (0, NULL);
+				}
+				r = builtin_execute (funcobject_get_builtin (a), b);
+				if (r == NULL) {
+					object_free (a);
+					object_free (b);
+
+					HANDLE_EXCEPTION;
+				}
+				object_free (a);
+				object_free (b);
+				break;
 			}
+			else {
+				if (OPCODE_OP (frame_last_opcode (g_current)) == OP_MAKE_VEC &&
+					CODE_NO_ARG (funcobject_get_value (a))) {
+					error ("func %s requires no argument.", code_get_name (funcobject_get_value (a)));
+					object_free (a);
+
+					HANDLE_EXCEPTION;
+				}
+				if (!interpreter_play (funcobject_get_value (a), 0)) {
+					object_free (a);
+					if (!frame_is_catched (g_current)) {
+						if (stack_get_sp (g_s) != frame_get_bottom (g_current) + 1) {
+							a = stack_pop (g_s);
+							r = stack_set (g_s, frame_get_bottom (g_current), a);
+							if (r != a && r != NULL) {
+								object_free (r);
+							}
+						}
+						interpreter_stack_rollback ();
+					}
+
+					HANDLE_EXCEPTION;
+				}
+			}
+			object_free (a);
 			break;
 		case OP_BIND_ARGS:
 			a = (object_t *) stack_pop (g_s);
-			if (a == NULL || OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
-				object_free (a);
+			if (OPCODE_OP (g_opcode_history[1]) != OP_MAKE_VEC ||
+				a == NULL || OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
+				if (a != NULL) {
+					object_free (a);
+				}
 				error ("no argument passed.");
 
 				HANDLE_EXCEPTION;

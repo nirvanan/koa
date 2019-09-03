@@ -201,7 +201,7 @@ exceptionobject_new (const char *val, size_t len, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_EXCEPTION);
 	OBJECT_DIGEST_FUN (obj) = exceptionobject_digest_fun;
 
 	obj->val = str_new (val, len);
@@ -224,7 +224,7 @@ exceptionobject_str_new (str_t *val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_EXCEPTION);
 
 	obj->val = val;
 
