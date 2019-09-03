@@ -37,7 +37,7 @@
 
 static object_t *g_builtin;
 
-object_t *
+static object_t *
 _builtin_print (object_t *args)
 {
 	object_t *arg;
@@ -46,6 +46,15 @@ _builtin_print (object_t *args)
 	object_print (arg);
 
 	return DUMMY;
+}
+
+static object_t *
+_builtin_hash (object_t *args)
+{
+	object_t *arg;
+
+	arg = ARG (args, 0);
+	return object_hash (arg);
 }
 
 typedef struct builtin_slot_s
@@ -61,6 +70,7 @@ typedef struct builtin_slot_s
 static builtin_slot_t g_builtin_slot_list[] =
 {
 	{1, "print", _builtin_print, 0, 1, {OBJECT_TYPE_ALL}},
+	{2, "hash", _builtin_hash, 0, 1, {OBJECT_TYPE_ALL}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 
