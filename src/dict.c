@@ -66,9 +66,7 @@ dict_new (hash_f hf, hash_test_f tf)
 
 	dict = pool_alloc (sizeof (dict_t));
 	if (dict == NULL) {
-		error ("out of memery.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	dict->used = 0;
@@ -82,9 +80,7 @@ dict_new (hash_f hf, hash_test_f tf)
 						dict_hash_cleanup_fun);
 	if (dict->h == NULL) {
 		pool_free ((void *) dict);
-		error ("out of memery.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	return dict;
@@ -199,9 +195,7 @@ dict_set (dict_t *dict, void *key, void *value)
 
 	node = (dict_node_t *) pool_alloc (sizeof (dict_node_t));
 	if (node == NULL) {
-		error ("out of memery.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	node->d = dict;

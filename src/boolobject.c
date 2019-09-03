@@ -200,9 +200,7 @@ boolobject_new (bool val, void *udata)
 
 	obj = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_BOOL);

@@ -470,9 +470,7 @@ dictobject_new (void *udata)
 
 	obj = (dictobject_t *) pool_alloc (sizeof (dictobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT);
@@ -495,9 +493,7 @@ dictobject_dict_new (dict_t *val, void *udata)
 
 	obj = (dictobject_t *) pool_alloc (sizeof (dictobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT);

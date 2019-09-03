@@ -342,9 +342,7 @@ strobject_load_binary (FILE *f)
 
 	data = pool_calloc (len + 1, sizeof (char));
 	if (data == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	if (fread (data, sizeof (char), len, f) != len) {
@@ -391,9 +389,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 
 	obj = (strobject_t *) pool_alloc (sizeof (strobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
@@ -434,9 +430,7 @@ strobject_str_new (str_t *val, void *udata)
 
 	obj = (strobject_t *) pool_alloc (sizeof (strobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);

@@ -209,9 +209,7 @@ charobject_new (char val, void *udata)
 
 	obj = (charobject_t *) pool_alloc (sizeof (charobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_CHAR);

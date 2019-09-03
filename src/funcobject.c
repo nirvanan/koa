@@ -102,9 +102,7 @@ funcobject_op_dump (object_t *obj)
 	size = strlen (filename) + strlen (name) + DUMP_BUF_EXTRA;
 	buf = (char *) pool_calloc (size, sizeof (char));
 	if (buf == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	snprintf (buf, size, "<func %s:%s>", filename, name);
@@ -166,9 +164,7 @@ funcobject_new (void *udata)
 
 	obj = (funcobject_t *) pool_alloc (sizeof (funcobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
@@ -186,9 +182,7 @@ funcobject_code_new (code_t *val, void *udata)
 
 	obj = (funcobject_t *) pool_alloc (sizeof (funcobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);

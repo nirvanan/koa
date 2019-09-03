@@ -36,9 +36,7 @@ stack_new ()
 	stack = (stack_t *) pool_calloc (1, sizeof (stack_t));
 	if (stack == NULL) {
 		vec_free (v);
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	stack->v = v;

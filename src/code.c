@@ -128,17 +128,13 @@ code_new (const char *filename, const char *name)
 	code->filename = str_new (filename, strlen (filename));
 	if (code->filename == NULL) {
 		code_free (code);
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	code->name = str_new (name, strlen (name));
 	if (code->name == NULL) {
 		code_free (code);
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	/* Allocate all data segments. */
@@ -230,9 +226,7 @@ code_insert_opcode (code_t *code, para_t pos, opcode_t opcode, uint32_t line)
 
 	op = (opcode_t *) pool_alloc (sizeof (opcode_t));
 	if (op == NULL) {
-		error ("out of memory.");
-
-		return -1;
+		fatal_error ("out of memory.");
 	}
 
 	*op = opcode;
@@ -240,9 +234,7 @@ code_insert_opcode (code_t *code, para_t pos, opcode_t opcode, uint32_t line)
 	li = pool_alloc (sizeof (uint32_t));
 	if (li == NULL) {
 		pool_free ((void *) op);
-		error ("out of memory.");
-
-		return -1;
+		fatal_error ("out of memory.");
 	}
 
 	*li = line;
@@ -778,9 +770,7 @@ code_save_binary (code_t *code)
 	len = str_len (code->filename);
 	path = (char *) pool_alloc (len + 1);
 	if (path == NULL) {
-		error ("out of memory.");
-
-		return 0;
+		fatal_error ("out of memory.");
 	}
 
 	/* Binary is saved as ".b". */
@@ -925,9 +915,7 @@ code_load_binary (const char *path, FILE *f)
 		len = strlen (path);
 		bin_path = (char *) pool_alloc (len + 1);
 		if (bin_path == NULL) {
-			error ("out of memory.");
-
-			return 0;
+			fatal_error ("out of memory.");
 		}
 
 		strcpy (bin_path, path);
@@ -949,9 +937,7 @@ code_load_binary (const char *path, FILE *f)
 		if (f == NULL) {
 			UNUSED (fclose (b));
 		}
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	if (f == NULL && !code_load_header (b)) {

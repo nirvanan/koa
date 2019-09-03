@@ -45,6 +45,7 @@
 #include "dictobject.h"
 #include "funcobject.h"
 #include "modobject.h"
+#include "exceptionobject.h"
 
 #define TYPE_NAME(x) (g_type_name[(x)->head.type])
 
@@ -1196,6 +1197,8 @@ object_get_default (object_type_t type)
 			return funcobject_new (NULL);
 		case OBJECT_TYPE_MOD:
 			return modobject_new (NULL);
+		case OBJECT_TYPE_EXCEPTION:
+			return exceptionobject_new ("", 0, NULL);
 		default:
 			break;
 	}
@@ -1296,4 +1299,5 @@ object_init ()
 	strobject_init ();
 	vecobject_init ();
 	dictobject_init ();
+	exceptionobject_init ();
 }

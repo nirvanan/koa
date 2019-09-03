@@ -35,9 +35,7 @@ frame_new (code_t *code, frame_t *current, sp_t bottom, int global)
 
 	frame = (frame_t *) pool_calloc (1, sizeof (frame_t));
 	if (frame == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	frame = (frame_t *) list_append (LIST (current), LIST (frame));
@@ -145,9 +143,7 @@ frame_enter_block (frame_t *frame, para_t out, sp_t bottom)
 	block = (block_t *) pool_calloc (1, sizeof (block_t));
 	if (block == NULL) {
 		dict_free (ns);
-		error ("out of memory.");
-
-		return 0;
+		fatal_error ("out of memory.");
 	}
 
 	block->ns = ns;

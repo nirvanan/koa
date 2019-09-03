@@ -259,9 +259,7 @@ floatobject_new (float val, void *udata)
 
 	obj = (floatobject_t *) pool_alloc (sizeof (floatobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FLOAT);

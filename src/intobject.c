@@ -370,9 +370,7 @@ intobject_new (int val, void *udata)
 
 	obj = (intobject_t *) pool_alloc (sizeof (intobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT);

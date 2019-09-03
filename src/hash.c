@@ -56,9 +56,7 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf, hash_del_f df)
 
 	ha = pool_alloc (sizeof (hash_t));
 	if (ha == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	bucket_size = bu * sizeof (list_t *);
@@ -66,9 +64,7 @@ hash_new (size_t bu, hash_f hf, hash_test_f tf, hash_del_f df)
 	ha->h = (list_t **) pool_calloc (bucket_size, sizeof (list_t *));
 	if (ha->h == NULL) {
 		pool_free ((void *) ha);
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 	ha->hf = hf;
 	ha->tf = tf;
@@ -314,9 +310,7 @@ hash_handle_copy (void *hn)
 
 	node = (hash_node_t *) pool_alloc (sizeof (hash_node_t));
 	if (node == NULL) {
-		error ("out of memery.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	memcpy ((void *) node, hn, sizeof (hash_node_t));

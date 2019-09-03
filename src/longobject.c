@@ -365,7 +365,7 @@ longobject_new (long val, void *udata)
 
 	obj = (longobject_t *) pool_alloc (sizeof (longobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
+		fatal_error ("out of memory.");
 
 		return NULL;
 	}

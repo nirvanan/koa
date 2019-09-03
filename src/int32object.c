@@ -355,9 +355,7 @@ int32object_new (int32_t val, void *udata)
 
 	obj = (int32object_t *) pool_alloc (sizeof (int32object_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT32);

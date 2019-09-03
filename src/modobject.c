@@ -98,9 +98,7 @@ modobject_op_dump (object_t *obj)
 	size = strlen (filename) + DUMP_BUF_EXTRA;
 	buf = (char *) pool_calloc (size, sizeof (char));
 	if (buf == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	snprintf (buf, size, "<mod %s>", filename);
@@ -162,9 +160,7 @@ modobject_new (void *udata)
 
 	obj = (modobject_t *) pool_alloc (sizeof (modobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
@@ -182,9 +178,7 @@ modobject_code_new (code_t *val, void *udata)
 
 	obj = (modobject_t *) pool_alloc (sizeof (modobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);

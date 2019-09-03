@@ -364,9 +364,7 @@ vecobject_new (size_t len, void *udata)
 
 	obj = (vecobject_t *) pool_alloc (sizeof (vecobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
@@ -396,9 +394,7 @@ vecobject_vec_new (vec_t *val, void *udata)
 
 	obj = (vecobject_t *) pool_alloc (sizeof (vecobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);

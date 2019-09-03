@@ -259,9 +259,7 @@ doubleobject_new (double val, void *udata)
 
 	obj = (doubleobject_t *) pool_alloc (sizeof (doubleobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DOUBLE);

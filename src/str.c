@@ -35,9 +35,7 @@ str_new (const char *s, size_t len)
 
 	str = (str_t *) pool_alloc (str_size);
 	if (str == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	str->len = len;
@@ -77,9 +75,7 @@ str_empty_str_new (size_t len)
 
 	str = (str_t *) pool_alloc (str_size);
 	if (str == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	str->len = len;

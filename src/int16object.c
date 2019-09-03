@@ -355,9 +355,7 @@ int16object_new (int16_t val, void *udata)
 
 	obj = (int16object_t *) pool_alloc (sizeof (int16object_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT16);

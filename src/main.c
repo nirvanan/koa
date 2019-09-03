@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "pool.h"
 #include "object.h"
 #include "intobject.h"
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		code_t *code = parser_load_file ("/home/likehui/test.k");
 		if (code) {
-			code_print (code);
+			//code_print (code);
 			//object_t *str = code_binary (code);
 			//object_t *str = vecobject_new (40000, NULL);
 			//object_t *bin = object_binary (str);
@@ -71,14 +72,15 @@ int main(int argc, char *argv[])
 			code_free (code);
 			//object_free (str);
 			//object_free (bin);
+			//system ("rm /home/likehui/test.b");
 		}
 		else {
 			printf ("wrong\n");
 		}
-		break;
+		//break;
 	}
 
-	int e = -5;
+	int e = 0;
 	while (e--) {
 		interpreter_execute ("/home/likehui/test.k");
 	}

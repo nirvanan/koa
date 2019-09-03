@@ -355,9 +355,7 @@ int64object_new (int64_t val, void *udata)
 
 	obj = (int64object_t *) pool_alloc (sizeof (int64object_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT64);

@@ -355,9 +355,7 @@ int8object_new (int8_t val, void *udata)
 
 	obj = (int8object_t *) pool_alloc (sizeof (int8object_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT8);

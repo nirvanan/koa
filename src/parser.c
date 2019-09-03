@@ -218,13 +218,6 @@ parser_push_const (code_t *code, object_type_t type, object_t *obj)
 		return (para_t) -1;
 	}
 
-	if (const_exist) {
-		object_free (const_obj);
-	}
-	else {
-		object_ref (const_obj);
-	}
-
 	return const_pos;
 }
 
@@ -2513,6 +2506,8 @@ parser_function_definition (parser_t *parser, code_t *code,
 	/* Push func name. */
 	var_pos = code_push_varname (code, id, OBJECT_TYPE_FUNC, 0);
 	if (var_pos == -1) {
+		code_free (func_code);
+
 		return 0;
 	}
 
@@ -2522,20 +2517,28 @@ parser_function_definition (parser_t *parser, code_t *code,
 	/* Has parameter? */
 	if (!parser_check (parser, TOKEN (')'))) {
 		if (!parser_parameter_list (parser, func_code)) {
+			code_free (func_code);
+
 			return 0;
 		}
 	}
 
 	if (!parser_test_and_next (parser, TOKEN (')'), "missing matching ')'.")) {
+		code_free (func_code);
+
 		return 0;
 	}
 
 	if (!parser_check (parser, TOKEN ('{'))) {
+		code_free (func_code);
+
 		return parser_syntax_error (parser,
 									"missing '{' in function definition.");
 	}
 
 	if (!parser_compound_statement (parser, func_code, UPPER_TYPE_PLAIN, -1)) {
+		code_free (func_code);
+
 		return 0;
 	}
 
@@ -2543,11 +2546,15 @@ parser_function_definition (parser_t *parser, code_t *code,
 	last = code_last_opcode (func_code);
 	if (OPCODE_OP (last) != OP_RETURN) {
 		if (ret_type != OBJECT_TYPE_VOID) {
+			code_free (func_code);
+
 			return parser_syntax_error (parser,
 										"non-void func must return a value.");
 		}
 
 		if (!parser_push_dummy_return (parser, func_code)) {
+			code_free (func_code);
+
 			return 0;
 		}
 	}
@@ -2555,16 +2562,26 @@ parser_function_definition (parser_t *parser, code_t *code,
 	/* Make a new funcobject and push this const. */
 	func_obj = funcobject_code_new (func_code, NULL);
 	if (func_obj == NULL) {
+		code_free (func_code);
+
 		return 0;
 	}
 	const_pos = parser_push_const (code, OBJECT_TYPE_FUNC, func_obj);
 	if (const_pos == -1) {
+		object_free (func_obj);
+
 		return 0;
 	}
 
 	/* Make opcodes and insert them. */
-	return code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) &&
-		code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line);
+	if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line) ||
+		!code_push_opcode (code, OPCODE (OP_STORE_LOCAL, var_pos), line)) {
+		object_free (func_obj);
+
+		return 0;
+	}
+
+	return 1;
 }
 
 /* external-declaration:
@@ -2593,9 +2610,10 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	if (parser_check (parser, TOKEN ('('))) {
 		/* Goes to function-definition. */
 		if (!parser_function_definition (parser, code, type, id)) {
+			lex_token_free (temp);
+
 			return 0;
 		}
-
 		lex_token_free (temp);
 
 		return 1;
@@ -2607,6 +2625,8 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	}
 
 	if (!parser_declaration (parser, code, type, id)) {
+		lex_token_free (temp);
+
 		return 0;
 	}
 
@@ -2762,9 +2782,7 @@ parser_load_file (const char *path)
 	parser = (parser_t *) pool_calloc (1, sizeof (parser_t));
 	if (parser == NULL) {
 		code_free (code);
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	parser->reader = lex_reader_new (path, parser_file_reader,
@@ -2810,23 +2828,22 @@ parser_load_buf (const char *path, str_t *buf)
 
 	b = (buf_read_t *) pool_alloc (sizeof (buf_read_t));
 	if (b == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		code_free (code);
+		fatal_error ("out of memory.");
 	}
 	b->buf = buf;
 	b->p = 0;
 
 	parser = (parser_t *) pool_calloc (1, sizeof (parser_t));
 	if (parser == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		code_free (code);
+		fatal_error ("out of memory.");
 	}
 
 	parser->reader = lex_reader_new (path, parser_buf_reader,
 		parser_buf_clear, (void *) b);
 	if (parser->reader == NULL) {
+		code_free (code);
 		pool_free ((void *) parser);
 
 		return NULL;

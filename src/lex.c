@@ -182,9 +182,7 @@ lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata)
 
 	reader = (reader_t *) pool_calloc (1, sizeof (reader_t));
 	if (reader == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	reader->path = path;
@@ -571,6 +569,7 @@ lex_read_char (reader_t *reader, token_t *token)
 		}
 	}
 
+	lex_save_char (reader, token, -1, 1);
 	if (reader->current != '\'') {
 		return lex_token_error (reader, token,
 								"multiple chars in char literal.");

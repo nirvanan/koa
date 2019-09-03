@@ -165,9 +165,7 @@ exceptionobject_load_binary (FILE *f)
 
 	data = pool_calloc (len + 1, sizeof (char));
 	if (data == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	if (fread (data, sizeof (char), len, f) != len) {
@@ -200,9 +198,7 @@ exceptionobject_new (const char *val, size_t len, void *udata)
 
 	obj = (exceptionobject_t *) pool_alloc (sizeof (exceptionobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
@@ -225,9 +221,7 @@ exceptionobject_str_new (str_t *val, void *udata)
 
 	obj = (exceptionobject_t *) pool_alloc (sizeof (exceptionobject_t));
 	if (obj == NULL) {
-		error ("out of memory.");
-
-		return NULL;
+		fatal_error ("out of memory.");
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
