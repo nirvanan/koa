@@ -5329,7 +5329,7 @@ fi
 if test "x$enable_debug" = "xyes"; then :
   CFLAGS="-g2 -O0 -DDEBUG -Wall"
 elif test "x$enable_debug" = "xno"; then :
-  CFLAGS="-O2 -Wall"
+  CFLAGS="-O3 -Wall"
 fi
 
 ac_config_files="$ac_config_files Makefile src/Makefile"

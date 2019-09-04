@@ -41,7 +41,7 @@ AC_CHECK_FUNCS([memset modf strtol])
 # Enable debug or not. 
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [enable DEBUG mode(default=no)]),[], [enable_debug=no])
 AS_IF([test "x$enable_debug" = "xyes"], [CFLAGS="-g2 -O0 -DDEBUG -Wall"], 
-	  [test "x$enable_debug" = "xno"], [CFLAGS="-O2 -Wall"], [])
+	  [test "x$enable_debug" = "xno"], [CFLAGS="-O3 -Wall"], [])
 
 AC_CONFIG_FILES([Makefile
 src/Makefile
