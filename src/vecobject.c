@@ -38,6 +38,7 @@ static object_t *vecobject_op_ipindex (object_t *obj1,
 									   object_t *obj2, object_t *obj3);
 static object_t *vecobject_op_hash (object_t *obj);
 static object_t *vecobject_op_binary (object_t *obj);
+static object_t *vecobject_op_len (object_t *obj);
 
 static object_t *g_dump_head;
 static object_t *g_dump_tail;
@@ -69,7 +70,8 @@ static object_opset_t g_object_ops =
 	vecobject_op_index, /* Index. */
 	vecobject_op_ipindex, /* Inplace index. */
 	vecobject_op_hash, /* Hash. */
-	vecobject_op_binary /* Binary. */
+	vecobject_op_binary, /* Binary. */
+	vecobject_op_len /* Len. */
 };
 
 /* Free. */
@@ -292,6 +294,19 @@ vecobject_op_binary (object_t *obj)
 	}
 	
 	return temp;
+}
+
+/* Len. */
+static object_t *
+vecobject_op_len (object_t *obj)
+{
+	vec_t *vec;
+	size_t size;
+
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+
+	return uint64object_new ((uint64_t) size, NULL);
 }
 
 object_t *

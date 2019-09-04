@@ -65,7 +65,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
 	funcobject_op_hash, /* Hash. */
-	funcobject_op_binary /* Binary. */
+	funcobject_op_binary, /* Binary. */
+	NULL /* Len. */
 };
 
 /* Free. */

@@ -39,6 +39,7 @@ static object_t *dictobject_op_ipindex (object_t *obj1,
 										object_t *obj2, object_t *obj3);
 static object_t *dictobject_op_hash (object_t *obj);
 static object_t *dictobject_op_binary (object_t *obj);
+static object_t *dictobject_op_len (object_t *obj);
 
 static object_t *g_dump_head;
 static object_t *g_dump_tail;
@@ -71,7 +72,8 @@ static object_opset_t g_object_ops =
 	dictobject_op_index, /* Index. */
 	dictobject_op_ipindex, /* Inplace index. */
 	dictobject_op_hash, /* Hash. */
-	dictobject_op_binary /* Binary. */
+	dictobject_op_binary, /* Binary. */
+	dictobject_op_len /* Binary. */
 };
 
 /* Free. */
@@ -380,6 +382,19 @@ dictobject_op_binary (object_t *obj)
 	vec_free (pairs);
 
 	return temp;
+}
+
+/* Len. */
+static object_t *
+dictobject_op_len (object_t *obj)
+{
+	dict_t *dict;
+	size_t size;
+
+	dict = dictobject_get_value (obj);
+	size = dict_size (dict);
+
+	return uint64object_new ((uint64_t) size, NULL);
 }
 
 /* Hash function for dict. */

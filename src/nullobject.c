@@ -64,7 +64,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
 	nullobject_op_hash, /* Hash. */
-	nullobject_op_binary /* Binary. */
+	nullobject_op_binary, /* Binary. */
+	NULL /* Len. */
 };
 
 /* Equality. */

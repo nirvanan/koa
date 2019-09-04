@@ -57,6 +57,15 @@ _builtin_hash (object_t *args)
 	return object_hash (arg);
 }
 
+static object_t *
+_builtin_len (object_t *args)
+{
+	object_t *arg;
+
+	arg = ARG (args, 0);
+	return object_len (arg);
+}
+
 typedef struct builtin_slot_s
 {
 	int id;
@@ -71,6 +80,7 @@ static builtin_slot_t g_builtin_slot_list[] =
 {
 	{1, "print", _builtin_print, 0, 1, {OBJECT_TYPE_ALL}},
 	{2, "hash", _builtin_hash, 0, 1, {OBJECT_TYPE_ALL}},
+	{3, "len", _builtin_len, 0, 1, {OBJECT_TYPE_ALL}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 

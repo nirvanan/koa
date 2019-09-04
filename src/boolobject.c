@@ -70,7 +70,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
 	boolobject_op_hash, /* Hash. */
-	boolobject_op_binary /* Binary. */
+	boolobject_op_binary, /* Binary. */
+	NULL /* Len. */
 };
 
 /* Print. */

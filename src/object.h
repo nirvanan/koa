@@ -206,6 +206,7 @@ typedef struct object_opset_s
 	ter_op_f ipindex;
 	una_op_f hash;
 	una_op_f binary;
+	una_op_f len;
 } object_opset_t;
 
 void
@@ -321,6 +322,9 @@ object_load_binary (FILE *f);
 
 void
 object_print (object_t *obj);
+
+object_t *
+object_len (object_t *obj);
 
 void
 object_init ();

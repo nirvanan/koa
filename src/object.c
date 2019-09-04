@@ -1294,6 +1294,21 @@ object_print (object_t *obj)
 	print_fun (obj);
 }
 
+object_t *
+object_len (object_t *obj)
+{
+	una_op_f len_fun;
+
+	len_fun = (OBJECT_OPSET (obj))->len;
+	if (len_fun == NULL) {
+		error ("%s has no print routine.", TYPE_NAME (obj));
+
+		return NULL;
+	}	
+
+	return len_fun (obj);
+}
+
 void
 object_init ()
 {

@@ -80,7 +80,8 @@ static object_opset_t g_object_ops =
 	NULL, /* Index. */
 	NULL, /* Inplace index. */
 	int8object_op_hash, /* Hash. */
-	int8object_op_binary /* Binary. */
+	int8object_op_binary, /* Binary. */
+	NULL /* Len. */
 };
 
 /* Logic Not. */

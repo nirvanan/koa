@@ -56,6 +56,7 @@ static object_t *strobject_op_cmp (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_index (object_t *obj1, object_t *obj2);
 static object_t *strobject_op_hash (object_t *obj);
 static object_t *strobject_op_binary (object_t *obj);
+static object_t *strobject_op_len (object_t *obj);
 
 static object_opset_t g_object_ops =
 {
@@ -83,7 +84,8 @@ static object_opset_t g_object_ops =
 	strobject_op_index, /* Index. */
 	NULL, /* Inplace index. */ /* Note that str objects are read-only! */
 	strobject_op_hash, /* Hash. */
-	strobject_op_binary /* Binary. */
+	strobject_op_binary, /* Binary. */
+	strobject_op_len /* Len. */
 };
 
 /* Free. */
@@ -106,9 +108,11 @@ strobject_op_print (object_t *obj)
 
 	str = strobject_get_value (obj);
 	len = str_len (str);
+	printf ("\"");
 	for (size_t i = 0; i < len; i++) {
 		printf ("%c", str_pos (str, (integer_value_t) i));
 	}
+	printf ("\"");
 }
 
 /* Dump. */
@@ -303,6 +307,19 @@ strobject_op_binary (object_t *obj)
 	object_free (len_obj);
 
 	return res;
+}
+
+/* Len. */
+static object_t *
+strobject_op_len (object_t *obj)
+{
+	str_t *str;
+	size_t len;
+
+	str = strobject_get_value (obj);
+	len = str_len (str);
+
+	return uint64object_new ((uint64_t) len, NULL);
 }
 
 object_t *
