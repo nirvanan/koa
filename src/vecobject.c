@@ -110,7 +110,7 @@ vecobject_op_print (object_t *obj)
 	vec = vecobject_get_value (obj);
 	size = vec_size (vec);
 	printf ("[");
-	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		element = (object_t *) vec_pos (vec, i);
 		object_print (element);
 		if (i != (integer_value_t) size - 1) {
@@ -459,6 +459,21 @@ vecobject_traverse (object_t *obj, traverse_f fun, void *udata)
 			object_ref (dummy);
 		}
 	}
+}
+
+int
+vecobject_append (object_t *obj, object_t *element)
+{
+	vec_t *vec;
+
+	vec = vecobject_get_value (obj);
+	if (vec_push_back (vec, (void *) element) == 0) {
+		return 0;
+	}
+
+	object_ref (element);
+
+	return 1;
 }
 
 void

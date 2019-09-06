@@ -89,11 +89,9 @@ exceptionobject_op_print (object_t *obj)
 
 	str = exceptionobject_get_value (obj);
 	len = str_len (str);
-	printf ("\"");
 	for (size_t i = 0; i < len; i++) {
 		printf ("%c", str_pos (str, (integer_value_t) i));
 	}
-	printf ("\"");
 }
 
 /* Dump. */

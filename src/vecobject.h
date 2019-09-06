@@ -46,6 +46,9 @@ vecobject_get_value (object_t *obj);
 void
 vecobject_traverse (object_t *obj, traverse_f fun, void *udata);
 
+int
+vecobject_append (object_t *obj, object_t *element);
+
 void
 vecobject_init ();
 

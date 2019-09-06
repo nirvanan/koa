@@ -1349,7 +1349,6 @@ parser_try_statement (parser_t *parser, code_t *code)
 	}
 
 	/* Emit an LEAVE_BLOCK. */
-	leave_pos = code_current_pos (code) + 1;
 	line = TOKEN_LINE (parser->token);
 	if (!code_push_opcode (code, OPCODE (OP_LEAVE_BLOCK, 0), line)) {
 		return 0;

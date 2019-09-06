@@ -32,7 +32,8 @@
 
 #define MAX_ARGS 256
 
-#define ARG(x, y) ((object_t*)vec_pos(vecobject_get_value((x)),(integer_value_t)y))
+#define ARG(x, y) ((object_t*)vec_pos(vecobject_get_value((x)),vec_size(vecobject_get_value((x)))-1-(integer_value_t)y))
+#define ARG_SIZE(x) (vec_size(vecobject_get_value((x))))
 #define DUMMY (object_get_default(OBJECT_TYPE_VOID))
 
 static object_t *g_builtin;
@@ -54,6 +55,7 @@ _builtin_hash (object_t *args)
 	object_t *arg;
 
 	arg = ARG (args, 0);
+
 	return object_hash (arg);
 }
 
@@ -63,7 +65,36 @@ _builtin_len (object_t *args)
 	object_t *arg;
 
 	arg = ARG (args, 0);
+
 	return object_len (arg);
+}
+
+static object_t *
+_builtin_append (object_t *args)
+{
+	object_t *vec;
+
+
+	/* The first argument must be vec. */
+	vec = ARG(args, 0);
+	if (vec == NULL || !OBJECT_IS_VEC (vec)) {
+		error ("the first argument of append must be vec.");
+
+		return NULL;
+	}
+	if (ARG(args, 1) == NULL) {
+		error ("no element to append.");
+
+		return NULL;
+	}
+
+	for (int i = 1; ARG(args, i) != NULL; i++) {
+		if (vecobject_append (vec, ARG(args, i)) == 0) {
+			return NULL;
+		}
+	}
+
+	return DUMMY;
 }
 
 typedef struct builtin_slot_s
@@ -81,6 +112,7 @@ static builtin_slot_t g_builtin_slot_list[] =
 	{1, "print", _builtin_print, 0, 1, {OBJECT_TYPE_ALL}},
 	{2, "hash", _builtin_hash, 0, 1, {OBJECT_TYPE_ALL}},
 	{3, "len", _builtin_len, 0, 1, {OBJECT_TYPE_ALL}},
+	{4, "append", _builtin_append, 1, 0, {}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 
@@ -157,7 +189,8 @@ builtin_get_name (builtin_t *builtin)
 int
 builtin_no_arg (builtin_t *builtin)
 {
-	return g_builtin_slot_list[builtin->slot - 1].args == 0;
+	return g_builtin_slot_list[builtin->slot - 1].args == 0 &&
+		!g_builtin_slot_list[builtin->slot - 1].var_args;
 }
 
 object_t *
