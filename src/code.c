@@ -1026,9 +1026,9 @@ code_check_args (code_t *code, vec_t *args)
 		object_t *arg;
 		object_type_t *type;
 
-		arg = (object_t *) vec_pos (args, (integer_value_t) i);
+		arg = (object_t *) vec_pos (args, (integer_value_t) size - 1 - i);
 		type = (object_type_t *) vec_pos (code->types, (integer_value_t) i);
-		if (OBJECT_TYPE (arg) != *type) {
+		if (OBJECT_TYPE (arg) != *type && !CAN_CAST (OBJECT_TYPE (arg), *type)) {
 			error ("wrong argument type at position %d.", i + 1);
 
 			return 0;

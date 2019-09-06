@@ -28,6 +28,8 @@
 #include "stack.h"
 #include "object.h"
 
+#define FRAME_UPPER(x) ((frame_t *)LIST_NEXT(x))
+
 typedef struct block_s
 {
 	list_t link;

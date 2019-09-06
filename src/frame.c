@@ -27,8 +27,6 @@
 #include "vecobject.h"
 #include "error.h"
 
-#define FRAME_UPPER(x) ((frame_t *)LIST_NEXT(x))
-
 frame_t *
 frame_new (code_t *code, frame_t *current, sp_t bottom, int global)
 {
@@ -334,9 +332,17 @@ frame_bind_args (frame_t *frame, object_t *args)
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		object_t *arg;
 		object_t *name;
+		object_type_t arg_type;
 
 		arg = (object_t *) vec_pos (v, i);
-		name = code_get_varname (frame->code, (para_t) i);
+		name = code_get_varname (frame->code, (para_t) size - 1 - i);
+		arg_type = code_get_vartype (frame->code, (para_t) size - 1 - i);
+		if (OBJECT_TYPE (arg) != arg_type) {
+			arg = object_cast (arg, arg_type);
+			if (arg == NULL) {
+				return 0;
+			}
+		}
 		if (!frame_store_local (frame, name, arg)) {
 			return 0;
 		}

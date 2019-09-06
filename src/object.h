@@ -82,6 +82,23 @@
 #define CONTAINER_TYPE(x) ((x)->head.type == OBJECT_TYPE_VEC||\
 	(x)->head.type == OBJECT_TYPE_DICT)
 
+#define CAST_TYPE(x) ((x)==OBJECT_TYPE_BOOL||\
+	(x)==OBJECT_TYPE_CHAR||\
+	(x)==OBJECT_TYPE_INT||\
+	(x)==OBJECT_TYPE_LONG||\
+	(x)==OBJECT_TYPE_INT8||\
+	(x)==OBJECT_TYPE_UINT8||\
+	(x)==OBJECT_TYPE_INT16||\
+	(x)==OBJECT_TYPE_UINT16||\
+	(x)==OBJECT_TYPE_INT32||\
+	(x)==OBJECT_TYPE_UINT32||\
+	(x)==OBJECT_TYPE_INT64||\
+	(x)==OBJECT_TYPE_UINT64||\
+	(x)==OBJECT_TYPE_FLOAT||\
+	(x)==OBJECT_TYPE_DOUBLE)
+
+#define CAN_CAST(x, y) (CAST_TYPE((x))&&CAST_TYPE((y)))
+
 #define OBJECT_REF(x) ((x)->head.ref)
 #define OBJECT_TYPE(x) ((x)->head.type)
 #define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))

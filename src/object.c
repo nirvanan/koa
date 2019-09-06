@@ -220,8 +220,7 @@ object_cast (object_t *obj, object_type_t type)
 			case OBJECT_TYPE_DOUBLE:
 				return doubleobject_new ((double) val, NULL);
 			default:
-				error ("try to cast numberical object to %s.", TYPE_NAME (obj));
-
+				error ("try to cast numberical object to %s.", g_type_name[type]);
 				return NULL;
 		}
 	}
@@ -259,8 +258,7 @@ object_cast (object_t *obj, object_type_t type)
 			case OBJECT_TYPE_DOUBLE:
 				return doubleobject_new ((double) val, NULL);
 			default:
-				error ("try to cast numberical object to %s.", TYPE_NAME (obj));
-
+				error ("try to cast numberical object to %s.", g_type_name[type]);
 				return NULL;
 		}
 	}

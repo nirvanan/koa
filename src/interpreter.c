@@ -47,7 +47,6 @@ static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
 static int g_gc_op_count;
-static opcode_t g_opcode_history[2];
 
 static void
 interpreter_stack_rollback ()
@@ -387,7 +386,7 @@ recover:
 			break;
 		case OP_BIND_ARGS:
 			a = (object_t *) stack_pop (g_s);
-			if (OPCODE_OP (g_opcode_history[1]) != OP_MAKE_VEC ||
+			if (OPCODE_OP (frame_last_opcode (FRAME_UPPER (g_current))) != OP_MAKE_VEC ||
 				a == NULL || OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
 				if (a != NULL) {
 					object_free (a);
