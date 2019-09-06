@@ -1,11 +1,13 @@
 # Koa
 A fast static typed script language.
-## Proposals
+## Features
 - Complete C-style syntactics.
 - Fast data types.
 - Simple and clean builtin functions.
-- SP-based stack.
-- Simple object system and gc.
+- Stack-based virtual machine.
+- Simple object system.
+- Generation-based garbage collection.
+- Easy-to-use coroutine utility.
 ## Standard
 Koa is implemented as a subset of [ISO/IEC 9899:1999](https://www.iso.org/standard/29237.html) standard plus some builtin data structures and tokens.
 ## Installation

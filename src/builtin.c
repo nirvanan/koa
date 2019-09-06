@@ -220,4 +220,7 @@ builtin_init ()
 
 		slot++;
 	}
+	
+	object_ref (g_builtin);
+	gc_untrack (g_builtin);
 }

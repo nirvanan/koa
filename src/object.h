@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "koa.h"
+#include "gc.h"
 #include "str.h"
 
 /* In koa world, we do not present unsigned integers explitly,
@@ -78,6 +79,9 @@
 	(x)->head.type==OBJECT_TYPE_FLOAT||\
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
+#define CONTAINER_TYPE(x) ((x)->head.type == OBJECT_TYPE_VEC||\
+	(x)->head.type == OBJECT_TYPE_DICT)
+
 #define OBJECT_REF(x) ((x)->head.ref)
 #define OBJECT_TYPE(x) ((x)->head.type)
 #define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))
@@ -86,11 +90,12 @@
 #define OBJECT_DIGEST_FUN(x) ((x)->head.digest_fun)
 #define OBJECT_UDATA(x) ((x)->head.udata)
 
-#define OBJECT_NEW_INIT(x, t) OBJECT_REF ((x)) = 0;\
-	OBJECT_TYPE ((x)) = t;\
-	OBJECT_OPSET_P ((x)) = (void *) &g_object_ops;\
-	OBJECT_DIGEST ((x)) = 0;\
-	OBJECT_UDATA ((x)) = udata
+#define OBJECT_NEW_INIT(x, t) OBJECT_REF((x))=0;\
+	OBJECT_TYPE((x))=t;\
+	OBJECT_OPSET_P((x))=(void*)&g_object_ops;\
+	OBJECT_DIGEST ((x))=0;\
+	OBJECT_UDATA ((x))=udata;\
+	GC_INIT(((gc_head_t*)(x)))
 
 #define OBJECT_BIGGER(o1, o2) (OBJECT_TYPE((o1))<OBJECT_TYPE((o2))?\
 	object_cast((o1),OBJECT_TYPE((o2))):(o1))
@@ -158,6 +163,7 @@ typedef uint64_t (*digest_f) (void *obj);
 
 typedef struct object_head_s
 {
+	gc_head_t gc;
 	int ref;
 	object_type_t type;
 	uint64_t digest;
@@ -178,6 +184,8 @@ typedef void (*void_una_op_f) (object_t *obj);
 typedef object_t *(*bin_op_f) (object_t *obj1, object_t *obj2); 
 
 typedef object_t *(*ter_op_f) (object_t *obj1, object_t *obj2, object_t *ob3);
+
+typedef int (*traverse_f) (object_t *obj, void *data);
 
 typedef struct object_opset_s
 {
@@ -325,6 +333,9 @@ object_print (object_t *obj);
 
 object_t *
 object_len (object_t *obj);
+
+void
+object_traverse (object_t *obj, traverse_f fun, void *udata);
 
 void
 object_init ();

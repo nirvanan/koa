@@ -44,6 +44,9 @@ dict_t *
 dictobject_get_value (object_t *obj);
 
 void
+dictobject_traverse (object_t *obj, traverse_f fun, void *udata);
+
+void
 dictobject_init ();
 
 #endif /* DICTOBJECT_H */

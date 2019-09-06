@@ -346,6 +346,23 @@ pool_calloc (size_t member, size_t size)
 }
 
 static int
+pool_find_page_fun (list_t *list, void *data)
+{
+	page_hash_t *ph;
+	page_t **page;
+
+	ph = (page_hash_t *) list;
+	page = (page_t **) data;
+	if (ph->p == *page) {
+		*page = NULL;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+static int
 pool_is_pool_cell (void *bl)
 {
 	page_t *page;
@@ -354,7 +371,9 @@ pool_is_pool_cell (void *bl)
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 	h = (intptr_t) page % PAGE_HASH_BUCKET;
 
-	return list_find (g_page_hash[h], LIST (page->hash));
+	list_foreach (g_page_hash[h], pool_find_page_fun, (void *) &page);
+
+	return page == NULL;
 }
 
 static void

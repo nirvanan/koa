@@ -25,11 +25,14 @@
 
 #include "koa.h"
 
-#define LIST(x) ((list_t *)x)
-
-#define LIST_NEXT(x) (((list_t *)(x))->next)
-
-#define LIDT_PREV(x) (((list_t *)(x))->prev)
+#define LIST(x) ((list_t*)x)
+#define LIST_CLEAR(x) ((x)->prev=(x)->next=NULL)
+#define LIST_SET_SINGLE(x) ((x)->prev=(x)->next=(x))
+#define LIST_NEXT(x) (((list_t*)(x))->next)
+#define LIST_PREV(x) (((list_t*)(x))->prev)
+#define LIST_NULL {NULL,NULL}
+#define LIST_SINGLE(x) {(x),(x)}
+#define LIST_IS_SINGLE(x) ((x)->next==(x))
 
 typedef struct list_s
 {
@@ -46,6 +49,9 @@ list_append (list_t *list, list_t *n);
 
 list_t *
 list_remove (list_t *list, list_t *n);
+
+void
+list_merge (list_t *a, list_t *b);
 
 int
 list_find (list_t *list, void *data);

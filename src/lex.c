@@ -971,4 +971,7 @@ lex_init()
 
 		re++;
 	}
+
+	object_ref (g_reserved_tokens);
+	gc_untrack (g_reserved_tokens);
 }

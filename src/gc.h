@@ -1,5 +1,5 @@
 /*
- * vecobject.h
+ * gc.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,35 +18,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef VECOBJECT_H
-#define VECOBJECT_H
+#ifndef GC_H
+#define GC_H
 
 #include "koa.h"
-#include "object.h"
-#include "vec.h"
+#include "list.h"
 
-typedef struct vecobject_s
+#define GC_REF(x) ((x)->gc_ref)
+#define GC_STATUS(x) ((x)->status)
+#define GC_NULL {LIST_NULL,GC_STATUS_UNTRACKED,0}
+#define GC_INIT(x) GC_REF((x))=0;\
+	GC_STATUS((x))=GC_STATUS_UNTRACKED;\
+	LIST_CLEAR(&(x)->link)
+
+typedef enum gc_status_e
 {
-	object_head_t head;
-	vec_t *val;
-} vecobject_t;
+	GC_STATUS_UNTRACKED,
+	GC_STATUS_REACHABLE,
+	GC_STATUS_UNREACHABLE
+} gc_status_t;
 
-object_t *
-vecobject_load_binary (FILE *f);
-
-object_t *
-vecobject_new (size_t len, void *udata);
-
-object_t *
-vecobject_vec_new (vec_t *val, void *udata);
-
-vec_t *
-vecobject_get_value (object_t *obj);
+typedef struct gc_head_s
+{
+	list_t link;
+	int gc_ref;
+	gc_status_t status;
+} gc_head_t;
 
 void
-vecobject_traverse (object_t *obj, traverse_f fun, void *udata);
+gc_track (void *obj);
 
 void
-vecobject_init ();
+gc_untrack (void *obj);
 
-#endif /* VECOBJECT_H */
+void
+gc_collect ();
+
+#endif /* GC_H */

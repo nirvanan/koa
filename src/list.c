@@ -26,13 +26,23 @@
 list_t *
 list_append (list_t *list, list_t *n)
 {
-	n->next = list;
-	n->prev = NULL;
-	if (list != NULL) {
-		list->prev = n;
+	if (list == NULL || list->prev == NULL) {
+		n->next = list;
+		n->prev = NULL;
+		if (list != NULL) {
+			n->prev = list->prev;
+			list->prev = n;
+		}
+
+		return n;
 	}
 
-	return n;
+	n->next = list;
+	n->prev = list->prev;
+	list->prev->next = n;
+	list->prev = n;
+
+	return list;
 }
 
 list_t *
@@ -55,13 +65,25 @@ list_remove (list_t *list, list_t *n)
 	return head;
 }
 
+void
+list_merge (list_t *a, list_t *b)
+{
+	a->next->prev = b->prev;
+	b->prev->next = a->next;
+	a->next = b;
+	b->prev = a;
+}
+
 int
 list_find (list_t *list, void *data)
 {
 	list_t *l;
    
-	l = list;
-	while (l != NULL) {
+	if (list != NULL && (void *) list == data) {
+		return 1;
+	}
+	l = list == NULL? NULL: list->next;
+	while (l != NULL && l != list) {
 		if ((void *) l == data) {
 			return 1;
 		}
@@ -79,8 +101,8 @@ list_cleanup (list_t *list, list_del_f df, int need_free, void *udata)
 	list_t *head;
 	list_t *next;
 
-	l = list;
 	head = list;
+	l = list;
 	while (l != NULL) {
 		next = l->next;
 		if (df (l, udata) > 0) {
@@ -100,13 +122,21 @@ void
 list_foreach (list_t *list, list_for_f ff, void *udata)
 {
 	list_t *l;
+	list_t *next;
 
-	l = list;
-	while (l != NULL) {
+	l = NULL;
+	if (list != NULL) {
+		l = list->next;
+		if (ff (list, udata) > 0) {
+			return;
+		}
+	}
+	while (l != NULL && l != list) {
+		next = l->next;
 		if (ff (l, udata) > 0) {
 			return;
 		}
-		l = l->next;
+		l = next;
 	}
 }
 

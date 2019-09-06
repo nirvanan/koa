@@ -315,6 +315,7 @@ code_push_const (code_t *code, object_t *var, int *exist)
 	}
 
 	*exist = 0;
+
 	object_ref (var);
 
 	/* Return the index of this new var. */
@@ -577,6 +578,7 @@ code_object_to_binary (vec_t *vec)
 	}
 
 	res = object_binary (obj);
+	gc_untrack (obj);
 	/* Data can not be freed. */
 	pool_free ((void *) obj);
 
@@ -854,6 +856,7 @@ static vec_t *
 code_binary_to_object (FILE *f)
 {
 	vec_t *vec;
+	size_t size;
 	object_t *obj;
 
 	obj = object_load_binary (f);
@@ -861,6 +864,11 @@ code_binary_to_object (FILE *f)
 		return NULL;
 	}
 	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+	gc_untrack (obj);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		gc_untrack ((object_t *) vec_pos(vec, i)); 
+	}
 	pool_free ((void *) obj);
 
 	return vec;
@@ -987,7 +995,14 @@ code_load_binary (const char *path, FILE *f)
 object_t *
 code_get_const (code_t *code, para_t pos)
 {
-	return (object_t *) vec_pos (code->consts, (integer_value_t) pos);
+	object_t *obj;
+
+	obj = (object_t *) vec_pos (code->consts, (integer_value_t) pos);
+	if (CONTAINER_TYPE (obj)) {
+		return object_get_default (OBJECT_TYPE (obj));
+	}
+
+	return obj;
 }
 
 object_t *

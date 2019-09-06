@@ -16,6 +16,8 @@ dictobject.c \
 dictobject.h \
 doubleobject.c \
 doubleobject.h \
+error.c \
+error.h \
 exceptionobject.c \
 exceptionobject.h \
 floatobject.c \
@@ -24,8 +26,8 @@ frame.c \
 frame.h \
 funcobject.c \
 funcobject.h \
-error.c \
-error.h \
+gc.c \
+gc.h \
 hash.c \
 hash.h \
 interpreter.c \

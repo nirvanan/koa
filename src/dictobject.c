@@ -23,6 +23,7 @@
 #include "dictobject.h"
 #include "pool.h"
 #include "hash.h"
+#include "gc.h"
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
@@ -99,11 +100,15 @@ dictobject_op_free (object_t *obj)
 		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
 		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
 		object_unref (key);
-		object_unref (value);
+		if (value != obj) {
+			object_unref (value);
+		}
 	}
 
 	vec_free (pairs);
 	dict_free (dict);
+
+	gc_untrack ((void *) obj);
 }
 
 /* Print. */
@@ -299,10 +304,8 @@ dictobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	}
 
 	object_ref (obj3);
-	if (prev == NULL) {
-		object_ref (obj2);
-	}
-	else {
+	object_ref (obj2);
+	if (prev != NULL) {
 		object_unref (prev);
 	}
 
@@ -466,10 +469,12 @@ dictobject_load_binary (FILE *f)
 
 			return NULL;
 		}
+
+		object_ref (key);
+		object_ref (value);
 	}
 
 	return dictobject_dict_new (dict, NULL);
-
 }
 
 static uint64_t
@@ -498,6 +503,8 @@ dictobject_new (void *udata)
 		return NULL;
 	}
 
+	gc_track ((void *) obj);
+
 	return (object_t *) obj;
 }
 
@@ -516,6 +523,8 @@ dictobject_dict_new (dict_t *val, void *udata)
 
 	obj->val = val;
 
+	gc_track ((void *) obj);
+
 	return (object_t *) obj;
 }
 
@@ -527,6 +536,39 @@ dictobject_get_value (object_t *obj)
 	ob = (dictobject_t *) obj;
 
 	return ob->val;
+}
+
+void
+dictobject_traverse (object_t *obj, traverse_f fun, void *udata)
+{
+	dict_t *dict;
+	vec_t *pairs;
+	size_t size;
+
+	dict = dictobject_get_value (obj);
+	pairs = dict_pairs (dict);
+	if (pairs == NULL) {
+		return;
+	}
+
+	size = vec_size (pairs);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *key;
+		object_t *value;
+
+		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
+		UNUSED (fun (key, udata));
+		if (fun (value, udata) > 0) {
+			object_t *dummy;
+
+			dummy = object_get_default (OBJECT_TYPE_VOID);
+			dict_set (dict, (void *) key, (void *) dummy);
+			object_ref (dummy);
+		}
+	}
+
+	vec_free (pairs);
 }
 
 void

@@ -92,6 +92,7 @@ static object_opset_t g_dummy_ops =
 static object_t g_dummy_object = 
 {
 	{
+		GC_NULL, 
 		1,
 		OBJECT_TYPE_VOID,
 		0,
@@ -1307,6 +1308,21 @@ object_len (object_t *obj)
 	}	
 
 	return len_fun (obj);
+}
+
+void
+object_traverse (object_t *obj, traverse_f fun, void *udata)
+{
+	switch (OBJECT_TYPE (obj)) {
+	case OBJECT_TYPE_VEC:
+		vecobject_traverse (obj, fun, udata);
+		break;
+	case OBJECT_TYPE_DICT:
+		dictobject_traverse (obj, fun, udata);
+		break;
+	default:
+		fatal_error ("can't traverse %s", TYPE_NAME (obj));
+	}
 }
 
 void

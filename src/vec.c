@@ -37,9 +37,7 @@ vec_new (size_t size)
 	vec_t *vec;
 
 	if (size > MAX_VEC_SIZE) {
-		error ("vec too big.");
-
-		return NULL;
+		fatal_error ("vec too big.");
 	}
 
 	req = size;

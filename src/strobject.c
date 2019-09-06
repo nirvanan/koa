@@ -413,6 +413,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 
 		obj->hn = hn;
 		obj->hashed = 1;
+		object_ref ((object_t *) obj);
 	}
 
 	return (object_t *) obj;

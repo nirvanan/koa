@@ -26,12 +26,15 @@
 #include "parser.h"
 #include "code.h"
 #include "builtin.h"
+#include "gc.h"
+#include "error.h"
 #include "boolobject.h"
 #include "intobject.h"
 #include "vecobject.h"
 #include "funcobject.h"
 #include "exceptionobject.h"
-#include "error.h"
+
+#define GC_OP_COUNT 1000
 
 #define HANDLE_EXCEPTION if (interpreter_recover_exception ()) {\
 	goto recover;\
@@ -43,6 +46,7 @@ else {\
 static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
+static int g_gc_op_count;
 static opcode_t g_opcode_history[2];
 
 static void
@@ -100,12 +104,16 @@ interpreter_play (code_t *code, int global)
 
 recover:
 	while ((opcode = frame_next_opcode (g_current))) {
+		g_gc_op_count++;
 		op = OPCODE_OP (opcode);
 		para = OPCODE_PARA (opcode);
 		r = NULL;
 		switch (op) {
 		case OP_LOAD_CONST:
 			r = code_get_const (code, para);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
 			break;
 		case OP_STORE_LOCAL:
 			a = code_get_varname (code, para);
@@ -1102,6 +1110,10 @@ recover:
 			if (!frame_leave_block (g_current)) {
 				HANDLE_EXCEPTION;
 			}
+			if (g_gc_op_count > GC_OP_COUNT) {
+				gc_collect ();
+				g_gc_op_count = 0;
+			}
 			break;
 		case OP_RETURN:
 			a = (object_t *) stack_pop (g_s);
@@ -1122,6 +1134,10 @@ recover:
 				HANDLE_EXCEPTION;
 			}
 			g_current = frame_free (g_current);
+			if (g_gc_op_count > GC_OP_COUNT) {
+				gc_collect ();
+				g_gc_op_count = 0;
+			}
 			return 1;
 		case OP_PUSH_BLOCKS:
 			for (para_t i = 0; i < para; i++) {
@@ -1204,6 +1220,8 @@ interpreter_execute (const char *path)
 	}
 	code_free (code);
 	g_runtime_started = 0;
+	
+	gc_collect ();
 }
 
 void

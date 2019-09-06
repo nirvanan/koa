@@ -79,7 +79,6 @@ int main(int argc, char *argv[])
 			code_free (code);
 			//object_free (str);
 			//object_free (bin);
-			//system ("rm /home/likehui/test.b");
 		}
 		else {
 			printf ("wrong\n");
@@ -90,9 +89,6 @@ int main(int argc, char *argv[])
 	int e = -1;
 	while (e--) {
 		interpreter_execute ("/home/likehui/test.k");
-		if (e % 10000 == 0) {
-			printf ("done %d\n", e);
-		}
 	}
 
 	return 0;

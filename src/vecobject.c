@@ -21,6 +21,7 @@
 
 #include "vecobject.h"
 #include "pool.h"
+#include "gc.h"
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
@@ -85,10 +86,17 @@ vecobject_op_free (object_t *obj)
 	size = vec_size (vec);
 	/* Unref all elements. */
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		object_unref ((object_t *) vec_pos (vec, i));
+		object_t *value;
+
+		value = (object_t *) vec_pos (vec, i);
+		if (value != obj) {
+			object_unref (value);
+		}
 	}
 
 	vec_free (vec);
+
+	gc_untrack ((void *) obj);
 }
 
 /* Print. */
@@ -109,7 +117,7 @@ vecobject_op_print (object_t *obj)
 			printf (",");
 		}
 	}
-	printf ("[");
+	printf ("]");
 }
 
 static object_t *
@@ -399,6 +407,8 @@ vecobject_new (size_t len, void *udata)
 		return NULL;
 	}
 
+	gc_track ((void *) obj);
+
 	return (object_t *) obj;
 }
 
@@ -417,6 +427,8 @@ vecobject_vec_new (vec_t *val, void *udata)
 
 	obj->val = val;
 
+	gc_track ((void *) obj);
+
 	return (object_t *) obj;
 }
 
@@ -428,6 +440,25 @@ vecobject_get_value (object_t *obj)
 	ob = (vecobject_t *) obj;
 
 	return ob->val;
+}
+
+void
+vecobject_traverse (object_t *obj, traverse_f fun, void *udata)
+{
+	vec_t *vec;
+	size_t size;
+
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		if (fun ((object_t *) vec_pos (vec, i), udata) > 0) {
+			object_t *dummy;
+
+			dummy = object_get_default (OBJECT_TYPE_VOID);
+			vec_set (vec, i, dummy);
+			object_ref (dummy);
+		}
+	}
 }
 
 void
