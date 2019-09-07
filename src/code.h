@@ -48,6 +48,7 @@
 	OPCODE_OP(x)==OP_JUMP_DEFAULT)
 
 #define FUNC_RET_TYPE(x) ((x)->ret_type)
+#define FUNC_ARG_NUM(x) ((x)->args)
 
 typedef int32_t para_t;
 

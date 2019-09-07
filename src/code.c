@@ -998,7 +998,7 @@ code_get_const (code_t *code, para_t pos)
 	object_t *obj;
 
 	obj = (object_t *) vec_pos (code->consts, (integer_value_t) pos);
-	if (CONTAINER_TYPE (obj)) {
+	if (obj != NULL && CONTAINER_TYPE (obj)) {
 		return object_get_default (OBJECT_TYPE (obj));
 	}
 

@@ -249,6 +249,16 @@ lex_token_free (token_t *token)
 	pool_free ((void *) token);
 }
 
+static token_t *
+lex_token_error (reader_t *reader, token_t *token, const char *err)
+{
+	error ("lex error: %s:%d: %s", reader->path, reader->line, err);
+	lex_token_free (token);
+	reader->broken = 1;
+
+	return NULL;
+}
+
 static void
 lex_new_line (reader_t *reader, token_t *token, char prev)
 {
@@ -270,6 +280,46 @@ lex_set_type_and_next (reader_t *reader, token_t *token, token_type_t type)
 {
 	token->type = type;
 	lex_next_char (reader);
+}
+
+static void
+lex_skip_line_comment (reader_t *reader, token_t *token)
+{
+	while (reader->current != '\n' && reader->current != EOF) {
+		lex_next_char (reader);
+	}
+	lex_set_type_and_next (reader, token, TOKEN_COMMENT);
+}
+
+static token_t *
+lex_skip_block_comment (reader_t *reader, token_t *token)
+{
+	char prev;
+
+	lex_next_char (reader);
+	prev = reader->current;
+	if (prev == EOF) {
+		lex_token_error (reader, token, "unterminated block comment.");
+
+		return NULL;
+	}
+	lex_next_char (reader);
+	while (reader->current != EOF) {
+		if (prev == '*' && reader->current == '/') {
+			break;
+		}
+		prev = reader->current;
+		lex_next_char (reader);
+	}
+	if (reader->current == EOF) {
+		lex_token_error (reader, token, "unterminated block comment.");
+
+		return NULL;
+	}
+
+	lex_set_type_and_next (reader, token, TOKEN_COMMENT);
+
+	return token;
 }
 
 static token_t *
@@ -350,6 +400,12 @@ lex_check_one_ahead (reader_t *reader, token_t *token)
 			if (reader->current == '=') {
 				lex_set_type_and_next (reader, token, TOKEN_IPDIV);
 			}
+			else if (reader->current == '/') {
+				lex_skip_line_comment (reader, token);
+			}
+			else if (reader->current == '*') {
+				return lex_skip_block_comment (reader, token);
+			}
 			break;
 		case '%':
 			if (reader->current == '=') {
@@ -402,16 +458,6 @@ lex_save_char (reader_t *reader, token_t *token, char c, int next)
 	if (next) {
 		lex_next_char (reader);
 	}
-}
-
-static token_t *
-lex_token_error (reader_t *reader, token_t *token, const char *err)
-{
-	error ("lex error: %s:%d: %s", reader->path, reader->line, err);
-	lex_token_free (token);
-	reader->broken = 1;
-
-	return NULL;
 }
 
 static int
@@ -885,7 +931,11 @@ lex_next (reader_t *reader)
 			case '/':
 			case '%':
 			case '^':
-				return lex_check_one_ahead (reader, token);
+				token = lex_check_one_ahead (reader, token);
+				if (token != NULL && token->type == TOKEN_COMMENT) {
+					continue;
+				}
+				return token;
 			case '\'':
 				return lex_read_char (reader, token);
 			case '\"':

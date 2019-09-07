@@ -2652,6 +2652,17 @@ parser_insert_main_code (parser_t *parser, code_t *code)
 			if (func_code != NULL && strcmp (code_get_name (func_code), "main") == 0) {
 				uint32_t line;
 
+				/* Check the return type and argument list. */
+				if (FUNC_RET_TYPE (func_code) != OBJECT_TYPE_INT) {
+					parser_syntax_error (parser, "main func must return int.");
+
+					return 0;
+				}
+				if (FUNC_ARG_NUM (func_code) != 0) {
+					parser_syntax_error (parser, "main func must receive no argument.");
+
+					return 0;
+				}
 				line = TOKEN_LINE (parser->token);
 				/* Emit a OP_LOAD_CONST and OP_CALL_FUNC. */
 				if (code_push_opcode (code, OPCODE (OP_LOAD_CONST, i), line) == 0) {

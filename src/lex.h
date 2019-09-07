@@ -159,7 +159,8 @@ typedef enum token_type_e
 	TOKEN_EXPO, /* Constant: exponential floating. */
 	TOKEN_CHARACTER, /* Constant: character. */
 	TOKEN_IDENTIFIER, /* Primary-expression: identifier. */
-	TOKEN_STRING /* Primary-expression: string. */
+	TOKEN_STRING, /* Primary-expression: string. */
+	TOKEN_COMMENT /* Comment. */
 } token_type_t;
 
 typedef struct token_s

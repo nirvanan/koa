@@ -84,7 +84,7 @@ frame_free (frame_t *frame)
 	if (frame->exception != NULL) {
 		object_unref (frame->exception);
 	}
-	upper = FRAME_UPPER (frame);
+	upper = (frame_t *) list_remove (LIST (frame), LIST (frame));
 	list_cleanup (LIST (frame->current), frame_block_cleanup_fun, 1, NULL);
 	pool_free ((void *) frame);
 

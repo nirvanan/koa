@@ -30,6 +30,7 @@
 #include "error.h"
 #include "boolobject.h"
 #include "intobject.h"
+#include "strobject.h"
 #include "vecobject.h"
 #include "funcobject.h"
 #include "exceptionobject.h"
@@ -67,6 +68,9 @@ interpreter_recover_exception ()
 	sp_t bottom;
 	object_t *obj;
 
+	if (g_current == NULL) {
+		return 0;
+	}
 	if (!frame_is_catched (g_current)) {
 		return 0;
 	}
@@ -151,6 +155,11 @@ recover:
 		case OP_LOAD_VAR:
 			a = code_get_varname (code, para);
 			if ((r = frame_get_var (g_current, a)) == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			else if (OBJECT_IS_NULL (r)) {
+				error ("variable undefined: %s.", strobject_c_str (a));
+
 				HANDLE_EXCEPTION;
 			}
 			break;

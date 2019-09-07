@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 		else {
 			printf ("wrong\n");
 		}
+		//system("rm /home/nirvanan/test.b");
 		break;
 	}
 
