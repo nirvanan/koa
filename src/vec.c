@@ -293,10 +293,10 @@ vec_remove (vec_t *vec, integer_value_t pos)
 }
 
 void
-vec_foreach (vec_t *vec, vec_foreach_f ff)
+vec_foreach (vec_t *vec, vec_foreach_f ff, void *udata)
 {
 	for (size_t i = 0; i < vec->size; i++) {
-		if (ff (vec->v[i]) > 0) {
+		if (ff (vec->v[i], udata) > 0) {
 			return;
 		}
 	}

@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/home/nirvanan/test.k");
+		code_t *code = parser_load_file ("/home/likehui/test.k");
 		if (code) {
 			code_print (code);
 			//object_t *str = code_binary (code);
@@ -83,13 +83,16 @@ int main(int argc, char *argv[])
 		else {
 			printf ("wrong\n");
 		}
-		//system("rm /home/nirvanan/test.b");
+		//system("rm /home/likehui/test.b");
 		break;
 	}
 
 	int e = -1;
 	while (e--) {
-		interpreter_execute ("/home/nirvanan/test.k");
+		interpreter_execute ("/home/likehui/test.k");
+		if (e % 10000 == 0) {
+			printf ("done %d\n", e);
+		}
 	}
 
 	return 0;

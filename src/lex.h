@@ -160,6 +160,7 @@ typedef enum token_type_e
 	TOKEN_CHARACTER, /* Constant: character. */
 	TOKEN_IDENTIFIER, /* Primary-expression: identifier. */
 	TOKEN_STRING, /* Primary-expression: string. */
+	TOKEN_STRUCT, /* Type-specifier: struct. */
 	TOKEN_COMMENT /* Comment. */
 } token_type_t;
 

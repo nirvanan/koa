@@ -1205,7 +1205,8 @@ object_get_default (object_type_t type)
 		case OBJECT_TYPE_EXCEPTION:
 			return exceptionobject_new ("", 0, NULL);
 		default:
-			break;
+			error ("no default value for %s.", g_type_name[type]);
+			return NULL;
 	}
 
 	return NULL;

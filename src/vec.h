@@ -26,7 +26,7 @@
 #include "koa.h"
 
 typedef int (*vec_find_f) (void *a, void *b);
-typedef int (*vec_foreach_f) (void *data);
+typedef int (*vec_foreach_f) (void *data, void *udata);
 
 typedef struct vec_s {
 	size_t size;
@@ -83,6 +83,6 @@ int
 vec_remove (vec_t *vec, integer_value_t pos);
 
 void
-vec_foreach (vec_t *vec, vec_foreach_f ff);
+vec_foreach (vec_t *vec, vec_foreach_f ff, void *udata);
 
 #endif /* VEC_H */

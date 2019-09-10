@@ -124,6 +124,8 @@
 #define FLOATING_IS_INFINITY(x) (!isfinite((x))&&!isnan((x)))
 #define FLOATING_FINITE(x) isfinite((x))
 
+#define STRUCT_INDEX(x) ((x)-OBJECT_TYPE_STRUCT)
+
 #define OBJECT_IS_DUMMY(x) (OBJECT_TYPE((x))==OBJECT_TYPE_VOID)
 #define OBJECT_IS_NULL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_NULL)
 #define OBJECT_IS_BOOL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BOOL)
@@ -146,6 +148,7 @@
 #define OBJECT_IS_FUNC(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FUNC)
 #define OBJECT_IS_FRAME(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FRAME)
 #define OBJECT_IS_EXCEPTION(x) (OBJECT_TYPE((x))==OBJECT_TYPE_EXCEPTION)
+#define OBJECT_IS_STRUCT(x) (OBJECT_TYPE((x))>=OBJECT_TYPE_STRUCT)
 
 typedef enum object_type_e
 {
@@ -174,6 +177,10 @@ typedef enum object_type_e
 	OBJECT_TYPE_MOD = 0x14,
 	OBJECT_TYPE_FRAME = 0x15,
 	OBJECT_TYPE_EXCEPTION = 0x16,
+	/* This is used as the base index of all
+	 * struct types. This value is the type of
+	 * the first struct type of code object. */
+	OBJECT_TYPE_STRUCT = 0x17
 } object_type_t;
 
 typedef uint64_t (*digest_f) (void *obj);

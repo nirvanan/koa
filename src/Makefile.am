@@ -68,6 +68,8 @@ str.c \
 str.h \
 strobject.c \
 strobject.h \
+struct.c \
+struct.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \

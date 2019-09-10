@@ -5,6 +5,7 @@ translation-unit:
 external-declaration:
 	function-definition
 	declaration
+	struct-specifier
 
 function-definition:
 	type-specifier identifier ( parameter-listopt ) compound-statement
@@ -20,6 +21,17 @@ type-specifier:
 	vec
 	dict
 	func
+	struct identifier
+
+struct-specifier:
+	struct identifier { struct-declaration-listopt }
+
+struct-declaration-list:
+	struct-declaration
+	struct-declaration-list
+
+struct-declaration:
+	type-specifier identifier ;
 
 parameter-list:
 	parameter-declaration

@@ -140,6 +140,7 @@ typedef struct code_s {
 	vec_t *types; /* Type of local variables. */
 	vec_t *consts; /* All consts appears in this block. */
 	vec_t *varnames; /* The names of local variables (parameters included). */
+	vec_t *structs; /* All struct specifiers. */
 	str_t *name; /* Reference name of this block (or function name). */
 	str_t *filename; /* File name of this block. */
 	int func; /* Is this code representing a function? */

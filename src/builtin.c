@@ -76,20 +76,20 @@ _builtin_append (object_t *args)
 
 
 	/* The first argument must be vec. */
-	vec = ARG(args, 0);
+	vec = ARG (args, 0);
 	if (vec == NULL || !OBJECT_IS_VEC (vec)) {
 		error ("the first argument of append must be vec.");
 
 		return NULL;
 	}
-	if (ARG(args, 1) == NULL) {
+	if (ARG (args, 1) == NULL) {
 		error ("no element to append.");
 
 		return NULL;
 	}
 
-	for (int i = 1; ARG(args, i) != NULL; i++) {
-		if (vecobject_append (vec, ARG(args, i)) == 0) {
+	for (int i = 1; ARG (args, i) != NULL; i++) {
+		if (vecobject_append (vec, ARG (args, i)) == 0) {
 			return NULL;
 		}
 	}

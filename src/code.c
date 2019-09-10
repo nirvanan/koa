@@ -25,6 +25,7 @@
 #include "error.h"
 #include "pool.h"
 #include "object.h"
+#include "struct.h"
 #include "longobject.h"
 #include "strobject.h"
 #include "vecobject.h"
@@ -126,16 +127,7 @@ code_new (const char *filename, const char *name)
 	}
 
 	code->filename = str_new (filename, strlen (filename));
-	if (code->filename == NULL) {
-		code_free (code);
-		fatal_error ("out of memory.");
-	}
-
 	code->name = str_new (name, strlen (name));
-	if (code->name == NULL) {
-		code_free (code);
-		fatal_error ("out of memory.");
-	}
 
 	/* Allocate all data segments. */
 	code->opcodes = vec_new (0);
@@ -143,9 +135,10 @@ code_new (const char *filename, const char *name)
 	code->types = vec_new (0);
 	code->consts = vec_new (0);
 	code->varnames = vec_new (0);
+	code->structs = vec_new (0);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
 		code->types == NULL || code->consts == NULL ||
-		code->varnames == NULL) {
+		code->varnames == NULL || code->structs == NULL) {
 		code_free (code);
 
 		return NULL;
@@ -163,7 +156,7 @@ code_set_func (code_t *code, uint32_t line, object_type_t ret_type)
 }
 
 static int
-code_vec_free_fun (void *data)
+code_vec_free_fun (void *data, void *udata)
 {
 	pool_free (data);
 
@@ -171,9 +164,17 @@ code_vec_free_fun (void *data)
 }
 
 static int
-code_vec_unref_fun (void *data)
+code_vec_unref_fun (void *data, void *udata)
 {
 	object_unref ((object_t *) data);
+
+	return 0;
+}
+
+static int
+code_vec_struct_free_fun (void *data, void *udata)
+{
+	struct_free ((struct_t *) data);
 
 	return 0;
 }
@@ -182,24 +183,28 @@ void
 code_free (code_t *code)
 {
 	if (code->opcodes != NULL) {
-		vec_foreach (code->opcodes, code_vec_free_fun);
+		vec_foreach (code->opcodes, code_vec_free_fun, NULL);
 		vec_free (code->opcodes);
 	}
 	if (code->lineinfo != NULL) {
-		vec_foreach (code->lineinfo, code_vec_free_fun);
+		vec_foreach (code->lineinfo, code_vec_free_fun, NULL);
 		vec_free (code->lineinfo);
 	}
 	if (code->types != NULL) {
-		vec_foreach (code->types, code_vec_free_fun);
+		vec_foreach (code->types, code_vec_free_fun, NULL);
 		vec_free (code->types);
 	}
 	if (code->consts != NULL) {
-		vec_foreach (code->consts, code_vec_unref_fun);
+		vec_foreach (code->consts, code_vec_unref_fun, NULL);
 		vec_free (code->consts);
 	}
 	if (code->varnames != NULL) {
-		vec_foreach (code->varnames, code_vec_unref_fun);
+		vec_foreach (code->varnames, code_vec_unref_fun, NULL);
 		vec_free (code->varnames);
+	}
+	if (code->structs != NULL) {
+		vec_foreach (code->structs, code_vec_struct_free_fun, NULL);
+		vec_free (code->structs);
 	}
 	if (code->filename != NULL) {
 		str_free (code->filename);
@@ -585,6 +590,38 @@ code_object_to_binary (vec_t *vec)
 	return res;
 }
 
+static int
+code_structs_concat (void *data, void *udata)
+{
+	struct_t *meta;
+	str_t **str;
+	str_t *dump;
+	str_t *new;
+
+	meta = (struct_t *) data;
+	str = (str_t **) udata;
+	dump = struct_to_binary (meta);
+	new = str_concat (*str, dump);
+	str_free (*str);
+	str_free (dump);
+	*str = new;
+
+	return 0;
+}
+
+static object_t *
+code_structs_to_binary (vec_t *vec)
+{
+	str_t *str;
+	size_t len;
+
+	len = vec_size (vec);
+	str = str_new ((const char *) &len, sizeof (size_t));
+	vec_foreach (vec, code_structs_concat, &str);
+
+	return strobject_str_new (str, NULL);
+}
+
 static object_t *
 code_str_to_binary (str_t *str)
 {
@@ -635,10 +672,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump types. */
 	temp = code_vec_to_binary (code->types, sizeof (object_type_t));
 	if (temp == NULL) {
@@ -647,10 +680,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump consts. */
 	temp = code_object_to_binary (code->consts);
 	if (temp == NULL) {
@@ -659,10 +688,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump varnames. */
 	temp = code_object_to_binary (code->varnames);
 	if (temp == NULL) {
@@ -671,10 +696,14 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
+	/* Dump structs. */
+	temp = code_structs_to_binary (code->structs);
+	if (temp == NULL) {
+		object_free (cur);
 
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
 	/* Dump name. */
 	temp = code_str_to_binary (code->name);
 	if (temp == NULL) {
@@ -683,10 +712,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump filename. */
 	temp = code_str_to_binary (code->filename);
 	if (temp == NULL) {
@@ -695,10 +720,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump func. */
 	temp = strobject_new (BINARY (code->func), sizeof (int), 1, NULL);
 	if (temp == NULL) {
@@ -707,10 +728,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump lineno. */
 	temp = strobject_new (BINARY (code->lineno), sizeof (int), 1, NULL);
 	if (temp == NULL) {
@@ -719,10 +736,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump args. */
 	temp = strobject_new (BINARY (code->args), sizeof (int), 1, NULL);
 	if (temp == NULL) {
@@ -731,10 +744,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
-
 	/* Dump ret_type. */
 	temp = strobject_new (BINARY (code->ret_type), sizeof (object_type_t), 1, NULL);
 	if (temp == NULL) {
@@ -743,9 +752,6 @@ code_binary (code_t *code)
 		return NULL;
 	}
 	cur = code_binary_concat (cur, temp);
-	if (cur == NULL) {
-		return cur;
-	}
 
 	return cur;
 }
@@ -874,6 +880,33 @@ code_binary_to_object (FILE *f)
 	return vec;
 }
 
+static vec_t *
+code_binary_to_struct (FILE *f)
+{
+	vec_t *vec;
+	size_t size;
+
+	if (fread (&size, sizeof (size_t), 1, f) != 1) {
+		error ("failed to load size while load structs.");
+
+		return NULL;
+	}
+	vec = vec_new (size);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		struct_t *meta;
+
+		meta = struct_load_binary (f);
+		if (meta == NULL) {
+			vec_foreach (vec, code_vec_struct_free_fun, NULL);
+			vec_free (vec);
+
+			return NULL;
+		}
+	}
+
+	return vec;
+}
+
 static str_t *
 code_binary_to_str (FILE *f)
 {
@@ -959,12 +992,13 @@ code_load_binary (const char *path, FILE *f)
 	code->types = code_binary_to_vec (b, sizeof (object_type_t));
 	code->consts = code_binary_to_object (b);
 	code->varnames = code_binary_to_object (b);
+	code->structs = code_binary_to_struct (b);
 	code->name = code_binary_to_str (b);
 	code->filename = code_binary_to_str (b);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
 		code->types == NULL || code->consts == NULL ||
-		code->varnames == NULL || code->name == NULL ||
-		code->filename == NULL) {
+		code->varnames == NULL || code->structs == NULL ||
+		code->name == NULL || code->filename == NULL) {
 		code_free (code);
 		if (f == NULL) {
 			UNUSED (fclose (b));

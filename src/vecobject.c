@@ -339,6 +339,9 @@ vecobject_load_binary (FILE *f)
 
 		obj = object_load_binary (f);
 		if (obj == NULL) {
+			for (integer_value_t j = 0; j < (integer_value_t) i; j++) {
+				object_free ((object_t *) vec_pos (vec, j));
+			}
 			vec_free (vec);
 
 			return NULL;
