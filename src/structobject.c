@@ -82,7 +82,7 @@ structobject_op_free (object_t *obj)
 	members = ((structobject_t *) obj)->members;
 	size = vec_size (members);
 	for (size_t i = 0; i < size; i++) {
-		object_free ((object_t *) vec_pos (members, (integer_value_t) i));
+		object_unref ((object_t *) vec_pos (members, (integer_value_t) i));
 	}
 
 	vec_free (members);
@@ -312,6 +312,7 @@ structobject_new (code_t *code, object_type_t type, void *udata)
 		field = struct_get_field_type (meta, (integer_value_t) i);
 		member = object_get_default (field, (void *) code);
 		UNUSED (vec_set (members, (integer_value_t) i, (void *) member));
+		object_ref (member);
 	}
 
 	gc_track ((void *) obj);

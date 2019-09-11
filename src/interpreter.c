@@ -152,8 +152,6 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_top (g_s);
 			if ((c = frame_store_var (g_current, a, b)) == NULL) {
-				object_free (b);
-
 				HANDLE_EXCEPTION;
 			}
 			object_unref (c);
