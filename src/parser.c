@@ -48,6 +48,7 @@ typedef struct parser_s
 	reader_t *reader; /* Token stream source. */
 	const char *path; /* Source file path. */
 	token_t *token; /* Current token. */
+	code_t *global; /* Top level. */
 } parser_t;
 
 typedef struct buf_read_s
@@ -191,14 +192,31 @@ parser_test_and_next (parser_t *parser, token_type_t need, const char *err)
 }
 
 static object_type_t
-parser_token_object_type (parser_t *parser)
+parser_token_object_type (parser_t *parser, code_t *code, int insert)
 {
+	object_type_t type;
+
 	/* token can be NULL if lex error occurred. */
 	if (parser->token == NULL) {
 		return OBJECT_TYPE_ERR;
 	}
 
-	return lex_get_token_object_type (parser->token);
+	type = lex_get_token_object_type (parser->token);
+	if (type == OBJECT_TYPE_STRUCT) {
+		parser_next_token (parser);
+		if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+			return OBJECT_TYPE_ERR;
+		}
+		type = code_find_struct (parser->global, TOKEN_ID (parser->token));
+		if (type == OBJECT_TYPE_ERR && !insert) {
+			return OBJECT_TYPE_ERR;
+		}
+		if (type == OBJECT_TYPE_ERR && insert) {
+			type = code_make_new_struct (parser->global, TOKEN_ID (parser->token));
+		}
+	}
+
+	return type;
 }
 
 static int
@@ -211,7 +229,7 @@ parser_push_const (code_t *code, object_type_t type, object_t *obj)
 	const_exist = 0;
 	const_obj = obj;
 	if (const_obj == NULL) {
-		const_obj = object_get_default (type);
+		const_obj = object_get_default (type, NULL);
 	}
 	if (const_obj == NULL ||
 		(const_pos = code_push_const (code, const_obj, &const_exist)) == -1) {
@@ -2168,7 +2186,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 
 		line = TOKEN_LINE (parser->token);
 		parser_next_token (parser);
-		type = parser_token_object_type (parser);
+		type = parser_token_object_type (parser, code, 0);
 		/* Oops, it's an unary-expression,
 		 * and we skipped its leading parenthese. */
 		if (type == OBJECT_TYPE_ERR) {
@@ -2177,6 +2195,10 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		else if (type == OBJECT_TYPE_VOID) {
 			return parser_syntax_error (parser,
 										"can not cast any type to void.");
+		}
+		else if (STRUCT_INDEX (type) >= 0) {
+			return parser_syntax_error (parser,
+										"can not cast any type to struct.");
 		}
 		
 		parser_next_token (parser);
@@ -2299,17 +2321,12 @@ parser_init_declarator (parser_t *parser, code_t *code,
 		}
 	}
 	else {
-		para_t const_pos;
-
-		const_pos = parser_push_const (code, type, NULL);
-		if (const_pos == -1) {
+		/* Emit a STORE_DEF opcpde. */
+		if (!code_push_opcode (code, OPCODE (OP_STORE_DEF, var_pos), line)) {
 			return 0;
 		}
 
-		/* Emit a LOAD_CONST opcpde. */
-		if (!code_push_opcode (code, OPCODE (OP_LOAD_CONST, const_pos), line)) {
-			return 0;
-		}
+		return 1;
 	}
 
 	/* Emit a STORE_LOCAL opcode. */
@@ -2347,7 +2364,7 @@ parser_declaration (parser_t *parser, code_t *code,
 
 	t = type;
 	if (t == -1) {
-		t = parser_token_object_type (parser);
+		t = parser_token_object_type (parser, code, 0);
 		if (t == OBJECT_TYPE_VOID) {
 			return parser_syntax_error (parser, "variable can not be void.");
 		}
@@ -2421,8 +2438,8 @@ static int
 parser_parameter_declaration (parser_t *parser, code_t *code)
 {
 	object_type_t type;
-	type = parser_token_object_type (parser);
 
+	type = parser_token_object_type (parser, code, 0);
 	if (type == OBJECT_TYPE_ERR) {
 		return parser_syntax_error (parser, "unknown parameter type.");
 	}
@@ -2444,7 +2461,6 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 
 	parser_next_token (parser);
 
-	/* Make opcodes and insert them. */
 	return 1;
 }
 
@@ -2583,9 +2599,90 @@ parser_function_definition (parser_t *parser, code_t *code,
 	return 1;
 }
 
+/* struct-declaration:
+ * type-specifier identifier ; */
+static int
+parser_struct_declaration (parser_t *parser, code_t *code, object_type_t type, object_type_t field_type)
+{
+	if (field_type == OBJECT_TYPE_ERR) {
+		return parser_syntax_error (parser, "unknown field type.");
+	}
+	else if (type == OBJECT_TYPE_VOID) {
+		return parser_syntax_error (parser, "field can not be a void.");
+	}
+	if (type == field_type) {
+		return parser_syntax_error (parser, "field type is the same with struct type.");
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+		return parser_syntax_error (parser, "missing identifier name.");
+	}
+	if (!code_push_field (code, type, field_type, TOKEN_ID (parser->token))) {
+		return 0;
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN (';'))) {
+		return parser_syntax_error (parser, "missing ';' after field declaration.");
+	}
+
+	parser_next_token (parser);
+
+	return 1;
+}
+
+/* struct-declaration-list:
+ * struct-declaration
+ * struct-declaration struct-declaration-list */
+static int
+parser_struct_declaration_list (parser_t *parser, code_t *code, object_type_t type)
+{
+	object_type_t field_type;
+
+	while ((field_type = parser_token_object_type (parser, code, 0)) !=
+		   OBJECT_TYPE_ERR) {
+		if (!parser_struct_declaration (parser, code, type, field_type)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/* struct-specifier:
+ * struct* identifier* { struct-declaration-listopt } ;*/
+static int
+parser_struct_specifier (parser_t *parser, code_t *code, object_type_t type)
+{
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN ('{'))) {
+		return parser_syntax_error (parser, "missing '{' in struct specifier.");
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN ('}')) &&
+		!parser_struct_declaration_list (parser, code, type)) {
+		return 0;
+	}
+
+	if (!parser_check (parser, TOKEN ('}'))) {
+		return parser_syntax_error (parser, "missing matching '}'.");
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN (';'))) {
+		return parser_syntax_error (parser, "missing ';' after struct specifier.");
+	}
+
+	parser_next_token (parser);
+
+	return 1;
+}
+
 /* external-declaration:
  * function-definition
- * declaration */
+ * declaration
+ * struct-specifier */
 static int
 parser_external_declaration (parser_t *parser, code_t *code)
 {
@@ -2594,9 +2691,12 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	const char *id;
 	token_t *temp;
 
-	type = parser_token_object_type (parser);
+	type = parser_token_object_type (parser, code, 1);
 	if (type == OBJECT_TYPE_ERR) {
 		return parser_syntax_error (parser, "unknown type.");
+	}
+	else if (STRUCT_INDEX (type) >= 0) {
+		return parser_struct_specifier (parser, code, type);
 	}
 
 	parser_next_token (parser);
@@ -2795,6 +2895,7 @@ parser_load_file (const char *path)
 		fatal_error ("out of memory.");
 	}
 
+	parser->global = code;
 	parser->reader = lex_reader_new (path, parser_file_reader,
 		parser_file_close, (void *) f);
 	if (parser->reader == NULL) {
@@ -2850,6 +2951,7 @@ parser_load_buf (const char *path, str_t *buf)
 		fatal_error ("out of memory.");
 	}
 
+	parser->global = code;
 	parser->reader = lex_reader_new (path, parser_buf_reader,
 		parser_buf_clear, (void *) b);
 	if (parser->reader == NULL) {

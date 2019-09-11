@@ -24,6 +24,7 @@
 
 #include "object.h"
 #include "pool.h"
+#include "code.h"
 #include "error.h"
 #include "nullobject.h"
 #include "boolobject.h"
@@ -46,8 +47,10 @@
 #include "funcobject.h"
 #include "modobject.h"
 #include "exceptionobject.h"
+#include "structobject.h"
 
-#define TYPE_NAME(x) (g_type_name[(x)->head.type])
+#define TYPE_NAME(x) ((x)->head.type>=OBJECT_TYPE_STRUCT?"struct":g_type_name[(x)->head.type])
+#define TYPE_ID_NAME(x) (x>=OBJECT_TYPE_STRUCT?"struct":g_type_name[(x)])
 
 #define FLOATING_INT_TO_HASH_NEG -271828
 #define FLOATING_INT_TO_HASH_POS 314159
@@ -220,7 +223,7 @@ object_cast (object_t *obj, object_type_t type)
 			case OBJECT_TYPE_DOUBLE:
 				return doubleobject_new ((double) val, NULL);
 			default:
-				error ("try to cast numberical object to %s.", g_type_name[type]);
+				error ("try to cast numberical object to %s.", TYPE_ID_NAME (type));
 				return NULL;
 		}
 	}
@@ -258,7 +261,7 @@ object_cast (object_t *obj, object_type_t type)
 			case OBJECT_TYPE_DOUBLE:
 				return doubleobject_new ((double) val, NULL);
 			default:
-				error ("try to cast numberical object to %s.", g_type_name[type]);
+				error ("try to cast numberical object to %s.", TYPE_ID_NAME (type));
 				return NULL;
 		}
 	}
@@ -1157,7 +1160,7 @@ object_binary (object_t *obj)
 }
 
 object_t *
-object_get_default (object_type_t type)
+object_get_default (object_type_t type, void *udata)
 {
 	switch (type) {
 		case OBJECT_TYPE_VOID:
@@ -1205,7 +1208,10 @@ object_get_default (object_type_t type)
 		case OBJECT_TYPE_EXCEPTION:
 			return exceptionobject_new ("", 0, NULL);
 		default:
-			error ("no default value for %s.", g_type_name[type]);
+			if (STRUCT_INDEX (type) >= 0) {
+				return structobject_new ((code_t *) udata, type, NULL);
+			}
+			error ("no default value for %s.", TYPE_ID_NAME (type));
 			return NULL;
 	}
 
@@ -1267,6 +1273,9 @@ object_load_binary (FILE *f)
 		case OBJECT_TYPE_MOD:
 			return modobject_load_binary (f);
 		default:
+			if (STRUCT_INDEX (type) >= 0) {
+				return structobject_load_binary (type, f);
+			}
 			break;
 	}
 
@@ -1320,7 +1329,12 @@ object_traverse (object_t *obj, traverse_f fun, void *udata)
 		dictobject_traverse (obj, fun, udata);
 		break;
 	default:
-		fatal_error ("can't traverse %s", TYPE_NAME (obj));
+		if (STRUCT_INDEX (OBJECT_TYPE (obj)) >= 0) {
+			structobject_traverse (obj, fun, udata);
+		}
+		else {
+			fatal_error ("can't traverse %s.", TYPE_NAME (obj));
+		}
 	}
 }
 
@@ -1336,4 +1350,5 @@ object_init ()
 	vecobject_init ();
 	dictobject_init ();
 	exceptionobject_init ();
+	structobject_init ();
 }

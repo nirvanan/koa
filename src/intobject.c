@@ -374,7 +374,7 @@ intobject_new (int val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT, udata);
 	OBJECT_DIGEST_FUN (obj) = intobject_digest_fun;
 
 	obj->val = val;

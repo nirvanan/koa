@@ -359,7 +359,7 @@ uint16object_new (uint16_t val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_UINT16);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_UINT16, udata);
 	OBJECT_DIGEST_FUN (obj) = uint16object_digest_fun;
 
 	obj->val = val;

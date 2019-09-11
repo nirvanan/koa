@@ -263,7 +263,7 @@ doubleobject_new (double val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DOUBLE);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DOUBLE, udata);
 	OBJECT_DIGEST_FUN (obj) = doubleobject_digest_fun;
 
 	obj->val = val;

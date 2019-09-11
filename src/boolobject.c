@@ -204,7 +204,7 @@ boolobject_new (bool val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_BOOL);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_BOOL, udata);
 	OBJECT_DIGEST_FUN (obj) = boolobject_digest_fun;
 
 	obj->val = val;

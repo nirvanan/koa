@@ -64,7 +64,7 @@
 #define FLOATING_TYPE(x) ((x)->head.type==OBJECT_TYPE_FLOAT||\
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
-#define NUMBERICAL_TYPE(x) ((x)->head.type == OBJECT_TYPE_BOOL||\
+#define NUMBERICAL_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL||\
 	(x)->head.type==OBJECT_TYPE_CHAR||\
 	(x)->head.type==OBJECT_TYPE_INT||\
 	(x)->head.type==OBJECT_TYPE_LONG||\
@@ -79,8 +79,9 @@
 	(x)->head.type==OBJECT_TYPE_FLOAT||\
 	(x)->head.type==OBJECT_TYPE_DOUBLE)
 
-#define CONTAINER_TYPE(x) ((x)->head.type == OBJECT_TYPE_VEC||\
-	(x)->head.type == OBJECT_TYPE_DICT)
+#define CONTAINER_TYPE(x) ((x)->head.type==OBJECT_TYPE_VEC||\
+	(x)->head.type==OBJECT_TYPE_DICT||\
+	(x)->head.type==OBJECT_TYPE_STRUCT)
 
 #define CAST_TYPE(x) ((x)==OBJECT_TYPE_BOOL||\
 	(x)==OBJECT_TYPE_CHAR||\
@@ -107,11 +108,11 @@
 #define OBJECT_DIGEST_FUN(x) ((x)->head.digest_fun)
 #define OBJECT_UDATA(x) ((x)->head.udata)
 
-#define OBJECT_NEW_INIT(x, t) OBJECT_REF((x))=0;\
+#define OBJECT_NEW_INIT(x, t, d) OBJECT_REF((x))=0;\
 	OBJECT_TYPE((x))=t;\
 	OBJECT_OPSET_P((x))=(void*)&g_object_ops;\
 	OBJECT_DIGEST ((x))=0;\
-	OBJECT_UDATA ((x))=udata;\
+	OBJECT_UDATA ((x))=d;\
 	GC_INIT(((gc_head_t*)(x)))
 
 #define OBJECT_BIGGER(o1, o2) (OBJECT_TYPE((o1))<OBJECT_TYPE((o2))?\
@@ -125,6 +126,7 @@
 #define FLOATING_FINITE(x) isfinite((x))
 
 #define STRUCT_INDEX(x) ((x)-OBJECT_TYPE_STRUCT)
+#define STRUCT_TYPE(x) ((x)+OBJECT_TYPE_STRUCT)
 
 #define OBJECT_IS_DUMMY(x) (OBJECT_TYPE((x))==OBJECT_TYPE_VOID)
 #define OBJECT_IS_NULL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_NULL)
@@ -347,7 +349,7 @@ object_t *
 object_binary (object_t *obj);
 
 object_t *
-object_get_default (object_type_t type);
+object_get_default (object_type_t type, void *udata);
 
 object_t *
 object_load_binary (FILE *f);

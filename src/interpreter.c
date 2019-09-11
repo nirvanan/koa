@@ -48,6 +48,7 @@ static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
 static int g_gc_op_count;
+static code_t *g_global;
 
 static void
 interpreter_stack_rollback ()
@@ -128,6 +129,18 @@ recover:
 				}
 				object_free (b);
 				b = c;
+			}
+			if (!frame_store_local (g_current, a, b)) {
+				object_free (b);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_STORE_DEF:
+			a = code_get_varname (code, para);
+			b = object_get_default (code_get_vartype (code, para), (void *) g_global);
+			if (b == NULL) {
+				HANDLE_EXCEPTION;
 			}
 			if (!frame_store_local (g_current, a, b)) {
 				object_free (b);
@@ -1215,6 +1228,7 @@ interpreter_execute (const char *path)
 		return;
 	}
 
+	g_global = code;
 	g_runtime_started = 1;
 	UNUSED (interpreter_play (code, 1));
 

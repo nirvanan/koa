@@ -359,7 +359,7 @@ int32object_new (int32_t val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT32);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT32, udata);
 	OBJECT_DIGEST_FUN (obj) = int32object_digest_fun;
 
 	obj->val = val;

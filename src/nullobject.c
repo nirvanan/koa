@@ -139,7 +139,7 @@ nullobject_new (void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_NULL);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_NULL, udata);
 	OBJECT_DIGEST_FUN (obj) = nullobject_digest_fun;
 
 	return (object_t *) obj;

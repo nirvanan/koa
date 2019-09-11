@@ -111,9 +111,9 @@ am_koa_OBJECTS = boolobject.$(OBJEXT) builtin.$(OBJEXT) \
 	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
 	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
 	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
-	struct.$(OBJEXT) uint16object.$(OBJEXT) uint32object.$(OBJEXT) \
-	uint64object.$(OBJEXT) uint8object.$(OBJEXT) vec.$(OBJEXT) \
-	vecobject.$(OBJEXT)
+	struct.$(OBJEXT) structobject.$(OBJEXT) uint16object.$(OBJEXT) \
+	uint32object.$(OBJEXT) uint64object.$(OBJEXT) \
+	uint8object.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -332,6 +332,8 @@ strobject.c \
 strobject.h \
 struct.c \
 struct.h \
+structobject.c \
+structobject.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \
@@ -465,6 +467,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/struct.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/structobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint16object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint32object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint64object.Po@am__quote@

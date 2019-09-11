@@ -70,6 +70,8 @@ strobject.c \
 strobject.h \
 struct.c \
 struct.h \
+structobject.c \
+structobject.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \

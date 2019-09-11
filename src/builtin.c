@@ -34,7 +34,7 @@
 
 #define ARG(x, y) ((object_t*)vec_pos(vecobject_get_value((x)),vec_size(vecobject_get_value((x)))-1-(integer_value_t)y))
 #define ARG_SIZE(x) (vec_size(vecobject_get_value((x))))
-#define DUMMY (object_get_default(OBJECT_TYPE_VOID))
+#define DUMMY (object_get_default(OBJECT_TYPE_VOID,NULL))
 
 static object_t *g_builtin;
 

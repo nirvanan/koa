@@ -359,7 +359,7 @@ int8object_new (int8_t val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT8);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_INT8, udata);
 	OBJECT_DIGEST_FUN (obj) = int8object_digest_fun;
 
 	obj->val = val;

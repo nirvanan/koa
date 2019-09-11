@@ -71,8 +71,9 @@ struct_push_field (struct_t *meta, const char *name, int type)
 	}
 
 	field->name = str_new (name, strlen (name));
+	field->type = type;
 	if (!vec_push_back (meta->fields, (void *) field)) {
-		fatal_error ("faild to add field.");
+		fatal_error ("failed to add field.");
 	}
 
 	return;
@@ -175,9 +176,7 @@ struct_load_binary (FILE *f)
 
 			return NULL;
 		}
-		if (!vec_set (meta->fields, (integer_value_t) i, (void *) field)) {
-			fatal_error ("faild to add field.");
-		}
+		UNUSED (vec_set (meta->fields, (integer_value_t) i, (void *) field));
 	}
 
 	return meta;
@@ -206,7 +205,7 @@ struct_to_binary (struct_t *meta)
 	void *pos;
 	str_t *str;
 
-	total = sizeof (size_t) + str_len (meta->name);
+	total = sizeof (size_t) + str_len (meta->name) + sizeof (size_t);
 	fields_len = vec_size (meta->fields);
 	for (size_t i = 0; i < fields_len; i++) {
 		field_t *field;
@@ -283,4 +282,10 @@ struct_find_field (struct_t *meta, str_t *name)
 	}
 
 	return (integer_value_t) -1;
+}
+
+size_t
+struct_size (struct_t *meta)
+{
+	return vec_size (meta->fields);
 }

@@ -26,6 +26,7 @@
 #include "koa.h"
 #include "vec.h"
 #include "str.h"
+#include "struct.h"
 #include "object.h"
 
 #define MAX_PARA (0x00ffffff)
@@ -59,6 +60,7 @@ typedef enum op_e
 	OP_LOAD_CONST = 0x01,
 	OP_STORE_LOCAL,
 	OP_STORE_VAR,
+	OP_STORE_DEF,
 	OP_STORE_EXCEPTION,
 	OP_LOAD_VAR,
 	OP_TYPE_CAST,
@@ -222,5 +224,18 @@ code_check_args (code_t *code, vec_t *args);
 
 object_type_t
 code_get_vartype (code_t *code, para_t pos);
+
+object_type_t
+code_make_new_struct (code_t *code, const char *name);
+
+int
+code_push_field (code_t *code, object_type_t type,
+				 object_type_t field, const char *name);
+
+object_type_t
+code_find_struct (code_t *code, const char *name);
+
+struct_t *
+code_get_struct (code_t *code, object_type_t type);
 
 #endif /* CODE_H */

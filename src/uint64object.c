@@ -358,7 +358,7 @@ uint64object_new (uint64_t val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_UINT64);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_UINT64, udata);
 	OBJECT_DIGEST_FUN (obj) = uint64object_digest_fun;
 
 	obj->val = val;

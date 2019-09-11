@@ -371,7 +371,7 @@ longobject_new (long val, void *udata)
 		return NULL;
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_LONG);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_LONG, udata);
 
 	obj->val = val;
 

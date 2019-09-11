@@ -385,7 +385,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR, udata);
 	OBJECT_DIGEST_FUN (obj) = strobject_digest_fun;
 
 	obj->hn = NULL;
@@ -427,7 +427,7 @@ strobject_str_new (str_t *val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR, udata);
 	OBJECT_DIGEST_FUN (obj) = strobject_digest_fun;
 
 	obj->val = val;

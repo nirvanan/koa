@@ -246,7 +246,7 @@ funcobject_new (void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC, udata);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
 	obj->is_builtin = 0;
@@ -266,7 +266,7 @@ funcobject_code_new (code_t *val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC, udata);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
 	obj->is_builtin = 0;
@@ -286,7 +286,7 @@ funcobject_builtin_new (builtin_t *builtin, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FUNC, udata);
 	OBJECT_DIGEST_FUN (obj) = funcobject_digest_fun;
 
 	obj->is_builtin = 1;

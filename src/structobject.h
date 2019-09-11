@@ -1,5 +1,5 @@
 /*
- * struct.h
+ * structobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,55 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STRUCT_H
-#define STRUCT_H
-
-#include <stdio.h>
+#ifndef STRUCTOBJECT_H
+#define STRUCTOBJECT_H
 
 #include "koa.h"
-#include "str.h"
+#include "object.h"
+#include "code.h"
 #include "vec.h"
 
-typedef struct field_s
+typedef struct structobject_s
 {
-	int type;
-	str_t *name;
-} field_t;
+	object_head_t head;
+	vec_t *members;
+} structobject_t;
 
-typedef struct struct_s
-{
-	str_t *name;
-	vec_t *fields;
-} struct_t;
+object_t *
+structobject_load_binary (object_type_t type, FILE *f);
 
-struct_t *
-struct_new (const char *name);
+object_t *
+structobject_new (code_t *code, object_type_t type, void *udata);
+
+object_t *
+structobject_store_path (code_t *code, vec_t *path);
 
 void
-struct_free (struct_t *meta);
+structobject_traverse (object_t *obj, traverse_f fun, void *udata);
 
 void
-struct_push_field (struct_t *meta, const char *name, int type);
+structobject_init ();
 
-struct_t *
-struct_load_binary (FILE *f);
-
-str_t *
-struct_to_binary (struct_t *meta);
-
-str_t *
-struct_get_name (struct_t *meta);
-
-str_t *
-struct_get_field_name (struct_t *meta, integer_value_t pos);
-
-int
-struct_get_field_type (struct_t *meta, integer_value_t pos);
-
-integer_value_t
-struct_find_field (struct_t *meta, str_t *name);
-
-size_t
-struct_size (struct_t *meta);
-
-#endif /* STRUCT_H */
+#endif /* STRUCTOBJECT_H */

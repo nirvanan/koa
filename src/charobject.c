@@ -213,7 +213,7 @@ charobject_new (char val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_CHAR);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_CHAR, udata);
 	OBJECT_DIGEST_FUN (obj) = charobject_digest_fun;
 
 	obj->val = val;

@@ -40,6 +40,7 @@ static const char *g_code_names[] =
 	"OP_LOAD_CONST",
 	"OP_STORE_LOCAL",
 	"OP_STORE_VAR",
+	"OP_STORE_DEF",
 	"OP_STORE_EXCEPTION",
 	"OP_LOAD_VAR",
 	"OP_TYPE_CAST",
@@ -902,6 +903,7 @@ code_binary_to_struct (FILE *f)
 
 			return NULL;
 		}
+		UNUSED (vec_set (vec, i, (void *) meta));
 	}
 
 	return vec;
@@ -1033,7 +1035,7 @@ code_get_const (code_t *code, para_t pos)
 
 	obj = (object_t *) vec_pos (code->consts, (integer_value_t) pos);
 	if (obj != NULL && CONTAINER_TYPE (obj)) {
-		return object_get_default (OBJECT_TYPE (obj));
+		return object_get_default (OBJECT_TYPE (obj), NULL);
 	}
 
 	return obj;
@@ -1076,4 +1078,80 @@ object_type_t
 code_get_vartype (code_t *code, para_t pos)
 {
 	return *(object_type_t *) vec_pos (code->types, pos);
+}
+
+object_type_t
+code_make_new_struct (code_t *code, const char *name)
+{
+	struct_t *meta;
+
+	meta = struct_new (name);
+
+	if (!vec_push_back (code->structs, (void *) meta)) {
+		struct_free (meta);
+
+		return OBJECT_TYPE_ERR;
+	}
+
+	return STRUCT_TYPE (vec_size (code->structs) - 1);
+}
+
+int
+code_push_field (code_t *code, object_type_t type,
+				 object_type_t field, const char *name)
+{
+	integer_value_t pos;
+	struct_t *meta;
+	str_t *str;
+
+	pos = (integer_value_t) STRUCT_INDEX (type);
+	meta = (struct_t *) vec_pos (code->structs, pos);
+	if (meta == NULL) {
+		error ("struct index %d not found.", pos);
+
+		return 0;
+	}
+
+	str = str_new (name, strlen (name));
+	if (struct_find_field (meta, str) != -1) {
+		str_free (str);
+		error ("struct field %s is already exists.", name);
+
+		return 0;
+	}
+	str_free (str);
+
+	struct_push_field (meta, name, field);
+
+	return 1;
+}
+
+object_type_t
+code_find_struct (code_t *code, const char *name)
+{
+	size_t size;
+	str_t *str;
+
+	str = str_new (name, strlen (name));
+	size = vec_size (code->structs);
+	for (size_t i = 0; i < size; i++) {
+		struct_t *meta;
+
+		meta = (struct_t *) vec_pos (code->structs, (integer_value_t) i);
+		if (str_cmp (str, struct_get_name (meta)) == 0) {
+			str_free (str);
+
+			return STRUCT_TYPE ((object_type_t) i);
+		}
+	}
+
+	str_free (str);
+
+	return OBJECT_TYPE_ERR;
+}
+
+struct_t *
+code_get_struct (code_t *code, object_type_t type)
+{
+	return (struct_t *) vec_pos (code->structs, (integer_value_t) STRUCT_INDEX (type));
 }

@@ -164,7 +164,7 @@ modobject_new (void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD, udata);
 	OBJECT_DIGEST_FUN (obj) = modobject_digest_fun;
 
 	obj->val = NULL;
@@ -182,7 +182,7 @@ modobject_code_new (code_t *val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_MOD, udata);
 	OBJECT_DIGEST_FUN (obj) = modobject_digest_fun;
 
 	obj->val = val;

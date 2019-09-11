@@ -28,6 +28,10 @@
 #include "uint64object.h"
 #include "strobject.h"
 
+static object_t *g_dump_head;
+static object_t *g_dump_tail;
+static object_t *g_dump_sep;
+
 /* Object ops. */
 static void vecobject_op_free (object_t *obj);
 static void vecobject_op_print (object_t *obj);
@@ -40,10 +44,6 @@ static object_t *vecobject_op_ipindex (object_t *obj1,
 static object_t *vecobject_op_hash (object_t *obj);
 static object_t *vecobject_op_binary (object_t *obj);
 static object_t *vecobject_op_len (object_t *obj);
-
-static object_t *g_dump_head;
-static object_t *g_dump_tail;
-static object_t *g_dump_sep;
 
 static object_opset_t g_object_ops =
 {
@@ -393,7 +393,7 @@ vecobject_new (size_t len, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC, udata);
 	OBJECT_DIGEST_FUN (obj) = vecobject_digest_fun;
 
 	obj->val = vec_new (len);
@@ -425,7 +425,7 @@ vecobject_vec_new (vec_t *val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_VEC, udata);
 	OBJECT_DIGEST_FUN (obj) = vecobject_digest_fun;
 
 	obj->val = val;
@@ -457,7 +457,7 @@ vecobject_traverse (object_t *obj, traverse_f fun, void *udata)
 		if (fun ((object_t *) vec_pos (vec, i), udata) > 0) {
 			object_t *dummy;
 
-			dummy = object_get_default (OBJECT_TYPE_VOID);
+			dummy = object_get_default (OBJECT_TYPE_VOID, NULL);
 			vec_set (vec, i, dummy);
 			object_ref (dummy);
 		}

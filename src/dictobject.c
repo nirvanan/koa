@@ -493,7 +493,7 @@ dictobject_new (void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT, udata);
 	OBJECT_DIGEST_FUN (obj) = dictobject_digest_fun;
 
 	obj->val = dict_new (dictobject_hash_fun, dictobject_test_fun);
@@ -518,7 +518,7 @@ dictobject_dict_new (dict_t *val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_DICT, udata);
 	OBJECT_DIGEST_FUN (obj) = dictobject_digest_fun;
 
 	obj->val = val;
@@ -562,7 +562,7 @@ dictobject_traverse (object_t *obj, traverse_f fun, void *udata)
 		if (fun (value, udata) > 0) {
 			object_t *dummy;
 
-			dummy = object_get_default (OBJECT_TYPE_VOID);
+			dummy = object_get_default (OBJECT_TYPE_VOID, NULL);
 			dict_set (dict, (void *) key, (void *) dummy);
 			object_ref (dummy);
 		}

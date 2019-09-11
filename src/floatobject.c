@@ -263,7 +263,7 @@ floatobject_new (float val, void *udata)
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FLOAT);
+	OBJECT_NEW_INIT (obj, OBJECT_TYPE_FLOAT, udata);
 	OBJECT_DIGEST_FUN (obj) = floatobject_digest_fun;
 
 	obj->val = val;

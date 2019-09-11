@@ -24,11 +24,11 @@ type-specifier:
 	struct identifier
 
 struct-specifier:
-	struct identifier { struct-declaration-listopt }
+	struct identifier { struct-declaration-listopt } ;
 
 struct-declaration-list:
 	struct-declaration
-	struct-declaration-list
+	struct-declaration struct-declaration-list
 
 struct-declaration:
 	type-specifier identifier ;
