@@ -44,6 +44,8 @@ else {\
 	return 0;\
 }\
 
+#define STACK_PUSH(s, o) (object_ref((o)),stack_push(s,(void*)(o)))
+
 static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
@@ -59,7 +61,7 @@ interpreter_stack_rollback ()
 	bottom = frame_get_bottom (g_current);
 	while (stack_get_sp (g_s) > bottom + 1) {
 		obj = (object_t *) stack_pop (g_s);
-		object_free (obj);
+		object_unref (obj);
 	}
 }
 
@@ -82,7 +84,7 @@ interpreter_recover_exception ()
 	bottom = frame_recover_exception (g_current);
 	while (stack_get_sp (g_s) > bottom) {
 		obj = (object_t *) stack_pop (g_s);
-		object_free (obj);
+		object_unref (obj);
 	}
 
 	return 1;
@@ -124,17 +126,19 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			if (code_get_vartype (code, para) != OBJECT_TYPE (b)) {
 				c = object_cast (b, code_get_vartype (code, para));
+				object_unref (b);
 				if (c == NULL) {
 					HANDLE_EXCEPTION;
 				}
-				object_free (b);
 				b = c;
+				object_ref (b);
 			}
 			if (!frame_store_local (g_current, a, b)) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
+			object_unref (b);
 			break;
 		case OP_STORE_DEF:
 			a = code_get_varname (code, para);
@@ -151,7 +155,9 @@ recover:
 		case OP_STORE_VAR:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_top (g_s);
-			if ((c = frame_store_var (g_current, a, b)) == NULL) {
+			c = frame_store_var (g_current, a, b);
+			object_unref (b);
+			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
 			object_unref (c);
@@ -176,12 +182,11 @@ recover:
 			break;
 		case OP_TYPE_CAST:
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_cast (a, (object_type_t) para)) == NULL) {
-				object_free (a);
-
+			r = object_cast (a, (object_type_t) para);
+			object_unref (a);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
 			break;
 		case OP_VAR_INC:
 		case OP_VAR_DEC:
@@ -205,70 +210,69 @@ recover:
 			if (d == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (frame_store_var (g_current, a, d) != b) {
-				HANDLE_EXCEPTION;
-			}
+			UNUSED (frame_store_var (g_current, a, d));
 			if (op == OP_VAR_INC || op == OP_VAR_DEC) {
 				object_unref (b);
 				r = d;
 			}
 			else {
-				object_unref_without_free (b);
 				r = b;
+				if (!stack_push (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
+				continue;
 			}
 			break;
 		case OP_NEGATIVE:
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_neg (a)) == NULL) {
-				object_free (a);
-
+			r = object_neg (a);
+			object_unref (a);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
 			break;
 		case OP_BIT_NOT:
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_bit_not (a)) == NULL) {
-				object_free (a);
-
+			r = object_bit_not (a);
+			object_unref (a);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
 			break;
 		case  OP_LOGIC_NOT:
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_logic_not (a)) == NULL) {
-				object_free (a);
-
+			r = object_logic_not (a);
+			object_unref (a);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
 			break;
 		case OP_POP_STACK:
 			a = (object_t *) stack_pop (g_s);
 			/* Need free because it might be zero refed. */
-			object_free (a);
+			object_unref (a);
 			break;
 		case OP_LOAD_INDEX:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_index (a, b)) == NULL) {
-				object_free (b);
-
+			r = object_index (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
 			break;
 		case OP_STORE_INDEX:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			if ((r = object_ipindex (a, b, c)) == NULL) {
-				object_free (b);
-
+			r = object_ipindex (a, b, c);
+			object_unref (a);
+			object_unref (b);
+			object_unref (c);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
 			break;
 		case OP_INDEX_INC:
 		case OP_INDEX_DEC:
@@ -287,33 +291,43 @@ recover:
 			}
 			d = object_index (a, b);
 			if (OBJECT_TYPE (d) == OBJECT_TYPE_NULL) {
-				object_free (b);
+				object_unref (a);
+				object_unref (b);
 				object_free (c);
+				object_free (d);
 				error ("null object can not be modified.");
 
 				HANDLE_EXCEPTION;
 			}
 			if ((e = object_add (d, c)) == NULL) {
-				object_free (b);
+				object_unref (a);
+				object_unref (b);
 				object_free (c);
 
 				HANDLE_EXCEPTION;
 			}
+			object_ref (d);
 			if ((r = object_ipindex (a, b, e)) == NULL) {
-				object_free (b);
+				object_unref (a);
+				object_unref (b);
 				object_free (c);
+				object_free (e);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
+			object_unref (a);
+			object_unref (b);
 			object_free (c);
 			if (op == OP_INDEX_INC || op == OP_INDEX_DEC) {
-				object_unref (d);
+				object_free (d);
 				r = e;
 			}
 			else {
-				object_unref_without_free (d);
 				r = d;
+				if (!stack_push (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
+				continue;
 			}
 			break;
 		case OP_MAKE_VEC:
@@ -327,6 +341,7 @@ recover:
 					HANDLE_EXCEPTION;
 				}
 				object_free (b);
+				object_unref (c);
 			}
 			break;
 		case OP_CALL_FUNC:
@@ -340,15 +355,15 @@ recover:
 				b = a;
 				a = (object_t *) stack_pop (g_s);
 				if (OBJECT_TYPE (a) != OBJECT_TYPE_FUNC) {
-					object_free (a);
-					object_free (b);
+					object_unref (a);
+					object_unref (b);
 					error ("only func object is callable.");
 
 					HANDLE_EXCEPTION;
 				}
 				if (!stack_push (g_s, (void *) b)) {
-					object_free (a);
-					object_free (b);
+					object_unref (a);
+					object_unref (b);
 
 					HANDLE_EXCEPTION;
 				}
@@ -357,7 +372,7 @@ recover:
 				if (OPCODE_OP (frame_last_opcode (g_current)) == OP_MAKE_VEC &&
 					builtin_no_arg (funcobject_get_builtin (a))) {
 					error ("builtin %s requires no argument.", builtin_get_name (funcobject_get_builtin (a)));
-					object_free (a);
+					object_unref (a);
 
 					HANDLE_EXCEPTION;
 				}
@@ -366,34 +381,35 @@ recover:
 				}
 				else {
 					b = vecobject_new (0, NULL);
+					object_ref (b);
 				}
 				r = builtin_execute (funcobject_get_builtin (a), b);
 				if (r == NULL) {
-					object_free (a);
-					object_free (b);
+					object_unref (a);
+					object_unref (b);
 
 					HANDLE_EXCEPTION;
 				}
-				object_free (a);
-				object_free (b);
+				object_unref (a);
+				object_unref (b);
 				break;
 			}
 			else {
 				if (OPCODE_OP (frame_last_opcode (g_current)) == OP_MAKE_VEC &&
 					CODE_NO_ARG (funcobject_get_value (a))) {
 					error ("func %s requires no argument.", code_get_name (funcobject_get_value (a)));
-					object_free (a);
+					object_unref (a);
 
 					HANDLE_EXCEPTION;
 				}
 				if (!interpreter_play (funcobject_get_value (a), 0)) {
-					object_free (a);
+					object_unref (a);
 					if (!frame_is_catched (g_current)) {
 						if (stack_get_sp (g_s) != frame_get_bottom (g_current) + 1) {
 							a = stack_pop (g_s);
 							r = stack_set (g_s, frame_get_bottom (g_current), a);
 							if (r != a && r != NULL) {
-								object_free (r);
+								object_unref (r);
 							}
 						}
 						interpreter_stack_rollback ();
@@ -402,25 +418,25 @@ recover:
 					HANDLE_EXCEPTION;
 				}
 			}
-			object_free (a);
+			object_unref (a);
 			break;
 		case OP_BIND_ARGS:
 			a = (object_t *) stack_pop (g_s);
 			if (OPCODE_OP (frame_last_opcode (FRAME_UPPER (g_current))) != OP_MAKE_VEC ||
 				a == NULL || OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
 				if (a != NULL) {
-					object_free (a);
+					object_unref (a);
 				}
 				error ("no argument passed.");
 
 				HANDLE_EXCEPTION;
 			}
 			if (!frame_bind_args (g_current, a)) {
-				object_free (a);
+				object_unref (a);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
+			object_unref (a);
 			break;
 		case OP_CON_SEL:
 			c = (object_t *) stack_pop (g_s);
@@ -428,93 +444,90 @@ recover:
 			a = (object_t *) stack_pop (g_s);
 			if (!object_is_zero (a)) {
 				r = b;
-				object_free (a);
-				object_free (c);
+				object_unref (a);
+				object_unref (c);
+				if (!stack_push (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
 			}
 			else {
 				r = c;
-				object_free (a);
-				object_free (b);
+				object_unref (a);
+				object_unref (b);
+				if (!stack_push (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
 			}
-			break;
+			continue;
 		case OP_LOGIC_OR:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_logic_or (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_logic_or (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_LOGIC_AND:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_logic_and (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_logic_and (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_BIT_OR:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_bit_or (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_bit_or (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_BIT_XOR:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_bit_xor (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_bit_xor (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_BIT_AND:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_bit_and (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
+			r = object_bit_and (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
+				object_unref (a);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_EQUAL:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_equal (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_equal (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_NOT_EQUAL:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = object_equal (a, b);
-			object_free (a);
-			object_free (b);
+			object_unref (a);
+			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -530,8 +543,8 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = object_compare (a, b);
-			object_free (a);
-			object_free (b);
+			object_unref (a);
+			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -547,8 +560,8 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = object_compare (a, b);
-			object_free (a);
-			object_free (b);
+			object_unref (a);
+			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -564,8 +577,8 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = object_compare (a, b);
-			object_free (a);
-			object_free (b);
+			object_unref (a);
+			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -581,8 +594,8 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = object_compare (a, b);
-			object_free (a);
-			object_free (b);
+			object_unref (a);
+			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -597,95 +610,84 @@ recover:
 		case OP_LEFT_SHIFT:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_left_shift (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_left_shift (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_RIGHT_SHIFT:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_right_shift (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_right_shift (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_ADD:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_add (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
+			r = object_add (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
+				object_unref (a);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_SUB:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_sub (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_sub (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_MUL:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_mul (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_mul (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_DIV:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_div (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_div (a, b);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_MOD:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
-			if ((r = object_mod (a, b)) == NULL) {
-				object_free (a);
-				object_free (b);
-
+			r = object_mod (a, b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			object_free (a);
-			object_free (b);
 			break;
 		case OP_VAR_IPMUL:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_mul (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -698,10 +700,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_div (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -714,10 +718,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_mod (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -730,10 +736,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_add (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -746,10 +754,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_sub (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -762,10 +772,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_left_shift (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -778,10 +790,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_right_shift (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -794,10 +808,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_bit_and (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -810,10 +826,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_bit_xor (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -826,10 +844,12 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
 			if ((c = frame_get_var (g_current, a)) == NULL) {
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			r = object_bit_or (c, b);
-			object_free (b);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -843,277 +863,277 @@ recover:
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_mul (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPDIV:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_div (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPMOD:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_mod (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPADD:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_add (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPSUB:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_sub (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPLS:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_left_shift (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPRS:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_right_shift (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPAND:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_bit_and (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPXOR:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_bit_xor (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_INDEX_IPOR:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
 			d = object_index (a, b);
+			object_unref (a);
 			if (d == NULL) {
-				object_free (b);
-				object_free (c);
+				object_unref (b);
+				object_unref (c);
 
 				HANDLE_EXCEPTION;
 			}
 			r = object_bit_or (d, c);
-			object_free (c);
+			object_unref (c);
 			if (r == NULL) {
-				object_free (b);
+				object_unref (b);
 
 				HANDLE_EXCEPTION;
 			}
-			if (object_ipindex (a, b, r) != d) {
-				object_free (b);
+			if (object_ipindex (a, b, r) != r) {
+				object_unref (b);
 				object_free (r);
 
 				HANDLE_EXCEPTION;
 			}
-			object_free (b);
-			object_unref (d);
+			object_unref (b);
 			break;
 		case OP_JUMP_FALSE:
 			a = (object_t *) stack_pop (g_s);
 			if (object_is_zero (a)) {
 				frame_jump (g_current, para);
 			}
-			object_free (a);
+			object_unref (a);
 			break;
 		case OP_JUMP_FORCE:
 		case OP_JUMP_CONTINUE:
@@ -1139,18 +1159,20 @@ recover:
 			/* Check return type and try cast. */
 			if (OBJECT_TYPE (a) != FUNC_RET_TYPE (code)) {
 				b = object_cast (a, FUNC_RET_TYPE (code));
+				object_unref (a);
 				if (b == NULL) {
 					HANDLE_EXCEPTION;
 				}
-
 				r = b;
-				object_free (a);
+				if (!STACK_PUSH (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
 			}
 			else {
 				r = a;
-			}
-			if (!stack_push (g_s, (void *) r)) {
-				HANDLE_EXCEPTION;
+				if (!stack_push (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
 			}
 			g_current = frame_free (g_current);
 			if (g_gc_op_count > GC_OP_COUNT) {
@@ -1176,7 +1198,7 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			c = object_equal (a, b);
-			object_free (b);
+			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -1187,12 +1209,12 @@ recover:
 				}
 			}
 			else {
-				object_free (a);
+				object_unref (a);
 			}
 			break;
 		case OP_JUMP_DEFAULT:
 			a = (object_t *) stack_pop (g_s);
-			object_free (a);
+			object_unref (a);
 			frame_jump (g_current, para);
 			break;
 		case OP_JUMP_TRUE:
@@ -1200,14 +1222,14 @@ recover:
 			if (!object_is_zero (a)) {
 				frame_jump (g_current, para);
 			}
-			object_free (a);
+			object_unref (a);
 			break;
 		case OP_END_PROGRAM:
 			g_current = frame_free (g_current);
 			return 1;
 		}
 
-		if (r != NULL && !stack_push (g_s, (void *) r)) {
+		if (r != NULL && !STACK_PUSH (g_s, (void *) r)) {
 			return 0;
 		}
 	}
@@ -1236,7 +1258,7 @@ interpreter_execute (const char *path)
 
 	while (stack_get_sp (g_s) > 0) {
 		obj = stack_pop (g_s);
-		object_free (obj);
+		object_unref (obj);
 	}
 	code_free (code);
 	g_runtime_started = 0;
@@ -1295,14 +1317,14 @@ interpreter_set_exception (const char *exception)
 	stack_sp = stack_get_sp (g_s);
 	bottom = frame_get_bottom (g_current);
 	if (stack_sp <= frame_get_bottom (g_current)) {
-		stack_push (g_s, (void *) exception_obj);
+		UNUSED (STACK_PUSH (g_s, (void *) exception_obj));
 	}
 	else {
 		object_t *prev;
 
 		prev = stack_set (g_s, (integer_value_t) bottom, (void *) exception_obj);
 		if (prev != NULL) {
-			object_free (prev);
+			object_unref (prev);
 		}
 	}
 	interpreter_stack_rollback ();

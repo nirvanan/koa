@@ -9,6 +9,7 @@ src/#
 src/am--include-marker
 src/koa
 src/gmon.out
+gmon.out
 stamp-h1
 tags
 autom4te.cache/

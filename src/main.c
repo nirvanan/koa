@@ -87,12 +87,10 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	int e = -1;
+	int e = -5;
 	while (e--) {
 		interpreter_execute ("/home/likehui/test.k");
-		if (e % 10000 == 0) {
 			printf ("done %d\n", e);
-		}
 	}
 
 	return 0;

@@ -2654,7 +2654,6 @@ parser_struct_declaration_list (parser_t *parser, code_t *code, object_type_t ty
 static int
 parser_struct_specifier (parser_t *parser, code_t *code, object_type_t type)
 {
-	parser_next_token (parser);
 	if (!parser_check (parser, TOKEN ('{'))) {
 		return parser_syntax_error (parser, "missing '{' in struct specifier.");
 	}
@@ -2686,7 +2685,7 @@ parser_struct_specifier (parser_t *parser, code_t *code, object_type_t type)
 static int
 parser_external_declaration (parser_t *parser, code_t *code)
 {
-	/* Need to look ahead 3 tokens: type id '('. */
+	/* Need to look ahead 3 tokens: type id '(' or '{'. */
 	object_type_t type;
 	const char *id;
 	token_t *temp;
@@ -2695,11 +2694,16 @@ parser_external_declaration (parser_t *parser, code_t *code)
 	if (type == OBJECT_TYPE_ERR) {
 		return parser_syntax_error (parser, "unknown type.");
 	}
-	else if (STRUCT_INDEX (type) >= 0) {
+
+	parser_next_token (parser);
+	if (parser_check (parser, TOKEN ('{'))) {
+		if (STRUCT_INDEX (type) < 0) {
+			return parser_syntax_error (parser, "invalid declaration.");
+		}
+
 		return parser_struct_specifier (parser, code, type);
 	}
 
-	parser_next_token (parser);
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
 		return parser_syntax_error (parser, "missing identifier name.");
 	}
