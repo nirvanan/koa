@@ -665,8 +665,9 @@ lex_read_decimal_floating (reader_t *reader, token_t *token, int digit_part)
 		lex_save_char (reader, token, -1, 1);
 		/* Test next for digits. */
 		if (!digit_part && !LEX_IS_DIGIT (reader->current)) {
-			return lex_token_error (reader, token,
-									"invalid floating sequence.");
+			token->type = (token_type_t) '.';
+
+			return token;
 		}
 	}
 

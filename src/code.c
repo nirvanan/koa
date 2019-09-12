@@ -43,6 +43,7 @@ static const char *g_code_names[] =
 	"OP_STORE_DEF",
 	"OP_STORE_EXCEPTION",
 	"OP_LOAD_VAR",
+	"OP_LOAD_MEMBER",
 	"OP_TYPE_CAST",
 	"OP_VAR_INC",
 	"OP_VAR_DEC",

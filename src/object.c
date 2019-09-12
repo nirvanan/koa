@@ -1310,7 +1310,7 @@ object_len (object_t *obj)
 
 	len_fun = (OBJECT_OPSET (obj))->len;
 	if (len_fun == NULL) {
-		error ("%s has no print routine.", TYPE_NAME (obj));
+		error ("%s has no len routine.", TYPE_NAME (obj));
 
 		return NULL;
 	}	

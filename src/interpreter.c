@@ -34,6 +34,7 @@
 #include "vecobject.h"
 #include "funcobject.h"
 #include "exceptionobject.h"
+#include "structobject.h"
 
 #define GC_OP_COUNT 1000
 
@@ -177,6 +178,21 @@ recover:
 			else if (OBJECT_IS_NULL (r)) {
 				error ("variable undefined: %s.", strobject_c_str (a));
 
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_LOAD_MEMBER:
+			a = code_get_varname (code, para);
+			b = (object_t *) stack_pop (g_s);
+			if (!OBJECT_IS_STRUCT (b)) {
+				object_unref (b);
+				error ("not a struct.");
+
+				HANDLE_EXCEPTION;
+			}
+			r = structobject_get_member (b, a, g_global);
+			object_unref (b);
+			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
 			break;

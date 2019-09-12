@@ -152,6 +152,7 @@ expression-postfix-list:
 	expression-postfix expression-postfix-list
 
 expression-postfix:
+	. identifier
 	[ expression ]
 	( argument-expression-listopt )
 	++

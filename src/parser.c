@@ -1805,6 +1805,7 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 }
 
 /* expression-postfix:
+ * . identifier
  * [ expression ]
  * ( argument-expression-listopt )
  * ++
@@ -1812,11 +1813,27 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 static int
 parser_expression_postfix (parser_t *parser, code_t *code)
 {
+	para_t pos;
 	uint32_t line;
 	opcode_t last;
 
 	line = TOKEN_LINE (parser->token);
-	if (parser_check (parser, TOKEN ('['))) {
+	if (parser_check (parser, TOKEN ('.'))) {
+		parser_next_token (parser);
+		if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+			return parser_syntax_error (parser, "missing member name after '.'.");
+		}
+		pos = code_push_varname (code, TOKEN_ID (parser->token),
+								 OBJECT_TYPE_VOID, 0);
+		if (pos == -1) {
+			return 0;
+		}
+		parser_next_token (parser);
+
+		/* Emit a LOAD_MEMBER. */
+		return code_push_opcode (code, OPCODE (OP_LOAD_MEMBER, pos), line);
+	}
+	else if (parser_check (parser, TOKEN ('['))) {
 		parser_next_token (parser);
 		if (!parser_expression (parser, code)) {
 			return 0;
@@ -1894,7 +1911,8 @@ static int
 parser_expression_postfix_list (parser_t *parser, code_t *code)
 {
 	for (;;) {
-		if (parser_check (parser, TOKEN ('[')) ||
+		if (parser_check (parser, TOKEN ('.')) ||
+			parser_check (parser, TOKEN ('[')) ||
 			parser_check (parser, TOKEN ('(')) ||
 			parser_check (parser, TOKEN_INC) ||
 			parser_check (parser, TOKEN_DEC)) {
@@ -1964,10 +1982,10 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 		case TOKEN_IDENTIFIER:
 			pos = code_push_varname (code, TOKEN_ID (parser->token),
 									 OBJECT_TYPE_VOID, 0);
-			parser_next_token (parser);
 			if (pos == -1) {
 				return 0;
 			}
+			parser_next_token (parser);
 			/* Emit a LOAD_VAR. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_VAR, pos), line);
 		case TOKEN_NULL:
@@ -2086,7 +2104,8 @@ parser_postfix_expression (parser_t *parser, code_t *code, int leading_par)
 		return 0;
 	}
 
-	if (parser_check (parser, TOKEN ('[')) ||
+	if (parser_check (parser, TOKEN ('.')) ||
+		parser_check (parser, TOKEN ('[')) ||
 		parser_check (parser, TOKEN ('(')) ||
 		parser_check (parser, TOKEN_INC) ||
 		parser_check (parser, TOKEN_DEC)) {
@@ -2198,7 +2217,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		}
 		else if (STRUCT_INDEX (type) >= 0) {
 			return parser_syntax_error (parser,
-										"can not cast any type to struct.");
+										"can not cast to struct.");
 		}
 		
 		parser_next_token (parser);

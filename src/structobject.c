@@ -339,6 +339,31 @@ structobject_traverse (object_t *obj, traverse_f fun, void *udata)
 	}
 }
 
+object_t *
+structobject_get_member (object_t *obj, object_t *name, code_t *code)
+{
+	struct_t *meta;
+	integer_value_t pos;
+	vec_t *members;
+
+	members = ((structobject_t *) obj)->members;
+	meta = code_get_struct (code, OBJECT_TYPE (obj));
+	if (meta == NULL) {
+		error ("struct not found.");
+
+		return NULL;
+	}
+
+	pos = struct_find_field (meta, strobject_get_value (name));
+	if (pos == -1) {
+		error ("%s has member named %s.", str_c_str (struct_get_name (meta)), strobject_c_str (name));
+
+		return NULL;
+	}
+
+	return (object_t *) vec_pos (members, pos);
+}
+
 void
 structobject_init ()
 {
