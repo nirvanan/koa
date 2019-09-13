@@ -44,6 +44,9 @@ structobject_traverse (object_t *obj, traverse_f fun, void *udata);
 object_t *
 structobject_get_member (object_t *obj, object_t *name, code_t *code);
 
+object_t *
+structobject_store_member (object_t *obj, object_t *name,
+						   object_t *value, code_t *code);
 void
 structobject_init ();
 

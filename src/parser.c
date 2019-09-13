@@ -129,7 +129,9 @@ parser_free (parser_t *parser)
 	if (parser->reader != NULL) {
 		lex_reader_free (parser->reader);
 	}
-
+	if (parser->token != NULL) {
+		lex_token_free (parser->token);
+	}
 	pool_free ((void *) parser);
 }
 
@@ -361,7 +363,7 @@ parser_get_var_assign_op (token_type_t type)
 			break;
 	}
 
-	return (op_t) 0;
+	return OP_UNKNOWN;
 }
 
 static op_t
@@ -396,9 +398,43 @@ parser_get_index_assign_op (token_type_t type)
 			break;
 	}
 
-	return (op_t) 0;
+	return OP_UNKNOWN;
 }
 
+static op_t
+parser_get_member_assign_op (token_type_t type)
+{
+	if (type == TOKEN ('=')) {
+		return OP_STORE_MEMBER;
+	}
+
+	switch (type) {
+		case TOKEN_IPMUL:
+			return OP_MEMBER_IPMUL;
+		case TOKEN_IPDIV:
+			return OP_MEMBER_IPDIV;
+		case TOKEN_IPMOD:
+			return OP_MEMBER_IPMOD;
+		case TOKEN_IPADD:
+			return OP_MEMBER_IPADD;
+		case TOKEN_IPSUB:
+			return OP_MEMBER_IPSUB;
+		case TOKEN_IPLS:
+			return OP_MEMBER_IPLS;
+		case TOKEN_IPRS:
+			return OP_MEMBER_IPRS;
+		case TOKEN_IPAND:
+			return OP_MEMBER_IPAND;
+		case TOKEN_IPXOR:
+			return OP_MEMBER_IPXOR;
+		case TOKEN_IPOR:
+			return OP_MEMBER_IPOR;
+		default:
+			break;
+	}
+
+	return OP_UNKNOWN;
+}
 static int
 parser_push_dummy_return (parser_t *parser, code_t *code)
 {
@@ -1880,7 +1916,11 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 		}
 		else if (OPCODE_OP (last) == OP_LOAD_INDEX) {
 			return code_modify_opcode (code, -1,
-				OPCODE (OP_INDEX_POINC, OPCODE_PARA (last)), line);
+				OPCODE (OP_INDEX_POINC, 0), line);
+		}
+		else if (OPCODE_OP (last) == OP_LOAD_MEMBER) {
+			return code_modify_opcode (code, -1,
+				OPCODE (OP_MEMBER_POINC, OPCODE_PARA (last)), line);
 		}
 		else {
 			return parser_syntax_error (parser, "lvalue requierd.");
@@ -1895,7 +1935,11 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 		}
 		else if (OPCODE_OP (last) == OP_LOAD_INDEX) {
 			return code_modify_opcode (code, -1,
-				OPCODE (OP_INDEX_PODEC, OPCODE_PARA (last)), line);
+				OPCODE (OP_INDEX_PODEC, 0), line);
+		}
+		else if (OPCODE_OP (last) == OP_LOAD_MEMBER) {
+			return code_modify_opcode (code, -1,
+				OPCODE (OP_MEMBER_PODEC, OPCODE_PARA (last)), line);
 		}
 		else {
 			return parser_syntax_error (parser, "lvalue requierd.");
@@ -2141,7 +2185,7 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 			if (!parser_unary_expression (parser, code, 0)) {
 				return 0;
 			}
-			/* The last opcode must be a LOAD_VAR or LOAD_INDEX,
+			/* The last opcode must be a LOAD_VAR or LOAD_INDEX or LOAD_MEMBER,
 			 * otherwise it's not a lvalue. */
 			last = code_last_opcode (code);
 			if (OPCODE_OP (last) == OP_LOAD_VAR) {
@@ -2156,15 +2200,22 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 										OPCODE (OP_VAR_DEC, para), line);
 			}
 			else if (OPCODE_OP (last) == OP_LOAD_INDEX){
+				return type == TOKEN_INC?
+					code_modify_opcode (code, -1,
+										OPCODE (OP_INDEX_INC, 0), line):
+					code_modify_opcode (code, -1,
+										OPCODE (OP_INDEX_DEC, 0), line);
+			}
+			else if (OPCODE_OP (last) == OP_LOAD_MEMBER) {
 				para_t para;
 
 				para = OPCODE_PARA (last);
 
 				return type == TOKEN_INC?
+					code_modify_opcode (code, -1, 
+										OPCODE (OP_MEMBER_INC, para), line):
 					code_modify_opcode (code, -1,
-										OPCODE (OP_INDEX_INC, para), line):
-					code_modify_opcode (code, -1,
-										OPCODE (OP_INDEX_DEC, para), line);
+										OPCODE (OP_MEMBER_DEC, para), line);
 			}
 			else {
 				return parser_syntax_error (parser, "lvalue required.");
@@ -2271,7 +2322,8 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		type = TOKEN_TYPE (parser->token);
 		last = code_last_opcode (code);
 		if (OPCODE_OP (last) != OP_LOAD_VAR &&
-			OPCODE_OP (last) != OP_LOAD_INDEX) {
+			OPCODE_OP (last) != OP_LOAD_INDEX &&
+			OPCODE_OP (last) != OP_LOAD_MEMBER) {
 			return parser_syntax_error (parser, "lvalue required.");
 		}
 
@@ -2288,10 +2340,18 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		}
 		
 		/* Need to remove that LOAD_* opcode and emit an assignment. */
-		op = OPCODE_OP (last) == OP_LOAD_VAR?
-			parser_get_var_assign_op (type):
-			parser_get_index_assign_op (type);
-		if (!op) {
+		op = OP_UNKNOWN;
+		switch (OPCODE_OP (last)) {
+		case OP_LOAD_VAR:
+			op = parser_get_var_assign_op (type);
+			break;
+		case OP_LOAD_INDEX:
+			op = parser_get_index_assign_op (type);
+			break;
+		case OP_LOAD_MEMBER:
+			op = parser_get_member_assign_op (type);
+			break;
+		default:
 			return parser_syntax_error (parser,
 										"unknown assignment operation.");
 		}
@@ -2938,9 +2998,6 @@ parser_load_file (const char *path)
 		return NULL;
 	}
 
-	if (parser->token != NULL) {
-		lex_token_free (parser->token);
-	}
 	parser_free (parser);
 
 	code_save_binary (code);

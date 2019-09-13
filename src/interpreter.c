@@ -116,6 +116,8 @@ recover:
 		para = OPCODE_PARA (opcode);
 		r = NULL;
 		switch (op) {
+		case OP_UNKNOWN:
+			fatal_error ("what's this?");
 		case OP_LOAD_CONST:
 			r = code_get_const (code, para);
 			if (r == NULL) {
@@ -162,6 +164,24 @@ recover:
 				HANDLE_EXCEPTION;
 			}
 			object_unref (c);
+			break;
+		case OP_STORE_MEMBER:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			if (!OBJECT_IS_STRUCT (a)) {
+				object_unref (a);
+				object_unref (c);
+				error ("not a struct.");
+
+				HANDLE_EXCEPTION;
+			}
+			r = structobject_store_member (a, b, c, g_global);
+			object_unref (a);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
 			break;
 		case OP_STORE_EXCEPTION:
 			a = code_get_varname (code, para);
@@ -239,6 +259,65 @@ recover:
 				continue;
 			}
 			break;
+		case OP_MEMBER_INC:
+		case OP_MEMBER_DEC:
+		case OP_MEMBER_POINC:
+		case OP_MEMBER_PODEC:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			if (!OBJECT_IS_STRUCT (a)) {
+				error ("not a struct.");
+
+				HANDLE_EXCEPTION;
+			}
+			if (op == OP_MEMBER_INC || op == OP_MEMBER_POINC) {
+				c = intobject_new (1, NULL);
+			}
+			else {
+				c = intobject_new (-1, NULL);
+			}
+			if (c == NULL) {
+				object_unref (a);
+
+				HANDLE_EXCEPTION;
+			}
+			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_TYPE (d) == OBJECT_TYPE_NULL) {
+				object_unref (a);
+				object_free (c);
+				object_free (d);
+				error ("null object can not be modified.");
+
+				HANDLE_EXCEPTION;
+			}
+			e = object_add (d, c);
+			object_free (c);
+			if (e == NULL) {
+				object_unref (a);
+				object_free (c);
+
+				HANDLE_EXCEPTION;
+			}
+			object_ref (d);
+			r = structobject_store_member (a, b, e, g_global);
+			object_unref (a);
+			if (r == NULL) {
+				object_free (e);
+
+				HANDLE_EXCEPTION;
+			}
+			if (op == OP_MEMBER_INC || op == OP_MEMBER_DEC) {
+				object_unref (d);
+				r = e;
+			}
+			else {
+				r = d;
+				if (!stack_push (g_s, (void *) r)) {
+					HANDLE_EXCEPTION;
+				}
+				continue;
+			}
+			break;
 		case OP_NEGATIVE:
 			a = (object_t *) stack_pop (g_s);
 			r = object_neg (a);
@@ -303,6 +382,9 @@ recover:
 				c = intobject_new (-1, NULL);
 			}
 			if (c == NULL) {
+				object_unref (a);
+				object_unref (b);
+
 				HANDLE_EXCEPTION;
 			}
 			d = object_index (a, b);
@@ -315,27 +397,25 @@ recover:
 
 				HANDLE_EXCEPTION;
 			}
-			if ((e = object_add (d, c)) == NULL) {
+			e = object_add (d, c);
+			object_free (c);
+			if (e == NULL) {
 				object_unref (a);
 				object_unref (b);
-				object_free (c);
 
 				HANDLE_EXCEPTION;
 			}
 			object_ref (d);
-			if ((r = object_ipindex (a, b, e)) == NULL) {
-				object_unref (a);
-				object_unref (b);
-				object_free (c);
+			r = object_ipindex (a, b, e);
+			object_unref (a);
+			object_unref (b);
+			if (r == NULL) {
 				object_free (e);
 
 				HANDLE_EXCEPTION;
 			}
-			object_unref (a);
-			object_unref (b);
-			object_free (c);
 			if (op == OP_INDEX_INC || op == OP_INDEX_DEC) {
-				object_free (d);
+				object_unref (d);
 				r = e;
 			}
 			else {
@@ -1143,6 +1223,226 @@ recover:
 				HANDLE_EXCEPTION;
 			}
 			object_unref (b);
+			break;
+		case OP_MEMBER_IPMUL:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_mul (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPDIV:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_div (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPMOD:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_mod (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPADD:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_add (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPSUB:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_sub (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPLS:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_left_shift (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPRS:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_right_shift (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPAND:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_bit_and (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPXOR:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_bit_xor (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
+			break;
+		case OP_MEMBER_IPOR:
+			b = code_get_varname (code, para);
+			a = (object_t *) stack_pop (g_s);
+			c = (object_t *) stack_pop (g_s);
+			d = structobject_get_member (a, b, g_global);
+			object_unref (a);
+			if (d == NULL) {
+				object_unref (c);
+
+				HANDLE_EXCEPTION;
+			}
+			r = object_bit_or (d, c);
+			object_unref (c);
+			if (r == NULL) {
+				HANDLE_EXCEPTION;
+			}
+			if (structobject_store_member (a, b, r, g_global) != r) {
+				object_free (r);
+
+				HANDLE_EXCEPTION;
+			}
 			break;
 		case OP_JUMP_FALSE:
 			a = (object_t *) stack_pop (g_s);
