@@ -50,6 +50,7 @@ else {\
 static frame_t *g_current;
 static stack_t *g_s;
 static int g_runtime_started;
+static int g_cmdline;
 static int g_gc_op_count;
 static code_t *g_global;
 
@@ -88,11 +89,11 @@ interpreter_recover_exception ()
 		object_unref (obj);
 	}
 
-	return 1;
+	return g_cmdline? 0: 1;
 }
 
-static int
-interpreter_play (code_t *code, int global)
+int
+interpreter_play (code_t *code, int global, frame_t *frame)
 {
 	opcode_t opcode;
 	op_t op;
@@ -104,9 +105,11 @@ interpreter_play (code_t *code, int global)
 	object_t *e;
 	object_t *r;
 
-	g_current = frame_new (code, g_current, stack_get_sp (g_s), global);
-	if (g_current == NULL) {
-		fatal_error ("failed to play code.");
+	if (frame == NULL) {
+		g_current = frame_new (code, g_current, stack_get_sp (g_s), global, 0);
+		if (g_current == NULL) {
+			fatal_error ("failed to play code.");
+		}
 	}
 
 recover:
@@ -498,7 +501,7 @@ recover:
 
 					HANDLE_EXCEPTION;
 				}
-				if (!interpreter_play (funcobject_get_value (a), 0)) {
+				if (!interpreter_play (funcobject_get_value (a), 0, NULL)) {
 					object_unref (a);
 					if (!frame_is_catched (g_current)) {
 						if (stack_get_sp (g_s) != frame_get_bottom (g_current) + 1) {
@@ -1566,7 +1569,7 @@ interpreter_execute (const char *path)
 
 	g_global = code;
 	g_runtime_started = 1;
-	UNUSED (interpreter_play (code, 1));
+	UNUSED (interpreter_play (code, 1, NULL));
 
 	while (g_current) {
 		g_current = frame_free (g_current);
@@ -1597,7 +1600,6 @@ interpreter_stack_print_fun (void *data)
 	object_print ((object_t *) data);
 }
 
-
 void
 interpreter_print_stack ()
 {
@@ -1624,6 +1626,10 @@ interpreter_set_exception (const char *exception)
 
 	if (frame_is_catched (g_current)) {
 		frame_set_exception (g_current, exception_obj);
+		if (g_cmdline) {
+			interpreter_traceback ();
+			fprintf (stderr, "runtime error: %s\n", exception);
+		}
 
 		return;
 	}
@@ -1645,6 +1651,15 @@ interpreter_set_exception (const char *exception)
 	}
 	interpreter_stack_rollback ();
 	g_current = frame_free (g_current);
+}
+
+void
+interpreter_set_cmdline (frame_t *frame, code_t *code)
+{
+	g_global = code;
+	g_current = frame;
+	g_cmdline = 1;
+	g_runtime_started = 1;
 }
 
 void

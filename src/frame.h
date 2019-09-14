@@ -35,6 +35,7 @@ typedef struct block_s
 	list_t link;
 	dict_t *ns;
 	int catched;
+	int cmdline;
 	para_t out;
 	sp_t bottom;
 } block_t;
@@ -52,7 +53,7 @@ typedef struct frame_s
 } frame_t;
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t bottom, int global);
+frame_new (code_t *code, frame_t *current, sp_t bottom, int global, int cmdline);
 
 frame_t *
 frame_free (frame_t *frame);
@@ -101,6 +102,15 @@ frame_set_exception (frame_t *frame, object_t *exception);
 
 object_t *
 frame_get_exception (frame_t *frame);
+
+void
+frame_clear_exception (frame_t *frame);
+
+void
+frame_set_catched (frame_t *frame);
+
+void
+frame_reset_esp (frame_t *frame);
 
 #endif /* FRAME_H */
 

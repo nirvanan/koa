@@ -1,3 +1,7 @@
+command-line:
+	external-declaration
+	statement
+	
 translation-unit:
 	external-declaration
 	external-declaration translation-unit

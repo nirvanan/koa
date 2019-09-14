@@ -22,6 +22,10 @@
 #define INTERPRETER_H
 
 #include "koa.h"
+#include "frame.h"
+
+int
+interpreter_play (code_t *code, int global, frame_t *frame);
 
 void
 interpreter_execute (const char *path);
@@ -37,6 +41,9 @@ interpreter_started ();
 
 void
 interpreter_set_exception (const char *exception);
+
+void
+interpreter_set_cmdline (frame_t *frame, code_t *code);
 
 void
 interpreter_init ();

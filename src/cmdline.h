@@ -1,5 +1,5 @@
 /*
- * misc.h
+ * cmdline.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,24 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MISC_H
-#define MISC_H
+#ifndef CMDLINE_H
+#define CMDLINE_H
 
 #include "koa.h"
 
-int
-misc_check_source_extension (const char *filename);
+void
+cmdline_start ();
 
-int
-misc_check_file_access (const char *path, int read, int write);
-
-int
-misc_file_is_older (const char *s, const char *b);
-
-const char *
-misc_get_package_full ();
-
-const char *
-misc_get_bugreport ();
-
-#endif /* MISC_H */
+#endif /* CMDLINE_H */

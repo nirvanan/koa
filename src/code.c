@@ -450,7 +450,7 @@ code_get_pos (code_t *code, para_t pos)
 
 	opcode = (opcode_t *) vec_pos (code->opcodes, (integer_value_t) pos);
 	if (opcode == NULL) {
-		return (opcode_t) 0;
+		return OP_UNKNOWN;
 	}
 
 	return *opcode;

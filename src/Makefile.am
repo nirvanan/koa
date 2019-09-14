@@ -10,6 +10,8 @@ charobject.c \
 charobject.h \
 code.c \
 code.h \
+cmdline.c \
+cmdline.h \
 dict.c \
 dict.h \
 dictobject.c \

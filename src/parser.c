@@ -43,14 +43,6 @@
 
 #define TOP_LEVEL_TAG "#GLOBAL"
 
-typedef struct parser_s
-{
-	reader_t *reader; /* Token stream source. */
-	const char *path; /* Source file path. */
-	token_t *token; /* Current token. */
-	code_t *global; /* Top level. */
-} parser_t;
-
 typedef struct buf_read_s
 {
 	str_t *buf;
@@ -2887,6 +2879,52 @@ parser_translation_unit (parser_t *parser, code_t *code)
 	return code_push_opcode (code, OPCODE (OP_END_PROGRAM, 0), line);
 }
 
+static void
+parser_recover_code (code_t *code, para_t pos)
+{
+	para_t current;
+
+	current = code_current_pos (code);
+	while (current != pos) {
+		if (!code_remove_pos (code, current)) {
+			fatal_error ("can't recover code after command line error.");
+		}
+		current = code_current_pos (code);
+	}
+}
+
+/* command-line-unit:
+ * external-declaration
+ * statement */
+int
+parser_command_line (parser_t *parser, code_t *code)
+{
+	para_t pos;
+
+	if (parser->token == NULL) {
+		parser_next_token (parser);
+	}
+
+	pos = code_current_pos (code);
+	if (TOKEN_IS_TYPE (parser->token)) {
+		if (!parser_external_declaration (parser, code)) {
+			parser_recover_code (code, pos);
+
+			return 0;
+		}
+
+		return 1;
+	}
+
+	if (!parser_statement (parser, code, UPPER_TYPE_PLAIN, 0)) {
+		parser_recover_code (code, pos);
+
+		return 0;
+	}
+
+	return 1;
+}
+
 static int
 parser_check_source (const char *path)
 {
@@ -2978,6 +3016,7 @@ parser_load_file (const char *path)
 		fatal_error ("out of memory.");
 	}
 
+	parser->path = path;
 	parser->global = code;
 	parser->reader = lex_reader_new (path, parser_file_reader,
 		parser_file_close, (void *) f);
@@ -2987,8 +3026,6 @@ parser_load_file (const char *path)
 
 		return NULL;
 	}
-
-	parser->path = path;
 
 	parser_next_token (parser);
 	if (!parser_translation_unit (parser, code)) {
@@ -3031,6 +3068,7 @@ parser_load_buf (const char *path, str_t *buf)
 		fatal_error ("out of memory.");
 	}
 
+	parser->path = path;
 	parser->global = code;
 	parser->reader = lex_reader_new (path, parser_buf_reader,
 		parser_buf_clear, (void *) b);
@@ -3040,8 +3078,6 @@ parser_load_buf (const char *path, str_t *buf)
 
 		return NULL;
 	}
-
-	parser->path = path;
 
 	parser_next_token (parser);
 	if (!parser_translation_unit (parser, code)) {
@@ -3057,4 +3093,35 @@ parser_load_buf (const char *path, str_t *buf)
 	parser_free (parser);
 
 	return code;
+}
+
+parser_t *
+parser_new_cmdline (const char *path, code_t *global, get_char_f rf,
+					clear_f cf, void *udata)
+{
+	parser_t *parser;
+
+	parser = (parser_t *) pool_calloc (1, sizeof (parser_t));
+	if (parser == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	parser->global = global;
+	parser->reader = lex_reader_new (path, rf, cf, udata);
+	if (parser->reader == NULL) {
+		pool_free ((void *) parser);
+
+		return NULL;
+	}
+	parser->path = path;
+
+	return parser;
+}
+
+void
+parser_cmdline_done (parser_t *parser)
+{
+	lex_token_free (parser->token);
+	parser->token = NULL;
+	lex_reader_reset (parser->reader);
 }

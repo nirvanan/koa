@@ -35,6 +35,7 @@
 #include "interpreter.h"
 #include "builtin.h"
 #include <time.h>
+#include "cmdline.h"
 
 void koa_init ()
 {
@@ -55,6 +56,7 @@ int main(int argc, char *argv[])
 	koa_init ();
 	int c = 0;
 
+	cmdline_start ();
 	while (0) {
 		object_t *val = dictobject_new (NULL);
 		object_t *idx = intobject_new (2, NULL);

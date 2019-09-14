@@ -23,6 +23,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "misc.h"
 
 int
@@ -72,4 +76,16 @@ misc_file_is_older (const char *s, const char *b)
 		(b_stat.st_mtim.tv_sec == s_stat.st_mtim.tv_sec &&
 		 b_stat.st_mtim.tv_nsec > s_stat.st_mtim.tv_nsec);
 #endif
+}
+
+const char *
+misc_get_package_full ()
+{
+	return PACKAGE_STRING;
+}
+
+const char *
+misc_get_bugreport ()
+{
+	return PACKAGE_BUGREPORT;
 }

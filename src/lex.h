@@ -197,6 +197,9 @@ reader_t *
 lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata);
 
 void
+lex_reader_reset (reader_t *reader);
+
+void
 lex_reader_free (reader_t *reader);
 
 int

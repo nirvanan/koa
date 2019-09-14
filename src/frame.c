@@ -28,7 +28,7 @@
 #include "error.h"
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t bottom, int global)
+frame_new (code_t *code, frame_t *current, sp_t bottom, int global, int cmdline)
 {
 	frame_t *frame;
 
@@ -43,6 +43,7 @@ frame_new (code_t *code, frame_t *current, sp_t bottom, int global)
 	frame_enter_block (frame, 0, bottom);
 	frame->global = global? frame->current->ns: FRAME_UPPER (frame)->global;
 	frame->is_global = global;
+	frame->current->cmdline = cmdline;
 
 	return frame;
 }
@@ -94,7 +95,14 @@ frame_free (frame_t *frame)
 opcode_t
 frame_next_opcode (frame_t *frame)
 {
-	return code_get_pos (frame->code, frame->esp++);
+	opcode_t opcode;
+
+	opcode = code_get_pos (frame->code, frame->esp);
+	if (opcode != OP_UNKNOWN) {
+		frame->esp++;
+	}
+
+	return opcode;
 }
 
 opcode_t
@@ -154,6 +162,7 @@ frame_enter_block (frame_t *frame, para_t out, sp_t bottom)
 	block->ns = ns;
 	block->out = out;
 	block->bottom = bottom;
+	block->cmdline = 0;
 	if (out > 0 || (frame->current != NULL && frame->current->catched)) {
 		block->catched = 1;
 	}
@@ -368,8 +377,11 @@ frame_recover_exception (frame_t *frame)
 {
 	sp_t bottom;
 
-	while (!frame->current->out) {
+	while (!frame->current->out && !frame->current->cmdline) {
 		frame_leave_block (frame);
+	}
+	if (frame->current->cmdline) {
+		return frame->current->bottom;
 	}
 	frame_jump (frame, frame->current->out + 1);
 	bottom = frame->current->bottom;
@@ -389,4 +401,23 @@ object_t *
 frame_get_exception (frame_t *frame)
 {
 	return frame->exception;
+}
+
+void
+frame_clear_exception (frame_t *frame)
+{
+	object_unref (frame->exception);
+	frame->exception = NULL;
+}
+
+void
+frame_set_catched (frame_t *frame)
+{
+	frame->current->catched = 1;
+}
+
+void
+frame_reset_esp (frame_t *frame)
+{
+	frame->esp = code_current_pos (frame->code) + 1;
 }

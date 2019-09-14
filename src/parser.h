@@ -23,11 +23,30 @@
 
 #include "koa.h"
 #include "code.h"
+#include "lex.h"
+
+typedef struct parser_s
+{
+	reader_t *reader; /* Token stream source. */
+	const char *path; /* Source file path. */
+	token_t *token; /* Current token. */
+	code_t *global; /* Top level. */
+} parser_t;
 
 code_t *
 parser_load_file (const char *path);
 
 code_t *
 parser_load_buf (const char *path, str_t *buf);
+
+int
+parser_command_line (parser_t *parser, code_t *code);
+
+parser_t *
+parser_new_cmdline (const char *path, code_t *global, get_char_f rf,
+					clear_f cf, void *udata);
+
+void
+parser_cmdline_done (parser_t *parser);
 
 #endif /* PARSER_H */

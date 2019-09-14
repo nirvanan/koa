@@ -100,20 +100,21 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_koa_OBJECTS = boolobject.$(OBJEXT) builtin.$(OBJEXT) \
-	charobject.$(OBJEXT) code.$(OBJEXT) dict.$(OBJEXT) \
-	dictobject.$(OBJEXT) doubleobject.$(OBJEXT) error.$(OBJEXT) \
-	exceptionobject.$(OBJEXT) floatobject.$(OBJEXT) \
-	frame.$(OBJEXT) funcobject.$(OBJEXT) gc.$(OBJEXT) \
-	hash.$(OBJEXT) interpreter.$(OBJEXT) intobject.$(OBJEXT) \
-	int16object.$(OBJEXT) int32object.$(OBJEXT) \
-	int64object.$(OBJEXT) int8object.$(OBJEXT) lex.$(OBJEXT) \
-	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
-	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
-	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
-	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
-	struct.$(OBJEXT) structobject.$(OBJEXT) uint16object.$(OBJEXT) \
-	uint32object.$(OBJEXT) uint64object.$(OBJEXT) \
-	uint8object.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
+	charobject.$(OBJEXT) code.$(OBJEXT) cmdline.$(OBJEXT) \
+	dict.$(OBJEXT) dictobject.$(OBJEXT) doubleobject.$(OBJEXT) \
+	error.$(OBJEXT) exceptionobject.$(OBJEXT) \
+	floatobject.$(OBJEXT) frame.$(OBJEXT) funcobject.$(OBJEXT) \
+	gc.$(OBJEXT) hash.$(OBJEXT) interpreter.$(OBJEXT) \
+	intobject.$(OBJEXT) int16object.$(OBJEXT) \
+	int32object.$(OBJEXT) int64object.$(OBJEXT) \
+	int8object.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
+	longobject.$(OBJEXT) main.$(OBJEXT) modobject.$(OBJEXT) \
+	misc.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
+	parser.$(OBJEXT) pool.$(OBJEXT) stack.$(OBJEXT) str.$(OBJEXT) \
+	strobject.$(OBJEXT) struct.$(OBJEXT) structobject.$(OBJEXT) \
+	uint16object.$(OBJEXT) uint32object.$(OBJEXT) \
+	uint64object.$(OBJEXT) uint8object.$(OBJEXT) vec.$(OBJEXT) \
+	vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -272,6 +273,8 @@ charobject.c \
 charobject.h \
 code.c \
 code.h \
+cmdline.c \
+cmdline.h \
 dict.c \
 dict.h \
 dictobject.c \
@@ -436,6 +439,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boolobject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/builtin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charobject.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmdline.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/code.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dict.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dictobject.Po@am__quote@

@@ -207,6 +207,15 @@ lex_reader_new (const char *path, get_char_f rf, clear_f cf, void *udata)
 	return reader;
 }
 
+void
+lex_reader_reset (reader_t *reader)
+{
+	reader->current = 0;
+	reader->line = 1;
+	reader->broken = 0;
+	lex_next_char (reader);
+}
+
 int
 lex_reader_broken (reader_t *reader)
 {
