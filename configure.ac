@@ -7,15 +7,12 @@ AC_CONFIG_SRCDIR([src/str.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_DEFINE(ENABLE_BINRELOC, , [define ENABLE_BINRELOC])
 AM_MAINTAINER_MODE
 
 AM_INIT_AUTOMAKE([1.15 -Wall no-define tar-ustar no-dist-gzip dist-xz])
 
 # Checks for programs.
 AC_PROG_CC_C99
-
-PKG_PROG_PKG_CONFIG
 
 # Checks for libraries.
 AC_CHECK_LIB(m, isnan)
@@ -26,11 +23,14 @@ AC_CHECK_HEADERS([inttypes.h limits.h stddef.h stdint.h stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
+AC_TYPE_INT16_T
 AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
 AC_TYPE_SIZE_T
+AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
-AC_TYPE_UINT8_T
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE

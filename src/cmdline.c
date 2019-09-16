@@ -49,7 +49,7 @@ cmdline_stdin_reader (void *udata)
 	r = (stdin_reader_t *) udata;
 	if (r->len == 0) {
 		while (r->len == 0) {
-			printf (">>>");
+			printf (">>> ");
 			if (fgets (r->line, MAX_LINE_LENGTH + 1, stdin) == NULL) {
 				r->len = 0;
 				r->current = 0;
@@ -102,7 +102,7 @@ cmdline_print_exception (frame_t *frame)
 static void
 cmdline_show_help ()
 {
-	printf ("%s. Copyright (C) 2018 Gordon Li.\n", misc_get_package_full ());
+	printf ("%s\nCopyright (C) 2018 Gordon Li.\n", misc_get_package_full ());
 	printf ("If you have any question, feel free to mail to <%s>.\n", misc_get_bugreport ());
 }
 
