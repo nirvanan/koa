@@ -63,7 +63,7 @@ cmdline_stdin_reader (void *udata)
 		r->len = 0;
 		r->current = 0;
 
-		return EOF;
+		return '\n';
 	}
 
 	return r->line[r->current++];

@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	int e = -5;
+	int e = 5;
 	while (e--) {
 		interpreter_execute ("/home/likehui/test.k");
 			printf ("done %d\n", e);

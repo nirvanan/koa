@@ -593,6 +593,9 @@ parser_for_statement (parser_t *parser, code_t *code)
 		if (!parser_declaration (parser, code, -1, NULL)) {
 			return 0;
 		}
+		if (parser->cmdline) {
+			parser_next_token (parser);
+		}
 	}
 	else {
 		/* There are initializing codes? */
@@ -794,8 +797,19 @@ parser_do_while_statement (parser_t *parser, code_t *code)
 	}
 
 	/* Check ')' and ';'. */
-	return parser_test_and_next (parser, TOKEN (')'), "missing matching ')'.") &&
-		parser_test_and_next (parser, TOKEN (';'), "missing ';'.");
+	if (!parser_test_and_next (parser, TOKEN (')'), "missing matching ')'.")) {
+		return 0;
+	}
+	if (parser->cmdline) {
+		if (!parser_check (parser, TOKEN (';'))) {
+			return parser_syntax_error (parser, "missing ';'.");
+		}
+
+		return 1;
+	}
+
+
+	return parser_test_and_next (parser, TOKEN (';'), "missing ';'.");
 }
 
 /* while-statement:
@@ -1043,7 +1057,6 @@ parser_switch_statement (parser_t *parser, code_t *code)
 		return 0;
 	}
 
-
 	return 1;
 }
 
@@ -1120,6 +1133,26 @@ parser_if_statement (parser_t *parser, code_t *code,
 		OPCODE (OP_JUMP_FALSE, out_pos), line);
 }
 
+static para_t
+parser_count_blocks (code_t *code, para_t pos)
+{
+	para_t blocks;
+	para_t last;
+
+	blocks = 0;
+	last = code_current_pos (code);
+	for (para_t i = pos; i <= last; i++) {
+		if (OPCODE_OP (code_get_pos (code, i)) == OP_ENTER_BLOCK) {
+			blocks++;
+		}
+		else if (OPCODE_OP (code_get_pos (code, i)) == OP_LEAVE_BLOCK) {
+			blocks--;
+		}
+	}
+
+	return blocks;
+}
+
 /* jump-statement:
  * continue ;
  * break ;
@@ -1140,7 +1173,7 @@ parser_jump_statement (parser_t *parser, code_t *code,
 		}
 
 		/* Emit POP_BLOCKS and JUMP_CONTINUE. */
-		if (!code_push_opcode (code, OPCODE (OP_POP_BLOCKS, upper_pos), line) ||
+		if (!code_push_opcode (code, OPCODE (OP_POP_BLOCKS, parser_count_blocks (code, upper_pos)), line) ||
 			!code_push_opcode (code, OPCODE (OP_JUMP_CONTINUE, upper_pos),
 			line)) {
 			return 0;
@@ -1153,7 +1186,7 @@ parser_jump_statement (parser_t *parser, code_t *code,
 		}
 
 		/* Emit POP_BLOCKS and JUMP_BREAK. */
-		if (!code_push_opcode (code, OPCODE (OP_POP_BLOCKS, upper_pos), line) ||
+		if (!code_push_opcode (code, OPCODE (OP_POP_BLOCKS, parser_count_blocks (code, upper_pos)), line) ||
 			!code_push_opcode (code, OPCODE (OP_JUMP_BREAK, upper_pos),
 			line)) {
 			return 0;
@@ -1193,6 +1226,14 @@ parser_jump_statement (parser_t *parser, code_t *code,
 	}
 
 	/* Skip ';'. */
+	if (parser->cmdline) {
+		if (!parser_check (parser, TOKEN (';'))) {
+			return parser_syntax_error (parser, "missing ';'.");
+		}
+
+		return 1;
+	}
+
 	return parser_test_and_next (parser, TOKEN (';'), "missing ';'.");
 }
 
@@ -1248,16 +1289,26 @@ parser_expression_statement (parser_t *parser, code_t *code)
 		return 0;
 	}
 
-	/* Skip ';'. */
-	if (!parser_test_and_next (parser, TOKEN (';'),
-		"missing ';' in the end of the statement.")) {
-		return 0;
-	}
 
 	/* Emit a POP_STACK to ignore left part. */
 	line = TOKEN_LINE (parser->token);
 
-	return code_push_opcode (code, OPCODE (OP_POP_STACK, 0), line);
+	if (!code_push_opcode (code, OPCODE (OP_POP_STACK, 0), line)) {
+		return 0;
+	}
+
+	/* Skip ';'. */
+	if (parser->cmdline) {
+		if (!parser_check (parser, TOKEN (';'))) {
+			return parser_syntax_error (parser,
+				"missing ';' in the end of the statement.");
+		}
+
+		return 1;
+	}
+
+	return parser_test_and_next (parser, TOKEN (';'),
+		"missing ';' in the end of the statement.");
 }
 
 /* labeled-statement:
@@ -2447,6 +2498,14 @@ parser_declaration (parser_t *parser, code_t *code,
 	}
 
 	/* Skip ';'. */
+	if (parser->cmdline) {
+		if (!parser_check (parser, TOKEN (';'))) {
+			return parser_syntax_error (parser, "missing ';' in declaration.");
+		}
+
+		return 1;
+	}
+
 	return parser_test_and_next (parser, TOKEN (';'),
 		"missing ';' in declaration.");
 }
@@ -2477,6 +2536,9 @@ parser_block_item_list (parser_t *parser, code_t *code,
 		if (!parser_block_item (parser, code, ut, upper_pos)) {
 			return 0;
 		}
+		if (parser->cmdline) {
+			parser_next_token (parser);
+		}
 	}
 
 	return 1;
@@ -2499,6 +2561,14 @@ parser_compound_statement (parser_t *parser, code_t *code,
 	}
 
 	/* Skip '}'. */
+	if (parser->cmdline) {
+		if (!parser_check (parser, TOKEN ('}'))) {
+			return parser_syntax_error (parser, "missing matching '}'.");
+		}
+
+		return 1;
+	}
+
 	return parser_test_and_next (parser, TOKEN ('}'),
 		"missing matching '}'.");
 }
@@ -2744,7 +2814,9 @@ parser_struct_specifier (parser_t *parser, code_t *code, object_type_t type)
 		return parser_syntax_error (parser, "missing ';' after struct specifier.");
 	}
 
-	parser_next_token (parser);
+	if (!parser->cmdline) {
+		parser_next_token (parser);
+	}
 
 	return 1;
 }
@@ -3106,14 +3178,15 @@ parser_new_cmdline (const char *path, code_t *global, get_char_f rf,
 		fatal_error ("out of memory.");
 	}
 
+	parser->path = path;
 	parser->global = global;
 	parser->reader = lex_reader_new (path, rf, cf, udata);
+	parser->cmdline = 1;
 	if (parser->reader == NULL) {
 		pool_free ((void *) parser);
 
 		return NULL;
 	}
-	parser->path = path;
 
 	return parser;
 }

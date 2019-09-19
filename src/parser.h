@@ -31,6 +31,7 @@ typedef struct parser_s
 	const char *path; /* Source file path. */
 	token_t *token; /* Current token. */
 	code_t *global; /* Top level. */
+	int cmdline; /* Flag for cmdline parser. */
 } parser_t;
 
 code_t *

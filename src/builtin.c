@@ -45,6 +45,7 @@ _builtin_print (object_t *args)
 
 	arg = ARG (args, 0);
 	object_print (arg);
+	printf ("\n");
 
 	return DUMMY;
 }
