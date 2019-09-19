@@ -1,5 +1,5 @@
 /*
- * cmdline.h
+ * cmdline.c
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li

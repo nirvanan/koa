@@ -1474,6 +1474,11 @@ recover:
 			}
 			break;
 		case OP_RETURN:
+			if (global && g_cmdline) {
+				error ("do not return from cmdline.");
+
+				HANDLE_EXCEPTION;
+			}
 			a = (object_t *) stack_pop (g_s);
 			/* Check return type and try cast. */
 			if (OBJECT_TYPE (a) != FUNC_RET_TYPE (code)) {
