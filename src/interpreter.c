@@ -501,6 +501,11 @@ recover:
 
 					HANDLE_EXCEPTION;
 				}
+				if (funcobject_get_value (a) == NULL) {
+					error ("null func is not callable.");
+
+					HANDLE_EXCEPTION;
+				}
 				if (!interpreter_play (funcobject_get_value (a), 0, NULL)) {
 					object_unref (a);
 					if (!frame_is_catched (g_current)) {

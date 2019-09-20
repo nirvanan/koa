@@ -98,13 +98,13 @@ funcobject_op_print (object_t *obj)
 	if (func->is_builtin) {
 		filename = "builtin";
 	}
-	else {
+	else if (func->val != NULL) {
 		filename = code_get_filename (func->val);
 	}
 	if (func->is_builtin) {
 		name = builtin_get_name (func->builtin);
 	}
-	else {
+	else if (func->val != NULL) {
 		name = code_get_name (func->val);
 	}
 	printf ("(%s:%s)", filename, name);
@@ -127,13 +127,13 @@ funcobject_op_dump (object_t *obj)
 	if (func->is_builtin) {
 		filename = "builtin";
 	}
-	else {
+	else if (func->val != NULL) {
 		filename = code_get_filename (func->val);
 	}
 	if (func->is_builtin) {
 		name = builtin_get_name (func->builtin);
 	}
-	else {
+	else if (func->val != NULL) {
 		name = code_get_name (func->val);
 	}
 	size = strlen (filename) + strlen (name) + DUMP_BUF_EXTRA;

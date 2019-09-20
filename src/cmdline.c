@@ -89,13 +89,6 @@ cmdline_reset (parser_t *parser, stdin_reader_t *r)
 static void
 cmdline_print_exception (frame_t *frame)
 {
-	object_t *e;
-
-	e = frame_get_exception (frame);
-	if (e != NULL) {
-		object_print (e);
-		printf ("\n");
-	}
 	frame_clear_exception (frame);
 }
 
