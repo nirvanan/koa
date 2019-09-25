@@ -22,18 +22,18 @@
 #include "pool.h"
 #include "error.h"
 
-stack_t *
+st_t *
 stack_new ()
 {
 	vec_t *v;
-	stack_t *stack;
+	st_t *stack;
 
 	v = vec_new (0);
 	if (v == NULL) {
 		return NULL;
 	}
 
-	stack = (stack_t *) pool_calloc (1, sizeof (stack_t));
+	stack = (st_t *) pool_calloc (1, sizeof (st_t));
 	if (stack == NULL) {
 		vec_free (v);
 		fatal_error ("out of memory.");
@@ -45,14 +45,14 @@ stack_new ()
 }
 
 void
-stack_free (stack_t *stack)
+stack_free (st_t *stack)
 {
 	vec_free (stack->v);
 	pool_free ((void *) stack);
 }
 
 int
-stack_push (stack_t *stack, void *data)
+stack_push (st_t *stack, void *data)
 {
 	if (vec_push_back (stack->v, data)) {
 		stack->sp++;
@@ -64,7 +64,7 @@ stack_push (stack_t *stack, void *data)
 }
 
 void *
-stack_pop (stack_t *stack)
+stack_pop (st_t *stack)
 {
 	void *ret;
 
@@ -83,13 +83,13 @@ stack_pop (stack_t *stack)
 }
 
 void *
-stack_top (stack_t *stack)
+stack_top (st_t *stack)
 {
 	return vec_last (stack->v);
 }
 
 void
-stack_foreach (stack_t *stack, stack_foreach_f fun)
+stack_foreach (st_t *stack, stack_foreach_f fun)
 {
 	for (integer_value_t pos = stack->sp - 1; pos >= 0; pos--) {
 		fun (vec_pos (stack->v, pos));
@@ -97,13 +97,13 @@ stack_foreach (stack_t *stack, stack_foreach_f fun)
 }
 
 sp_t
-stack_get_sp (stack_t *stack)
+stack_get_sp (st_t *stack)
 {
 	return stack->sp;
 }
 
 void *
-stack_set (stack_t *stack, integer_value_t pos, void *data)
+stack_set (st_t *stack, integer_value_t pos, void *data)
 {
 	return vec_set (stack->v, pos, data);
 }

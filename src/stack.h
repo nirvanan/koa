@@ -26,37 +26,37 @@
 
 typedef integer_value_t sp_t;
 
-typedef struct stack_s
+typedef struct st_s
 {
 	vec_t *v;
 	sp_t sp;
-} stack_t;
+} st_t;
 
 typedef void (*stack_foreach_f) (void *data);
 
-stack_t *
+st_t *
 stack_new ();
 
 void
-stack_free (stack_t *stack);
+stack_free (st_t *stack);
 
 int
-stack_push (stack_t *stack, void *data);
+stack_push (st_t *stack, void *data);
 
 void *
-stack_pop (stack_t *stack);
+stack_pop (st_t *stack);
 
 void *
-stack_top (stack_t *stack);
+stack_top (st_t *stack);
 
 void
-stack_foreach (stack_t *stack, stack_foreach_f fun);
+stack_foreach (st_t *stack, stack_foreach_f fun);
 
 sp_t
-stack_get_sp (stack_t *stack);
+stack_get_sp (st_t *stack);
 
 void *
-stack_set (stack_t *stack, integer_value_t pos, void *data);
+stack_set (st_t *stack, integer_value_t pos, void *data);
 
 #endif /* STACK_H */
 

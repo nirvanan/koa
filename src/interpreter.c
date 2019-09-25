@@ -48,7 +48,7 @@ else {\
 #define STACK_PUSH(s, o) (object_ref((o)),stack_push(s,(void*)(o)))
 
 static frame_t *g_current;
-static stack_t *g_s;
+static st_t *g_s;
 static int g_runtime_started;
 static int g_cmdline;
 static int g_gc_op_count;
