@@ -738,6 +738,9 @@ parser_do_while_statement (parser_t *parser, code_t *code)
 	}
 
 	/* Check while and '('. */
+	if (parser->cmdline) {
+		parser_next_token (parser);
+	}
 	if (!parser_test_and_next (parser, TOKEN_WHILE,
 		"expected while after do statement.")) {
 		return 0;
