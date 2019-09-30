@@ -388,6 +388,14 @@ structobject_store_member (object_t *obj, object_t *name,
 		return NULL;
 	}
 
+	prev = (object_t *) vec_pos (members, pos);
+	if (prev != NULL && OBJECT_TYPE (prev) != OBJECT_TYPE (value)) {
+		value = object_cast (value, OBJECT_TYPE (prev));
+		if (value == NULL) {
+			return NULL;
+		}
+	}
+
 	prev = (object_t *) vec_set (members, pos, (void *) value);
 	object_ref (value);
 	if (prev != NULL) {
