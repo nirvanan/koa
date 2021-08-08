@@ -298,10 +298,18 @@ code_switch_opcode (code_t *code, para_t f, para_t s)
 static int
 code_var_find_fun (void *a, void *b)
 {
+	object_t *obj_a;
+	object_t *obj_b;
 	object_t *res;
 	int eq;
 
-	res = object_equal ((object_t *) a, (object_t *) b);
+	obj_a = (object_t *) a;
+	obj_b = (object_t *) b;
+	if (OBJECT_TYPE (obj_a) != OBJECT_TYPE (obj_b)) {
+		return 0;
+	}
+
+	res = object_equal (obj_a, obj_b);
 	if (res == 0) {
 		return 0;
 	}

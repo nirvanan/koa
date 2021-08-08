@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	koa_init ();
 	int c = 0;
 
-	cmdline_start ();
+	//cmdline_start ();
 	while (0) {
 		object_t *val = dictobject_new (NULL);
 		object_t *idx = intobject_new (2, NULL);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		code_t *code = parser_load_file ("/home/likehui/test.k");
+		code_t *code = parser_load_file ("/home/nirvanan/test.k");
 		if (code) {
 			code_print (code);
 			//object_t *str = code_binary (code);
@@ -89,9 +89,9 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	int e = 5;
+	int e = -5;
 	while (e--) {
-		interpreter_execute ("/home/likehui/test.k");
+		interpreter_execute ("/home/nirvanan/test.k");
 			printf ("done %d\n", e);
 	}
 
