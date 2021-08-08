@@ -778,6 +778,8 @@ recover:
 			b = (object_t *) stack_pop (g_s);
 			a = (object_t *) stack_pop (g_s);
 			r = object_mod (a, b);
+			object_unref (a);
+			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
