@@ -168,7 +168,7 @@ pool_new (void *extra)
 
 	/* Insert all pages into free list and hash. */
 	pool_end = (void *) new_pool + POOL_REQUEST_SIZE;
-	for (void *p = new_pool->po; p < pool_end; p += PAGE_SIZE) {
+	for (void *p = new_pool->po; p + PAGE_SIZE <= pool_end; p += PAGE_SIZE) {
 		page_t *page;
 		
 		page = (page_t *) p;
