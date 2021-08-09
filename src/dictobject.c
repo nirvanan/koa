@@ -132,8 +132,8 @@ dictobject_op_print (object_t *obj)
 	size = vec_size (pairs);
 	printf ("{");
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, 0));
-		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, 0));
+		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
 		object_print (key);
 		printf (":");
 		object_print (value);
