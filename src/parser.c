@@ -3197,7 +3197,9 @@ parser_new_cmdline (const char *path, code_t *global, get_char_f rf,
 void
 parser_cmdline_done (parser_t *parser)
 {
-	lex_token_free (parser->token);
+	if (parser->token != NULL) {
+		lex_token_free (parser->token);
+	}
 	parser->token = NULL;
 	lex_reader_reset (parser->reader);
 }

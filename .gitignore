@@ -13,3 +13,5 @@ gmon.out
 stamp-h1
 tags
 autom4te.cache/
+.vscode
+*/flat-report

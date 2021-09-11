@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	koa_init ();
 	int c = 0;
 
-	//cmdline_start ();
+	cmdline_start ();
 	while (0) {
 		object_t *val = dictobject_new (NULL);
 		object_t *idx = intobject_new (2, NULL);
