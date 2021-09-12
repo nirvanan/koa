@@ -149,12 +149,12 @@ vecobject_op_dump (object_t *obj)
 		return object_add (g_dump_head, g_dump_tail);
 	}
 
-	res = object_add (g_dump_head, (object_t *) vec_pos (vec, 0));
+	res = g_dump_head;
 	if (res == NULL) {
 		return NULL;
 	}
 
-	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		object_t *dump;
 
 		element = (object_t *) vec_pos (vec, i);
@@ -165,8 +165,10 @@ vecobject_op_dump (object_t *obj)
 			return NULL;
 		}
 
-		if ((res = vecobject_dump_concat (res, g_dump_sep, 0)) == NULL ||
-			(res = vecobject_dump_concat (res, dump, 1)) == NULL) {
+		if ((res = vecobject_dump_concat (res, dump, 1)) == NULL) {
+			return NULL;
+		}
+		if (i != (integer_value_t) size - 1 && (res = vecobject_dump_concat (res, g_dump_sep, 0)) == NULL) {
 			return NULL;
 		}
 	}
@@ -487,12 +489,15 @@ vecobject_init ()
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init vec dump head.");
 	}
+	object_ref (g_dump_head);
 	g_dump_tail = strobject_new ("]>", strlen ("]>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init vec dump tail.");
 	}
+	object_ref (g_dump_tail);
 	g_dump_sep = strobject_new (", ", strlen (", "), 1, NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init vec dump sep.");
 	}
+	object_ref (g_dump_sep);
 }

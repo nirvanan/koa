@@ -39,6 +39,7 @@
 #include "longobject.h"
 #include "doubleobject.h"
 #include "strobject.h"
+#include "vecobject.h"
 #include "funcobject.h"
 
 #define TOP_LEVEL_TAG "#GLOBAL"
@@ -2046,6 +2047,95 @@ parser_expression (parser_t *parser, code_t *code)
 	return 1;
 }
 
+static object_t *
+parser_vec_constant (parser_t *parser, code_t *code)
+{
+	object_t *vec_object;
+
+	vec_object = vecobject_new (0, NULL);
+	if (vec_object == NULL) {
+		return NULL;
+	}
+
+	/* Skip '['. */
+	parser_next_token (parser);
+
+	while (!parser_check (parser, TOKEN (']'))) {
+		object_t *element;
+
+		element = NULL;
+		switch (TOKEN_TYPE (parser->token)) {
+			case TOKEN_NULL:
+				element = nullobject_new (NULL);
+				break;
+			case TOKEN_TRUE:
+			case TOKEN_FALSE:
+				element = boolobject_new (TOKEN_TYPE (parser->token) == TOKEN_TRUE, NULL);
+				parser_next_token (parser);
+				break;
+			case TOKEN_INTEGER:
+			case TOKEN_HEXINT:
+			case TOKEN_LINTEGER: {
+				long val;
+
+				val = strtol (TOKEN_ID (parser->token), NULL, 0);
+				if (val > INT_MAX || val < INT_MIN || parser_check (parser, TOKEN_LINTEGER)) {
+					element = longobject_new (val, NULL);
+				}
+				else {
+					element = intobject_new ((int) val, NULL);
+				}
+				parser_next_token (parser);
+				break;
+			}
+			case TOKEN_FLOATING:
+			case TOKEN_EXPO: {
+				double val;
+
+				val = strtod (TOKEN_ID (parser->token), NULL);
+				parser_next_token (parser);
+				element = doubleobject_new (val, NULL);
+				break;
+			}
+			case TOKEN_CHARACTER: {
+				char val;
+
+				val = (char) *TOKEN_ID (parser->token);
+				parser_next_token (parser);
+				element = charobject_new (val, NULL);
+				break;
+			}
+			case TOKEN_STRING:
+				element = strobject_new (TOKEN_ID (parser->token), strlen (TOKEN_ID (parser->token)), 0, NULL);
+				parser_next_token (parser);
+				break;
+			default:
+				if (parser_check (parser, TOKEN ('['))) {
+					element = parser_vec_constant (parser, code);
+				}
+				else if (parser_check (parser, TOKEN (','))) {
+					parser_next_token (parser);
+					continue;
+				}
+				else if (!parser_check (parser, TOKEN (']'))) {
+					parser_syntax_error (parser, "invalid vec constant.");
+					object_free (vec_object);
+					return NULL;
+				}
+		}
+		if (element == NULL) {
+			object_free (vec_object);
+			return NULL;
+		}
+		vecobject_append (vec_object, element);
+	}
+
+	/* Skip ']'. */
+	parser_next_token (parser);
+
+	return vec_object;
+}
+
 /* primary-expression:
  * identifier
  * constant
@@ -2168,7 +2258,21 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 			/* Emit a LOAD_CONST. */
 			return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
 		default:
-			if (parser_check (parser, TOKEN ('('))) {
+			if (parser_check (parser, TOKEN ('['))) {
+				object_t *vec_object;
+
+				vec_object = parser_vec_constant (parser, code);
+				if (vec_object == NULL) {
+					return 0;
+				}
+				pos = parser_push_const (code, OBJECT_TYPE_VEC, vec_object);
+				if (pos == -1) {
+					return 0;
+				}
+				/* Emit a LOAD_CONST. */
+				return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+			}
+			else if (parser_check (parser, TOKEN ('('))) {
 				parser_next_token (parser);
 				if (!parser_expression (parser, code)) {
 					return 0;
