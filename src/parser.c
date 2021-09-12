@@ -40,6 +40,7 @@
 #include "doubleobject.h"
 #include "strobject.h"
 #include "vecobject.h"
+#include "dictobject.h"
 #include "funcobject.h"
 
 #define TOP_LEVEL_TAG "#GLOBAL"
@@ -71,6 +72,7 @@ static int parser_conditional_expression (parser_t *parser, code_t *code,
 										  int skip);
 static int parser_declaration (parser_t *parser, code_t *code,
 							   object_type_t type, const char *first_id);
+static object_t *parser_dict_constant (parser_t *parser, code_t *code);							   
 
 static char
 parser_file_reader (void *udata)
@@ -2066,6 +2068,7 @@ parser_vec_constant (parser_t *parser, code_t *code)
 		element = NULL;
 		switch (TOKEN_TYPE (parser->token)) {
 			case TOKEN_NULL:
+				parser_next_token (parser);
 				element = nullobject_new (NULL);
 				break;
 			case TOKEN_TRUE:
@@ -2113,11 +2116,14 @@ parser_vec_constant (parser_t *parser, code_t *code)
 				if (parser_check (parser, TOKEN ('['))) {
 					element = parser_vec_constant (parser, code);
 				}
+				else if (parser_check (parser, TOKEN ('{'))) {
+					element = parser_dict_constant (parser, code);
+				}
 				else if (parser_check (parser, TOKEN (','))) {
 					parser_next_token (parser);
 					continue;
 				}
-				else if (!parser_check (parser, TOKEN (']'))) {
+				else {
 					parser_syntax_error (parser, "invalid vec constant.");
 					object_free (vec_object);
 					return NULL;
@@ -2134,6 +2140,159 @@ parser_vec_constant (parser_t *parser, code_t *code)
 	parser_next_token (parser);
 
 	return vec_object;
+}
+
+static object_t *
+parser_dict_constant (parser_t *parser, code_t *code)
+{
+	object_t *dict_object;
+
+	dict_object = dictobject_new (NULL);
+	if (dict_object == NULL) {
+		return NULL;
+	}
+
+	/* Skip '{'. */
+	parser_next_token (parser);
+
+	while (!parser_check (parser, TOKEN ('}'))) {
+		object_t *key;
+		object_t *value;
+
+		key = NULL;
+		switch (TOKEN_TYPE (parser->token)) {
+			case TOKEN_TRUE:
+			case TOKEN_FALSE:
+				key = boolobject_new (TOKEN_TYPE (parser->token) == TOKEN_TRUE, NULL);
+				parser_next_token (parser);
+				break;
+			case TOKEN_INTEGER:
+			case TOKEN_HEXINT:
+			case TOKEN_LINTEGER: {
+				long val;
+
+				val = strtol (TOKEN_ID (parser->token), NULL, 0);
+				if (val > INT_MAX || val < INT_MIN || parser_check (parser, TOKEN_LINTEGER)) {
+					key = longobject_new (val, NULL);
+				}
+				else {
+					key = intobject_new ((int) val, NULL);
+				}
+				parser_next_token (parser);
+				break;
+			}
+			case TOKEN_FLOATING:
+			case TOKEN_EXPO: {
+				double val;
+
+				val = strtod (TOKEN_ID (parser->token), NULL);
+				parser_next_token (parser);
+				key = doubleobject_new (val, NULL);
+				break;
+			}
+			case TOKEN_CHARACTER: {
+				char val;
+
+				val = (char) *TOKEN_ID (parser->token);
+				parser_next_token (parser);
+				key = charobject_new (val, NULL);
+				break;
+			}
+			case TOKEN_STRING:
+				key = strobject_new (TOKEN_ID (parser->token), strlen (TOKEN_ID (parser->token)), 0, NULL);
+				parser_next_token (parser);
+				break;
+			default:
+				if (parser_check (parser, TOKEN (','))) {
+					parser_next_token (parser);
+					continue;
+				}
+				parser_syntax_error (parser, "invalid dict constant.");
+				object_free (dict_object);
+				return NULL;
+		}
+		if (key == NULL) {
+			object_free (dict_object);
+			return NULL;
+		}
+
+		/* Check and skip ':'. */
+		if (!parser_test_and_next (parser, TOKEN (':'), "missing ':'")) {
+			object_free (dict_object);
+			return NULL;
+		}
+
+		value = NULL;
+		switch (TOKEN_TYPE (parser->token)) {
+			case TOKEN_NULL:
+				parser_next_token (parser);
+				value = nullobject_new (NULL);
+				break;
+			case TOKEN_TRUE:
+			case TOKEN_FALSE:
+				value = boolobject_new (TOKEN_TYPE (parser->token) == TOKEN_TRUE, NULL);
+				parser_next_token (parser);
+				break;
+			case TOKEN_INTEGER:
+			case TOKEN_HEXINT:
+			case TOKEN_LINTEGER: {
+				long val;
+
+				val = strtol (TOKEN_ID (parser->token), NULL, 0);
+				if (val > INT_MAX || val < INT_MIN || parser_check (parser, TOKEN_LINTEGER)) {
+					value = longobject_new (val, NULL);
+				}
+				else {
+					value = intobject_new ((int) val, NULL);
+				}
+				parser_next_token (parser);
+				break;
+			}
+			case TOKEN_FLOATING:
+			case TOKEN_EXPO: {
+				double val;
+
+				val = strtod (TOKEN_ID (parser->token), NULL);
+				parser_next_token (parser);
+				value = doubleobject_new (val, NULL);
+				break;
+			}
+			case TOKEN_CHARACTER: {
+				char val;
+
+				val = (char) *TOKEN_ID (parser->token);
+				parser_next_token (parser);
+				value = charobject_new (val, NULL);
+				break;
+			}
+			case TOKEN_STRING:
+				value = strobject_new (TOKEN_ID (parser->token), strlen (TOKEN_ID (parser->token)), 0, NULL);
+				parser_next_token (parser);
+				break;
+			default:
+				if (parser_check (parser, TOKEN ('['))) {
+					value = parser_vec_constant (parser, code);
+				}
+				else if (parser_check (parser, TOKEN ('{'))) {
+					value = parser_dict_constant (parser, code);
+				}
+				else {
+					parser_syntax_error (parser, "invalid dict constant.");
+					object_free (dict_object);
+					return NULL;
+				}
+		}
+		if (value == NULL) {
+			object_free (dict_object);
+			return NULL;
+		}
+		object_ipindex (dict_object, key, value);
+	}
+
+	/* Skip '}'. */
+	parser_next_token (parser);
+
+	return dict_object;
 }
 
 /* primary-expression:
@@ -2266,6 +2425,20 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 					return 0;
 				}
 				pos = parser_push_const (code, OBJECT_TYPE_VEC, vec_object);
+				if (pos == -1) {
+					return 0;
+				}
+				/* Emit a LOAD_CONST. */
+				return code_push_opcode (code, OPCODE (OP_LOAD_CONST, pos), line);
+			}
+			else if (parser_check (parser, TOKEN ('{'))) {
+				object_t *dict_object;
+
+				dict_object = parser_dict_constant (parser, code);
+				if (dict_object == NULL) {
+					return 0;
+				}
+				pos = parser_push_const (code, OBJECT_TYPE_DICT, dict_object);
 				if (pos == -1) {
 					return 0;
 				}

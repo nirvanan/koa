@@ -234,8 +234,8 @@ dictobject_op_dump (object_t *obj)
 	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
 		object_t *dump;
 
-		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, 0));
-		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, 0));
+		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
+		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
 		dump = dictobject_pair_concat (key, value);
 		if (dump == NULL) {
 			object_free (res);
@@ -304,9 +304,11 @@ dictobject_op_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	}
 
 	object_ref (obj3);
-	object_ref (obj2);
 	if (prev != NULL) {
 		object_unref (prev);
+	}
+	else {
+		object_ref (obj2);
 	}
 
 	return obj3;
