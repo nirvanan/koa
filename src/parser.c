@@ -2765,7 +2765,7 @@ parser_declaration (parser_t *parser, code_t *code,
 	object_type_t t;
 
 	t = type;
-	if (t == -1) {
+	if (t == OBJECT_TYPE_ERR) {
 		t = parser_token_object_type (parser, code, 0);
 		if (t == OBJECT_TYPE_VOID) {
 			return parser_syntax_error (parser, "variable can not be void.");
