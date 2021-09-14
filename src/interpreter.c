@@ -183,7 +183,7 @@ recover:
 			if (OBJECT_IS_STRUCT (a)) {
 				r = structobject_store_member (a, b, c, g_global);
 			}
-			else if (OBJECT_IS_UNION (a)) {
+			else {
 				r = unionobject_store_member (a, b, c, g_global);
 			}
 			object_unref (a);
@@ -222,7 +222,7 @@ recover:
 			if (OBJECT_IS_STRUCT (b)) {
 				r = structobject_get_member (b, a, g_global);
 			}
-			else if (OBJECT_IS_UNION (b)) {
+			else {
 				r = unionobject_get_member (b, a, g_global);
 			}
 			object_unref (b);
@@ -295,7 +295,7 @@ recover:
 
 				HANDLE_EXCEPTION;
 			}
-			if (OBJECT_IS_STRUCT (d)) {
+			if (OBJECT_IS_STRUCT (a)) {
 				d = structobject_get_member (a, b, g_global);
 			}
 			else {
