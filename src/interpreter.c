@@ -318,7 +318,12 @@ recover:
 				HANDLE_EXCEPTION;
 			}
 			object_ref (d);
-			r = structobject_store_member (a, b, e, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				r = structobject_store_member (a, b, e, g_global);
+			}
+			else {
+				r = unionobject_store_member (a, b, e, g_global);
+			}
 			object_unref (a);
 			if (r == NULL) {
 				object_free (e);
@@ -1254,7 +1259,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1266,7 +1276,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1276,7 +1292,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1288,7 +1309,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1298,7 +1325,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1310,7 +1342,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1320,7 +1358,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1332,7 +1375,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1342,7 +1391,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1354,7 +1408,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1364,7 +1424,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1376,7 +1441,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1386,7 +1457,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1398,7 +1474,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1408,7 +1490,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1420,7 +1507,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1430,7 +1523,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1442,7 +1540,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
@@ -1452,7 +1556,12 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			object_unref (a);
 			if (d == NULL) {
 				object_unref (c);
@@ -1464,7 +1573,13 @@ recover:
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
-			if (structobject_store_member (a, b, r, g_global) != r) {
+			if (OBJECT_IS_STRUCT (a)) {
+				e = structobject_store_member (a, b, r, g_global);
+			}
+			else {
+				e = unionobject_store_member (a, b, r, g_global);
+			}
+			if (e != r) {
 				object_free (r);
 
 				HANDLE_EXCEPTION;
