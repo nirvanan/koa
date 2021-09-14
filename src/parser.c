@@ -212,6 +212,19 @@ parser_token_object_type (parser_t *parser, code_t *code, int insert)
 			type = code_make_new_struct (parser->global, TOKEN_ID (parser->token));
 		}
 	}
+	else if (type == OBJECT_TYPE_UNION) {
+		parser_next_token (parser);
+		if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+			return OBJECT_TYPE_ERR;
+		}
+		type = code_find_union (parser->global, TOKEN_ID (parser->token));
+		if (type == OBJECT_TYPE_ERR && !insert) {
+			return OBJECT_TYPE_ERR;
+		}
+		if (type == OBJECT_TYPE_ERR && insert) {
+			type = code_make_new_union (parser->global, TOKEN_ID (parser->token));
+		}
+	}
 
 	return type;
 }
@@ -2589,9 +2602,11 @@ parser_cast_expression (parser_t *parser, code_t *code)
 			return parser_syntax_error (parser,
 										"can not cast any type to void.");
 		}
-		else if (STRUCT_INDEX (type) >= 0) {
-			return parser_syntax_error (parser,
-										"can not cast to struct.");
+		else if (COMPOUND_IS_STRUCT (type)) {
+			return parser_syntax_error (parser, "can not cast to struct.");
+		}
+		else if (COMPOUND_IS_UNION (type)) {
+			return parser_syntax_error (parser, "can not cast to union.");
 		}
 		
 		parser_next_token (parser);
@@ -3031,9 +3046,6 @@ parser_struct_declaration (parser_t *parser, code_t *code, object_type_t type, o
 	else if (type == OBJECT_TYPE_VOID) {
 		return parser_syntax_error (parser, "field can not be a void.");
 	}
-	if (type == field_type) {
-		return parser_syntax_error (parser, "field type is the same with struct type.");
-	}
 
 	parser_next_token (parser);
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
@@ -3101,10 +3113,89 @@ parser_struct_specifier (parser_t *parser, code_t *code, object_type_t type)
 	return 1;
 }
 
+/* union-declaration:
+ * type-specifier identifier ; */
+static int
+parser_union_declaration (parser_t *parser, code_t *code, object_type_t type, object_type_t field_type)
+{
+	if (field_type == OBJECT_TYPE_ERR) {
+		return parser_syntax_error (parser, "unknown field type.");
+	}
+	else if (type == OBJECT_TYPE_VOID) {
+		return parser_syntax_error (parser, "field can not be a void.");
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
+		return parser_syntax_error (parser, "missing identifier name.");
+	}
+	if (!code_push_field (code, type, field_type, TOKEN_ID (parser->token))) {
+		return 0;
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN (';'))) {
+		return parser_syntax_error (parser, "missing ';' after field declaration.");
+	}
+
+	parser_next_token (parser);
+
+	return 1;
+}
+
+/* union-declaration-list:
+ * union-declaration
+ * union-declaration union-declaration-list */
+static int
+parser_union_declaration_list (parser_t *parser, code_t *code, object_type_t type)
+{
+	object_type_t field_type;
+
+	while ((field_type = parser_token_object_type (parser, code, 0)) !=
+		   OBJECT_TYPE_ERR) {
+		if (!parser_union_declaration (parser, code, type, field_type)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/* union-specifier:
+ * union* identifier* { union-declaration-listopt } ;*/
+static int
+parser_union_specifier (parser_t *parser, code_t *code, object_type_t type)
+{
+	if (!parser_check (parser, TOKEN ('{'))) {
+		return parser_syntax_error (parser, "missing '{' in union specifier.");
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN ('}')) &&
+		!parser_union_declaration_list (parser, code, type)) {
+		return 0;
+	}
+
+	if (!parser_check (parser, TOKEN ('}'))) {
+		return parser_syntax_error (parser, "missing matching '}'.");
+	}
+
+	parser_next_token (parser);
+	if (!parser_check (parser, TOKEN (';'))) {
+		return parser_syntax_error (parser, "missing ';' after union specifier.");
+	}
+
+	if (!parser->cmdline) {
+		parser_next_token (parser);
+	}
+
+	return 1;
+}
+
 /* external-declaration:
  * function-definition
  * declaration
- * struct-specifier */
+ * struct-specifier
+ * union-specifier */
 static int
 parser_external_declaration (parser_t *parser, code_t *code)
 {
@@ -3120,11 +3211,14 @@ parser_external_declaration (parser_t *parser, code_t *code)
 
 	parser_next_token (parser);
 	if (parser_check (parser, TOKEN ('{'))) {
-		if (STRUCT_INDEX (type) < 0) {
-			return parser_syntax_error (parser, "invalid declaration.");
+		if (COMPOUND_IS_STRUCT (type)) {
+			return parser_struct_specifier (parser, code, type);
+		}
+		else if (COMPOUND_IS_UNION (type)) {
+			return parser_union_specifier (parser, code, type);
 		}
 
-		return parser_struct_specifier (parser, code, type);
+		return parser_syntax_error (parser, "invalid declaration.");
 	}
 
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {

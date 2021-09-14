@@ -1,5 +1,5 @@
 /*
- * struct.c
+ * compound.c
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -20,16 +20,16 @@
 
 #include <string.h>
 
-#include "struct.h"
+#include "compound.h"
 #include "pool.h"
 #include "error.h"
 
-struct_t *
-struct_new (const char *name)
+compound_t *
+compound_new (const char *name)
 {
-	struct_t *meta;
+	compound_t *meta;
 
-	meta = (struct_t *) pool_calloc (1, sizeof (struct_t));
+	meta = (compound_t *) pool_calloc (1, sizeof (compound_t));
 	if (meta == NULL) {
 		fatal_error ("out of memory.");
 	}
@@ -41,7 +41,7 @@ struct_new (const char *name)
 }
 
 void
-struct_free (struct_t *meta)
+compound_free (compound_t *meta)
 {
 	size_t fields_len;
 
@@ -61,7 +61,7 @@ struct_free (struct_t *meta)
 }
 
 void
-struct_push_field (struct_t *meta, const char *name, int type)
+compound_push_field (compound_t *meta, const char *name, object_type_t type)
 {
 	field_t *field;
 
@@ -80,7 +80,7 @@ struct_push_field (struct_t *meta, const char *name, int type)
 }
 
 static str_t *
-struct_load_name (FILE *f)
+compound_load_name (FILE *f)
 {
 	size_t name_len;
 	char *name;
@@ -99,7 +99,7 @@ struct_load_name (FILE *f)
 	}
 	if (fread (name, sizeof (char), name_len, f) != name_len) {
 		pool_free ((void *) name);
-		error ("failed to load struct name content.");
+		error ("failed to load compound name content.");
 
 		return NULL;
 	}
@@ -111,7 +111,7 @@ struct_load_name (FILE *f)
 }
 
 static field_t *
-struct_field_load_binary (FILE *f)
+compound_field_load_binary (FILE *f)
 {
 	field_t *field;
 
@@ -121,7 +121,7 @@ struct_field_load_binary (FILE *f)
 	}
 
 	/* Read name. */
-	field->name = struct_load_name (f);
+	field->name = compound_load_name (f);
 	if (field->name == NULL) {
 		pool_free ((void *) field);
 
@@ -131,7 +131,7 @@ struct_field_load_binary (FILE *f)
 	if (fread (&field->type, sizeof (int), 1, f) != 1) {
 		str_free (field->name);
 		pool_free ((void *) field);
-		error ("failed to load type while load struct field.");
+		error ("failed to load type while load compound field.");
 
 		return NULL;
 	}
@@ -139,19 +139,19 @@ struct_field_load_binary (FILE *f)
 	return field;
 }
 
-struct_t *
-struct_load_binary (FILE *f)
+compound_t *
+compound_load_binary (FILE *f)
 {
-	struct_t *meta;
+	compound_t *meta;
 	size_t fields_len;
 
-	meta = (struct_t *) pool_calloc (1, sizeof (struct_t));
+	meta = (compound_t *) pool_calloc (1, sizeof (compound_t));
 	if (meta == NULL) {
 		fatal_error ("out of memory.");
 	}
 
 	/* Read name. */
-	meta->name = struct_load_name (f);
+	meta->name = compound_load_name (f);
 	if (meta->name == NULL) {
 		pool_free ((void *) meta);
 
@@ -161,7 +161,7 @@ struct_load_binary (FILE *f)
 	if (fread (&fields_len, sizeof (size_t), 1, f) != 1) {
 		str_free (meta->name);
 		pool_free ((void *) meta);
-		error ("failed to load size while load struct fields.");
+		error ("failed to load size while load compound fields.");
 
 		return NULL;
 	}
@@ -170,9 +170,9 @@ struct_load_binary (FILE *f)
 	for (size_t i = 0; i < fields_len; i++) {
 		field_t *field;
 
-		field = struct_field_load_binary (f);
+		field = compound_field_load_binary (f);
 		if (field == NULL) {
-			struct_free (meta);
+			compound_free (meta);
 
 			return NULL;
 		}
@@ -183,7 +183,7 @@ struct_load_binary (FILE *f)
 }
 
 static void *
-struct_save_name (str_t *str, void *pos)
+compound_save_name (str_t *str, void *pos)
 {
 	size_t name_len;
 
@@ -197,7 +197,7 @@ struct_save_name (str_t *str, void *pos)
 }
 
 str_t *
-struct_to_binary (struct_t *meta)
+compound_to_binary (compound_t *meta)
 {
 	size_t fields_len;
 	size_t total;
@@ -216,14 +216,14 @@ struct_to_binary (struct_t *meta)
 
 	buf = (char *) pool_alloc (total);
 	pos = (void *) buf;
-	pos = struct_save_name (meta->name, pos);
+	pos = compound_save_name (meta->name, pos);
 	memcpy (pos, (void *) &fields_len, (unsigned) sizeof (size_t));
 	pos += sizeof (size_t);
 	for (size_t i = 0; i < fields_len; i++) {
 		field_t *field;
 
 		field = (field_t *) vec_pos (meta->fields, (integer_value_t) i);
-		pos = struct_save_name (field->name, pos);
+		pos = compound_save_name (field->name, pos);
 		memcpy (pos, (void *) &field->type, (unsigned) sizeof (int));
 		pos += sizeof (int);
 	}
@@ -235,13 +235,13 @@ struct_to_binary (struct_t *meta)
 }
 
 str_t *
-struct_get_name (struct_t *meta)
+compound_get_name (compound_t *meta)
 {
 	return meta->name;
 }
 
 str_t *
-struct_get_field_name (struct_t *meta, integer_value_t pos)
+compound_get_field_name (compound_t *meta, integer_value_t pos)
 {
 	field_t *field;
 
@@ -253,21 +253,21 @@ struct_get_field_name (struct_t *meta, integer_value_t pos)
 	return field->name;
 }
 
-int
-struct_get_field_type (struct_t *meta, integer_value_t pos)
+object_type_t
+compound_get_field_type (compound_t *meta, integer_value_t pos)
 {
 	field_t *field;
 
 	field = (field_t *) vec_pos (meta->fields, pos);
 	if (field == NULL) {
-		return -1;
+		return OBJECT_TYPE_ERR;
 	}
 
 	return field->type;
 }
 
 integer_value_t
-struct_find_field (struct_t *meta, str_t *name)
+compound_find_field (compound_t *meta, str_t *name)
 {
 	size_t fields_len;
 
@@ -285,7 +285,7 @@ struct_find_field (struct_t *meta, str_t *name)
 }
 
 size_t
-struct_size (struct_t *meta)
+compound_size (compound_t *meta)
 {
 	return vec_size (meta->fields);
 }

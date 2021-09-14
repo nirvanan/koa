@@ -10,6 +10,7 @@ external-declaration:
 	function-definition
 	declaration
 	struct-specifier
+	union-specifier
 
 function-definition:
 	type-specifier identifier ( parameter-listopt ) compound-statement
@@ -26,6 +27,7 @@ type-specifier:
 	dict
 	func
 	struct identifier
+	union identifier
 
 struct-specifier:
 	struct identifier { struct-declaration-listopt } ;
@@ -35,6 +37,16 @@ struct-declaration-list:
 	struct-declaration struct-declaration-list
 
 struct-declaration:
+	type-specifier identifier ;
+
+union-specifier:
+	union identifier { union-declaration-listopt } ;
+
+union-declaration-list:
+	union-declaration
+	union-declaration union-declaration-list
+
+union-declaration:
 	type-specifier identifier ;
 
 parameter-list:

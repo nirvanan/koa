@@ -35,6 +35,7 @@
 #include "funcobject.h"
 #include "exceptionobject.h"
 #include "structobject.h"
+#include "unionobject.h"
 
 #define GC_OP_COUNT 1000
 
@@ -172,14 +173,19 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			c = (object_t *) stack_pop (g_s);
-			if (!OBJECT_IS_STRUCT (a)) {
+			if (!OBJECT_IS_STRUCT (a) && !OBJECT_IS_UNION (a)) {
 				object_unref (a);
 				object_unref (c);
-				error ("not a struct.");
+				error ("not a compound.");
 
 				HANDLE_EXCEPTION;
 			}
-			r = structobject_store_member (a, b, c, g_global);
+			if (OBJECT_IS_STRUCT (a)) {
+				r = structobject_store_member (a, b, c, g_global);
+			}
+			else if (OBJECT_IS_UNION (a)) {
+				r = unionobject_store_member (a, b, c, g_global);
+			}
 			object_unref (a);
 			object_unref (c);
 			if (r == NULL) {
@@ -207,13 +213,18 @@ recover:
 		case OP_LOAD_MEMBER:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_pop (g_s);
-			if (!OBJECT_IS_STRUCT (b)) {
+			if (!OBJECT_IS_STRUCT (b) && !OBJECT_IS_UNION (b)) {
 				object_unref (b);
-				error ("not a struct.");
+				error ("not a compound.");
 
 				HANDLE_EXCEPTION;
 			}
-			r = structobject_get_member (b, a, g_global);
+			if (OBJECT_IS_STRUCT (b)) {
+				r = structobject_get_member (b, a, g_global);
+			}
+			else if (OBJECT_IS_UNION (b)) {
+				r = unionobject_get_member (b, a, g_global);
+			}
 			object_unref (b);
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
@@ -268,7 +279,7 @@ recover:
 		case OP_MEMBER_PODEC:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
-			if (!OBJECT_IS_STRUCT (a)) {
+			if (!OBJECT_IS_STRUCT (a) && !OBJECT_IS_UNION (a)) {
 				error ("not a struct.");
 
 				HANDLE_EXCEPTION;
@@ -284,7 +295,12 @@ recover:
 
 				HANDLE_EXCEPTION;
 			}
-			d = structobject_get_member (a, b, g_global);
+			if (OBJECT_IS_STRUCT (d)) {
+				d = structobject_get_member (a, b, g_global);
+			}
+			else {
+				d = unionobject_get_member (a, b, g_global);
+			}
 			if (OBJECT_TYPE (d) == OBJECT_TYPE_NULL) {
 				object_unref (a);
 				object_free (c);

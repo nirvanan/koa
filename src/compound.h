@@ -1,5 +1,5 @@
 /*
- * struct.h
+ * compound.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,55 +18,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STRUCT_H
-#define STRUCT_H
+#ifndef COMPOUND_H
+#define COMPOUND_H
 
 #include <stdio.h>
 
 #include "koa.h"
 #include "str.h"
 #include "vec.h"
+#include "object.h"
 
 typedef struct field_s
 {
-	int type;
+	object_type_t type;
 	str_t *name;
 } field_t;
 
-typedef struct struct_s
+typedef struct compound_s
 {
 	str_t *name;
 	vec_t *fields;
-} struct_t;
+} compound_t;
 
-struct_t *
-struct_new (const char *name);
-
-void
-struct_free (struct_t *meta);
+compound_t *
+compound_new (const char *name);
 
 void
-struct_push_field (struct_t *meta, const char *name, int type);
+compound_free (compound_t *meta);
 
-struct_t *
-struct_load_binary (FILE *f);
+void
+compound_push_field (compound_t *meta, const char *name, object_type_t type);
 
-str_t *
-struct_to_binary (struct_t *meta);
-
-str_t *
-struct_get_name (struct_t *meta);
+compound_t *
+compound_load_binary (FILE *f);
 
 str_t *
-struct_get_field_name (struct_t *meta, integer_value_t pos);
+compound_to_binary (compound_t *meta);
 
-int
-struct_get_field_type (struct_t *meta, integer_value_t pos);
+str_t *
+compound_get_name (compound_t *meta);
+
+str_t *
+compound_get_field_name (compound_t *meta, integer_value_t pos);
+
+object_type_t
+compound_get_field_type (compound_t *meta, integer_value_t pos);
 
 integer_value_t
-struct_find_field (struct_t *meta, str_t *name);
+compound_find_field (compound_t *meta, str_t *name);
 
 size_t
-struct_size (struct_t *meta);
+compound_size (compound_t *meta);
 
-#endif /* STRUCT_H */
+#endif /* COMPOUND_H */

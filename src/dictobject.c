@@ -561,6 +561,7 @@ dictobject_traverse (object_t *obj, traverse_f fun, void *udata)
 		key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
 		value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
 		UNUSED (fun (key, udata));
+		object_traverse (value, fun, udata);
 		if (fun (value, udata) > 0) {
 			object_t *dummy;
 

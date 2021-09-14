@@ -10,6 +10,8 @@ charobject.c \
 charobject.h \
 code.c \
 code.h \
+compound.c \
+compound.h \
 cmdline.c \
 cmdline.h \
 dict.c \
@@ -70,8 +72,6 @@ str.c \
 str.h \
 strobject.c \
 strobject.h \
-struct.c \
-struct.h \
 structobject.c \
 structobject.h \
 uint16object.c \
@@ -82,6 +82,8 @@ uint64object.c \
 uint64object.h \
 uint8object.c \
 uint8object.h \
+unionobject.c \
+unionobject.h \
 vec.c \
 vec.h \
 vecobject.c \

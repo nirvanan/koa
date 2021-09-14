@@ -48,9 +48,10 @@
 #include "modobject.h"
 #include "exceptionobject.h"
 #include "structobject.h"
+#include "unionobject.h"
 
-#define TYPE_NAME(x) ((x)->head.type>=OBJECT_TYPE_STRUCT?"struct":g_type_name[(x)->head.type])
-#define TYPE_ID_NAME(x) (x>=OBJECT_TYPE_STRUCT?"struct":g_type_name[(x)])
+#define TYPE_NAME(x) ((x)->head.type>=OBJECT_TYPE_STRUCT?"compound":g_type_name[(x)->head.type])
+#define TYPE_ID_NAME(x) (x>=OBJECT_TYPE_STRUCT?"compound":g_type_name[(x)])
 
 #define FLOATING_INT_TO_HASH_NEG -271828
 #define FLOATING_INT_TO_HASH_POS 314159
@@ -1208,8 +1209,11 @@ object_get_default (object_type_t type, void *udata)
 		case OBJECT_TYPE_EXCEPTION:
 			return exceptionobject_new ("", 0, NULL);
 		default:
-			if (STRUCT_INDEX (type) >= 0) {
+			if (COMPOUND_IS_STRUCT (type)) {
 				return structobject_new ((code_t *) udata, type, NULL);
+			}
+			else if (COMPOUND_IS_UNION (type)) {
+				return unionobject_new ((code_t *) udata, type, NULL);
 			}
 			error ("no default value for %s.", TYPE_ID_NAME (type));
 			return NULL;
@@ -1273,8 +1277,11 @@ object_load_binary (FILE *f)
 		case OBJECT_TYPE_MOD:
 			return modobject_load_binary (f);
 		default:
-			if (STRUCT_INDEX (type) >= 0) {
+			if (COMPOUND_IS_STRUCT (type)) {
 				return structobject_load_binary (type, f);
+			}
+			else if (COMPOUND_IS_UNION (type)) {
+				return unionobject_load_binary (type, f);
 			}
 			break;
 	}
@@ -1329,11 +1336,11 @@ object_traverse (object_t *obj, traverse_f fun, void *udata)
 		dictobject_traverse (obj, fun, udata);
 		break;
 	default:
-		if (STRUCT_INDEX (OBJECT_TYPE (obj)) >= 0) {
+		if (OBJECT_IS_STRUCT (obj)) {
 			structobject_traverse (obj, fun, udata);
 		}
-		else {
-			fatal_error ("can't traverse %s.", TYPE_NAME (obj));
+		else if (OBJECT_IS_UNION (obj)) {
+			unionobject_traverse (obj, fun, udata);
 		}
 	}
 }

@@ -100,20 +100,21 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_koa_OBJECTS = boolobject.$(OBJEXT) builtin.$(OBJEXT) \
-	charobject.$(OBJEXT) code.$(OBJEXT) cmdline.$(OBJEXT) \
-	dict.$(OBJEXT) dictobject.$(OBJEXT) doubleobject.$(OBJEXT) \
-	error.$(OBJEXT) exceptionobject.$(OBJEXT) \
-	floatobject.$(OBJEXT) frame.$(OBJEXT) funcobject.$(OBJEXT) \
-	gc.$(OBJEXT) hash.$(OBJEXT) interpreter.$(OBJEXT) \
-	intobject.$(OBJEXT) int16object.$(OBJEXT) \
-	int32object.$(OBJEXT) int64object.$(OBJEXT) \
-	int8object.$(OBJEXT) lex.$(OBJEXT) list.$(OBJEXT) \
-	longobject.$(OBJEXT) main.$(OBJEXT) modobject.$(OBJEXT) \
-	misc.$(OBJEXT) nullobject.$(OBJEXT) object.$(OBJEXT) \
-	parser.$(OBJEXT) pool.$(OBJEXT) stack.$(OBJEXT) str.$(OBJEXT) \
-	strobject.$(OBJEXT) struct.$(OBJEXT) structobject.$(OBJEXT) \
-	uint16object.$(OBJEXT) uint32object.$(OBJEXT) \
-	uint64object.$(OBJEXT) uint8object.$(OBJEXT) vec.$(OBJEXT) \
+	charobject.$(OBJEXT) code.$(OBJEXT) compound.$(OBJEXT) \
+	cmdline.$(OBJEXT) dict.$(OBJEXT) dictobject.$(OBJEXT) \
+	doubleobject.$(OBJEXT) error.$(OBJEXT) \
+	exceptionobject.$(OBJEXT) floatobject.$(OBJEXT) \
+	frame.$(OBJEXT) funcobject.$(OBJEXT) gc.$(OBJEXT) \
+	hash.$(OBJEXT) interpreter.$(OBJEXT) intobject.$(OBJEXT) \
+	int16object.$(OBJEXT) int32object.$(OBJEXT) \
+	int64object.$(OBJEXT) int8object.$(OBJEXT) lex.$(OBJEXT) \
+	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
+	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
+	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
+	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
+	structobject.$(OBJEXT) uint16object.$(OBJEXT) \
+	uint32object.$(OBJEXT) uint64object.$(OBJEXT) \
+	uint8object.$(OBJEXT) unionobject.$(OBJEXT) vec.$(OBJEXT) \
 	vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
@@ -134,25 +135,25 @@ depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/boolobject.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/charobject.Po ./$(DEPDIR)/cmdline.Po \
-	./$(DEPDIR)/code.Po ./$(DEPDIR)/dict.Po \
-	./$(DEPDIR)/dictobject.Po ./$(DEPDIR)/doubleobject.Po \
-	./$(DEPDIR)/error.Po ./$(DEPDIR)/exceptionobject.Po \
-	./$(DEPDIR)/floatobject.Po ./$(DEPDIR)/frame.Po \
-	./$(DEPDIR)/funcobject.Po ./$(DEPDIR)/gc.Po \
-	./$(DEPDIR)/hash.Po ./$(DEPDIR)/int16object.Po \
-	./$(DEPDIR)/int32object.Po ./$(DEPDIR)/int64object.Po \
-	./$(DEPDIR)/int8object.Po ./$(DEPDIR)/interpreter.Po \
-	./$(DEPDIR)/intobject.Po ./$(DEPDIR)/lex.Po \
-	./$(DEPDIR)/list.Po ./$(DEPDIR)/longobject.Po \
-	./$(DEPDIR)/main.Po ./$(DEPDIR)/misc.Po \
-	./$(DEPDIR)/modobject.Po ./$(DEPDIR)/nullobject.Po \
-	./$(DEPDIR)/object.Po ./$(DEPDIR)/parser.Po \
-	./$(DEPDIR)/pool.Po ./$(DEPDIR)/stack.Po ./$(DEPDIR)/str.Po \
-	./$(DEPDIR)/strobject.Po ./$(DEPDIR)/struct.Po \
+	./$(DEPDIR)/code.Po ./$(DEPDIR)/compound.Po \
+	./$(DEPDIR)/dict.Po ./$(DEPDIR)/dictobject.Po \
+	./$(DEPDIR)/doubleobject.Po ./$(DEPDIR)/error.Po \
+	./$(DEPDIR)/exceptionobject.Po ./$(DEPDIR)/floatobject.Po \
+	./$(DEPDIR)/frame.Po ./$(DEPDIR)/funcobject.Po \
+	./$(DEPDIR)/gc.Po ./$(DEPDIR)/hash.Po \
+	./$(DEPDIR)/int16object.Po ./$(DEPDIR)/int32object.Po \
+	./$(DEPDIR)/int64object.Po ./$(DEPDIR)/int8object.Po \
+	./$(DEPDIR)/interpreter.Po ./$(DEPDIR)/intobject.Po \
+	./$(DEPDIR)/lex.Po ./$(DEPDIR)/list.Po \
+	./$(DEPDIR)/longobject.Po ./$(DEPDIR)/main.Po \
+	./$(DEPDIR)/misc.Po ./$(DEPDIR)/modobject.Po \
+	./$(DEPDIR)/nullobject.Po ./$(DEPDIR)/object.Po \
+	./$(DEPDIR)/parser.Po ./$(DEPDIR)/pool.Po ./$(DEPDIR)/stack.Po \
+	./$(DEPDIR)/str.Po ./$(DEPDIR)/strobject.Po \
 	./$(DEPDIR)/structobject.Po ./$(DEPDIR)/uint16object.Po \
 	./$(DEPDIR)/uint32object.Po ./$(DEPDIR)/uint64object.Po \
-	./$(DEPDIR)/uint8object.Po ./$(DEPDIR)/vec.Po \
-	./$(DEPDIR)/vecobject.Po
+	./$(DEPDIR)/uint8object.Po ./$(DEPDIR)/unionobject.Po \
+	./$(DEPDIR)/vec.Po ./$(DEPDIR)/vecobject.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -295,6 +296,8 @@ charobject.c \
 charobject.h \
 code.c \
 code.h \
+compound.c \
+compound.h \
 cmdline.c \
 cmdline.h \
 dict.c \
@@ -355,8 +358,6 @@ str.c \
 str.h \
 strobject.c \
 strobject.h \
-struct.c \
-struct.h \
 structobject.c \
 structobject.h \
 uint16object.c \
@@ -367,6 +368,8 @@ uint64object.c \
 uint64object.h \
 uint8object.c \
 uint8object.h \
+unionobject.c \
+unionobject.h \
 vec.c \
 vec.h \
 vecobject.c \
@@ -463,6 +466,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmdline.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/code.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compound.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dict.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dictobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doubleobject.Po@am__quote@ # am--include-marker
@@ -492,12 +496,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stack.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strobject.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/struct.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/structobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint16object.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint32object.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint64object.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint8object.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unionobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vecobject.Po@am__quote@ # am--include-marker
 
@@ -653,6 +657,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/charobject.Po
 	-rm -f ./$(DEPDIR)/cmdline.Po
 	-rm -f ./$(DEPDIR)/code.Po
+	-rm -f ./$(DEPDIR)/compound.Po
 	-rm -f ./$(DEPDIR)/dict.Po
 	-rm -f ./$(DEPDIR)/dictobject.Po
 	-rm -f ./$(DEPDIR)/doubleobject.Po
@@ -682,12 +687,12 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/stack.Po
 	-rm -f ./$(DEPDIR)/str.Po
 	-rm -f ./$(DEPDIR)/strobject.Po
-	-rm -f ./$(DEPDIR)/struct.Po
 	-rm -f ./$(DEPDIR)/structobject.Po
 	-rm -f ./$(DEPDIR)/uint16object.Po
 	-rm -f ./$(DEPDIR)/uint32object.Po
 	-rm -f ./$(DEPDIR)/uint64object.Po
 	-rm -f ./$(DEPDIR)/uint8object.Po
+	-rm -f ./$(DEPDIR)/unionobject.Po
 	-rm -f ./$(DEPDIR)/vec.Po
 	-rm -f ./$(DEPDIR)/vecobject.Po
 	-rm -f Makefile
@@ -740,6 +745,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/charobject.Po
 	-rm -f ./$(DEPDIR)/cmdline.Po
 	-rm -f ./$(DEPDIR)/code.Po
+	-rm -f ./$(DEPDIR)/compound.Po
 	-rm -f ./$(DEPDIR)/dict.Po
 	-rm -f ./$(DEPDIR)/dictobject.Po
 	-rm -f ./$(DEPDIR)/doubleobject.Po
@@ -769,12 +775,12 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/stack.Po
 	-rm -f ./$(DEPDIR)/str.Po
 	-rm -f ./$(DEPDIR)/strobject.Po
-	-rm -f ./$(DEPDIR)/struct.Po
 	-rm -f ./$(DEPDIR)/structobject.Po
 	-rm -f ./$(DEPDIR)/uint16object.Po
 	-rm -f ./$(DEPDIR)/uint32object.Po
 	-rm -f ./$(DEPDIR)/uint64object.Po
 	-rm -f ./$(DEPDIR)/uint8object.Po
+	-rm -f ./$(DEPDIR)/unionobject.Po
 	-rm -f ./$(DEPDIR)/vec.Po
 	-rm -f ./$(DEPDIR)/vecobject.Po
 	-rm -f Makefile

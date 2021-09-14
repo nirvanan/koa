@@ -128,6 +128,13 @@
 #define STRUCT_INDEX(x) ((x)-OBJECT_TYPE_STRUCT)
 #define STRUCT_TYPE(x) ((x)+OBJECT_TYPE_STRUCT)
 
+#define UNION_INDEX(x) ((x)-OBJECT_TYPE_UNION)
+#define UNION_TYPE(x) ((x)+OBJECT_TYPE_UNION)
+
+#define COMPOUND_IS_STRUCT(x) ((x)>=OBJECT_TYPE_STRUCT&&(x)<OBJECT_TYPE_UNION)
+#define COMPOUND_IS_UNION(x) ((x)>=OBJECT_TYPE_UNION)
+#define IS_COMPOUND_TYPE(x) ((x)>=OBJECT_TYPE_STRUCT)
+
 #define OBJECT_IS_DUMMY(x) (OBJECT_TYPE((x))==OBJECT_TYPE_VOID)
 #define OBJECT_IS_NULL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_NULL)
 #define OBJECT_IS_BOOL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BOOL)
@@ -150,7 +157,8 @@
 #define OBJECT_IS_FUNC(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FUNC)
 #define OBJECT_IS_FRAME(x) (OBJECT_TYPE((x))==OBJECT_TYPE_FRAME)
 #define OBJECT_IS_EXCEPTION(x) (OBJECT_TYPE((x))==OBJECT_TYPE_EXCEPTION)
-#define OBJECT_IS_STRUCT(x) (OBJECT_TYPE((x))>=OBJECT_TYPE_STRUCT)
+#define OBJECT_IS_STRUCT(x) (OBJECT_TYPE((x))>=OBJECT_TYPE_STRUCT&&OBJECT_TYPE((x))<OBJECT_TYPE_UNION)
+#define OBJECT_IS_UNION(x) (OBJECT_TYPE((x))>=OBJECT_TYPE_UNION)
 
 typedef enum object_type_e
 {
@@ -179,10 +187,10 @@ typedef enum object_type_e
 	OBJECT_TYPE_MOD = 0x14,
 	OBJECT_TYPE_FRAME = 0x15,
 	OBJECT_TYPE_EXCEPTION = 0x16,
-	/* This is used as the base index of all
-	 * struct types. This value is the type of
-	 * the first struct type of code object. */
-	OBJECT_TYPE_STRUCT = 0x17
+	/* This value is the type of the first struct type of code object. */
+	OBJECT_TYPE_STRUCT = 0xff,
+	/* Similar to struct, this is the first type of all unions. */
+	OBJECT_TYPE_UNION = 0xf0000000
 } object_type_t;
 
 typedef uint64_t (*digest_f) (void *obj);

@@ -25,7 +25,8 @@
 #include "pool.h"
 #include "gc.h"
 #include "error.h"
-#include "struct.h"
+#include "compound.h"
+#include "nullobject.h"
 #include "boolobject.h"
 #include "uint64object.h"
 #include "strobject.h"
@@ -138,12 +139,8 @@ structobject_op_dump (object_t *obj)
 		return object_add (g_dump_head, g_dump_tail);
 	}
 
-	res = object_add (g_dump_head, (object_t *) vec_pos (members, 0));
-	if (res == NULL) {
-		return NULL;
-	}
-
-	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+	res = g_dump_head;
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		object_t *dump;
 
 		element = (object_t *) vec_pos (members, i);
@@ -154,8 +151,11 @@ structobject_op_dump (object_t *obj)
 			return NULL;
 		}
 
-		if ((res = structobject_dump_concat (res, g_dump_sep, 0)) == NULL ||
-			(res = structobject_dump_concat (res, dump, 1)) == NULL) {
+		if ((res = structobject_dump_concat (res, dump, 1)) == NULL) {
+			return NULL;
+		}
+		if (i != (integer_value_t) size - 1 &&
+			(res = structobject_dump_concat (res, g_dump_sep, 0)) == NULL) {
 			return NULL;
 		}
 	}
@@ -233,7 +233,7 @@ structobject_load_binary (object_type_t type, FILE *f)
 {
 	size_t size;
 	vec_t *members;
-	structobject_t *obj;
+	structobject_t *struct_obj;
 
 	if (fread (&size, sizeof (size_t), 1, f) != 1) {
 		error ("failed to load size while load vec.");
@@ -263,26 +263,26 @@ structobject_load_binary (object_type_t type, FILE *f)
 		object_ref (obj);
 	}
 
-	obj = (structobject_t *) pool_alloc (sizeof (structobject_t));
-	if (obj == NULL) {
+	struct_obj = (structobject_t *) pool_alloc (sizeof (structobject_t));
+	if (struct_obj == NULL) {
 		fatal_error ("out of memory.");
 	}
 
-	OBJECT_NEW_INIT (obj, type, NULL);
-	OBJECT_DIGEST_FUN (obj) = structobject_digest_fun;
+	OBJECT_NEW_INIT (struct_obj, type, NULL);
+	OBJECT_DIGEST_FUN (struct_obj) = structobject_digest_fun;
 
-	obj->members = members;
+	struct_obj->members = members;
 
-	gc_track ((void *) obj);
+	gc_track ((void *) struct_obj);
 
-	return (object_t *) obj;
+	return (object_t *) struct_obj;
 }
 
 object_t *
 structobject_new (code_t *code, object_type_t type, void *udata)
 {
 	structobject_t *obj;
-	struct_t *meta;
+	compound_t *meta;
 	vec_t *members;
 	size_t size;
 
@@ -302,15 +302,20 @@ structobject_new (code_t *code, object_type_t type, void *udata)
 		return NULL;
 	}
 
-	size = struct_size (meta);
+	size = compound_size (meta);
 	members = vec_new (size);
 	obj->members = members;
 	for (size_t i = 0; i < size; i++) {
 		object_t *member;
 		object_type_t field;
 
-		field = struct_get_field_type (meta, (integer_value_t) i);
-		member = object_get_default (field, (void *) code);
+		field = compound_get_field_type (meta, (integer_value_t) i);
+		if (IS_COMPOUND_TYPE (field)) {
+			member = nullobject_new (NULL);
+		}
+		else {
+			member = object_get_default (field, (void *) code);
+		}
 		UNUSED (vec_set (members, (integer_value_t) i, (void *) member));
 		object_ref (member);
 	}
@@ -329,7 +334,11 @@ structobject_traverse (object_t *obj, traverse_f fun, void *udata)
 	members = ((structobject_t *) obj)->members;
 	size = vec_size (members);
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		if (fun ((object_t *) vec_pos (members, i), udata) > 0) {
+		object_t *field;
+
+		field = (object_t *) vec_pos (members, i);
+		object_traverse (field, fun, udata);
+		if (fun (field, udata) > 0) {
 			object_t *dummy;
 
 			dummy = object_get_default (OBJECT_TYPE_VOID, NULL);
@@ -342,7 +351,7 @@ structobject_traverse (object_t *obj, traverse_f fun, void *udata)
 object_t *
 structobject_get_member (object_t *obj, object_t *name, code_t *code)
 {
-	struct_t *meta;
+	compound_t *meta;
 	integer_value_t pos;
 	vec_t *members;
 
@@ -354,9 +363,9 @@ structobject_get_member (object_t *obj, object_t *name, code_t *code)
 		return NULL;
 	}
 
-	pos = struct_find_field (meta, strobject_get_value (name));
+	pos = compound_find_field (meta, strobject_get_value (name));
 	if (pos == -1) {
-		error ("%s has no member named %s.", str_c_str (struct_get_name (meta)), strobject_c_str (name));
+		error ("%s has no member named %s.", str_c_str (compound_get_name (meta)), strobject_c_str (name));
 
 		return NULL;
 	}
@@ -368,7 +377,7 @@ object_t *
 structobject_store_member (object_t *obj, object_t *name,
 						   object_t *value, code_t *code)
 {
-	struct_t *meta;
+	compound_t *meta;
 	integer_value_t pos;
 	vec_t *members;
 	object_t *prev;
@@ -381,15 +390,15 @@ structobject_store_member (object_t *obj, object_t *name,
 		return NULL;
 	}
 
-	pos = struct_find_field (meta, strobject_get_value (name));
+	pos = compound_find_field (meta, strobject_get_value (name));
 	if (pos == -1) {
-		error ("%s has no member named %s.", str_c_str (struct_get_name (meta)), strobject_c_str (name));
+		error ("%s has no member named %s.", str_c_str (compound_get_name (meta)), strobject_c_str (name));
 
 		return NULL;
 	}
 
 	prev = (object_t *) vec_pos (members, pos);
-	if (prev != NULL && OBJECT_TYPE (prev) != OBJECT_TYPE (value)) {
+	if (prev != NULL && !OBJECT_IS_NULL (prev) && OBJECT_TYPE (prev) != OBJECT_TYPE (value)) {
 		value = object_cast (value, OBJECT_TYPE (prev));
 		if (value == NULL) {
 			return NULL;

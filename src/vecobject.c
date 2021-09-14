@@ -150,10 +150,6 @@ vecobject_op_dump (object_t *obj)
 	}
 
 	res = g_dump_head;
-	if (res == NULL) {
-		return NULL;
-	}
-
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
 		object_t *dump;
 
@@ -456,7 +452,11 @@ vecobject_traverse (object_t *obj, traverse_f fun, void *udata)
 	vec = vecobject_get_value (obj);
 	size = vec_size (vec);
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		if (fun ((object_t *) vec_pos (vec, i), udata) > 0) {
+		object_t *element;
+
+		element = (object_t *) vec_pos (vec, i);
+		object_traverse (element, fun, udata);
+		if (fun (element, udata) > 0) {
 			object_t *dummy;
 
 			dummy = object_get_default (OBJECT_TYPE_VOID, NULL);

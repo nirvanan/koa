@@ -56,7 +56,8 @@
 	TOKEN_TYPE((x))==TOKEN_DICT||\
 	TOKEN_TYPE((x))==TOKEN_FUNC||\
 	TOKEN_TYPE((x))==TOKEN_EXCEPTION||\
-	TOKEN_TYPE((x))==TOKEN_STRUCT)
+	TOKEN_TYPE((x))==TOKEN_STRUCT||\
+	TOKEN_TYPE((x))==TOKEN_UNION)
 
 #define TOKEN_IS_CON(x) (TOKEN_TYPE((x))==TOKEN('?')||\
 	TOKEN_TYPE((x))==TOKEN_LOR||\
@@ -163,6 +164,7 @@ typedef enum token_type_e
 	TOKEN_IDENTIFIER, /* Primary-expression: identifier. */
 	TOKEN_STRING, /* Primary-expression: string. */
 	TOKEN_STRUCT, /* Type-specifier: struct. */
+	TOKEN_UNION, /* Type-specifier: union. */
 	TOKEN_COMMENT /* Comment. */
 } token_type_t;
 

@@ -26,7 +26,7 @@
 #include "koa.h"
 #include "vec.h"
 #include "str.h"
-#include "struct.h"
+#include "compound.h"
 #include "object.h"
 
 #define MAX_PARA (0x00ffffff)
@@ -160,6 +160,7 @@ typedef struct code_s {
 	vec_t *consts; /* All consts appears in this block. */
 	vec_t *varnames; /* The names of local variables (parameters included). */
 	vec_t *structs; /* All struct specifiers. */
+	vec_t *unions; /* All union specifiers. */
 	str_t *name; /* Reference name of this block (or function name). */
 	str_t *filename; /* File name of this block. */
 	int func; /* Is this code representing a function? */
@@ -245,6 +246,9 @@ code_get_vartype (code_t *code, para_t pos);
 object_type_t
 code_make_new_struct (code_t *code, const char *name);
 
+object_type_t
+code_make_new_union (code_t *code, const char *name);
+
 int
 code_push_field (code_t *code, object_type_t type,
 				 object_type_t field, const char *name);
@@ -252,7 +256,13 @@ code_push_field (code_t *code, object_type_t type,
 object_type_t
 code_find_struct (code_t *code, const char *name);
 
-struct_t *
+compound_t *
 code_get_struct (code_t *code, object_type_t type);
+
+object_type_t
+code_find_union (code_t *code, const char *name);
+
+compound_t *
+code_get_union (code_t *code, object_type_t type);
 
 #endif /* CODE_H */

@@ -87,6 +87,7 @@ static reserved_word_t g_reserved_list[] =
 	{"true", TOKEN_TRUE},
 	{"false", TOKEN_FALSE},
 	{"struct", TOKEN_STRUCT},
+	{"union", TOKEN_UNION},
 	{NULL, 0}
 };
 
@@ -122,6 +123,7 @@ static token_object_type_t g_object_token_list[] =
 	{TOKEN_FUNC, OBJECT_TYPE_FUNC},
 	{TOKEN_EXCEPTION, OBJECT_TYPE_EXCEPTION},
 	{TOKEN_STRUCT, OBJECT_TYPE_STRUCT},
+	{TOKEN_UNION, OBJECT_TYPE_UNION},
 	{TOKEN_UNKNOWN, OBJECT_TYPE_ERR}
 };
 

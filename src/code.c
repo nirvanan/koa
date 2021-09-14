@@ -25,7 +25,6 @@
 #include "error.h"
 #include "pool.h"
 #include "object.h"
-#include "struct.h"
 #include "longobject.h"
 #include "strobject.h"
 #include "vecobject.h"
@@ -153,9 +152,10 @@ code_new (const char *filename, const char *name)
 	code->consts = vec_new (0);
 	code->varnames = vec_new (0);
 	code->structs = vec_new (0);
+	code->unions = vec_new (0);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
 		code->types == NULL || code->consts == NULL ||
-		code->varnames == NULL || code->structs == NULL) {
+		code->varnames == NULL || code->structs == NULL || code->unions == NULL) {
 		code_free (code);
 
 		return NULL;
@@ -189,9 +189,9 @@ code_vec_unref_fun (void *data, void *udata)
 }
 
 static int
-code_vec_struct_free_fun (void *data, void *udata)
+code_vec_compound_free_fun (void *data, void *udata)
 {
-	struct_free ((struct_t *) data);
+	compound_free ((compound_t *) data);
 
 	return 0;
 }
@@ -220,8 +220,12 @@ code_free (code_t *code)
 		vec_free (code->varnames);
 	}
 	if (code->structs != NULL) {
-		vec_foreach (code->structs, code_vec_struct_free_fun, NULL);
+		vec_foreach (code->structs, code_vec_compound_free_fun, NULL);
 		vec_free (code->structs);
+	}
+	if (code->unions != NULL) {
+		vec_foreach (code->unions, code_vec_compound_free_fun, NULL);
+		vec_free (code->unions);
 	}
 	if (code->filename != NULL) {
 		str_free (code->filename);
@@ -616,16 +620,16 @@ code_object_to_binary (vec_t *vec)
 }
 
 static int
-code_structs_concat (void *data, void *udata)
+code_compound_concat (void *data, void *udata)
 {
-	struct_t *meta;
+	compound_t *meta;
 	str_t **str;
 	str_t *dump;
 	str_t *new;
 
-	meta = (struct_t *) data;
+	meta = (compound_t *) data;
 	str = (str_t **) udata;
-	dump = struct_to_binary (meta);
+	dump = compound_to_binary (meta);
 	new = str_concat (*str, dump);
 	str_free (*str);
 	str_free (dump);
@@ -635,14 +639,14 @@ code_structs_concat (void *data, void *udata)
 }
 
 static object_t *
-code_structs_to_binary (vec_t *vec)
+code_compound_to_binary (vec_t *vec)
 {
 	str_t *str;
 	size_t len;
 
 	len = vec_size (vec);
 	str = str_new ((const char *) &len, sizeof (size_t));
-	vec_foreach (vec, code_structs_concat, &str);
+	vec_foreach (vec, code_compound_concat, &str);
 
 	return strobject_str_new (str, NULL);
 }
@@ -722,7 +726,15 @@ code_binary (code_t *code)
 	}
 	cur = code_binary_concat (cur, temp);
 	/* Dump structs. */
-	temp = code_structs_to_binary (code->structs);
+	temp = code_compound_to_binary (code->structs);
+	if (temp == NULL) {
+		object_free (cur);
+
+		return NULL;
+	}
+	cur = code_binary_concat (cur, temp);
+	/* Dump unions. */
+	temp = code_compound_to_binary (code->unions);
 	if (temp == NULL) {
 		object_free (cur);
 
@@ -906,23 +918,23 @@ code_binary_to_object (FILE *f)
 }
 
 static vec_t *
-code_binary_to_struct (FILE *f)
+code_binary_to_compound (FILE *f)
 {
 	vec_t *vec;
 	size_t size;
 
 	if (fread (&size, sizeof (size_t), 1, f) != 1) {
-		error ("failed to load size while load structs.");
+		error ("failed to load size while load compounds.");
 
 		return NULL;
 	}
 	vec = vec_new (size);
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		struct_t *meta;
+		compound_t *meta;
 
-		meta = struct_load_binary (f);
+		meta = compound_load_binary (f);
 		if (meta == NULL) {
-			vec_foreach (vec, code_vec_struct_free_fun, NULL);
+			vec_foreach (vec, code_vec_compound_free_fun, NULL);
 			vec_free (vec);
 
 			return NULL;
@@ -1018,13 +1030,14 @@ code_load_binary (const char *path, FILE *f)
 	code->types = code_binary_to_vec (b, sizeof (object_type_t));
 	code->consts = code_binary_to_object (b);
 	code->varnames = code_binary_to_object (b);
-	code->structs = code_binary_to_struct (b);
+	code->structs = code_binary_to_compound (b);
+	code->unions = code_binary_to_compound (b);
 	code->name = code_binary_to_str (b);
 	code->filename = code_binary_to_str (b);
 	if (code->opcodes == NULL || code->lineinfo == NULL ||
 		code->types == NULL || code->consts == NULL ||
 		code->varnames == NULL || code->structs == NULL ||
-		code->name == NULL || code->filename == NULL) {
+		code->unions == NULL || code->name == NULL || code->filename == NULL) {
 		code_free (code);
 		if (f == NULL) {
 			UNUSED (fclose (b));
@@ -1104,12 +1117,12 @@ code_get_vartype (code_t *code, para_t pos)
 object_type_t
 code_make_new_struct (code_t *code, const char *name)
 {
-	struct_t *meta;
+	compound_t *meta;
 
-	meta = struct_new (name);
+	meta = compound_new (name);
 
 	if (!vec_push_back (code->structs, (void *) meta)) {
-		struct_free (meta);
+		compound_free (meta);
 
 		return OBJECT_TYPE_ERR;
 	}
@@ -1117,32 +1130,60 @@ code_make_new_struct (code_t *code, const char *name)
 	return STRUCT_TYPE (vec_size (code->structs) - 1);
 }
 
+object_type_t
+code_make_new_union (code_t *code, const char *name)
+{
+	compound_t *meta;
+
+	meta = compound_new (name);
+
+	if (!vec_push_back (code->unions, (void *) meta)) {
+		compound_free (meta);
+
+		return OBJECT_TYPE_ERR;
+	}
+
+	return UNION_TYPE (vec_size (code->unions) - 1);
+}
+
 int
 code_push_field (code_t *code, object_type_t type,
 				 object_type_t field, const char *name)
 {
 	integer_value_t pos;
-	struct_t *meta;
+	compound_t *meta;
 	str_t *str;
 
-	pos = (integer_value_t) STRUCT_INDEX (type);
-	meta = (struct_t *) vec_pos (code->structs, pos);
+	pos = -1;
+	meta = NULL;
+	if (COMPOUND_IS_STRUCT (type)) {
+		pos = (integer_value_t) STRUCT_INDEX (type);
+		meta = (compound_t *) vec_pos (code->structs, pos);
+	}
+	else if (COMPOUND_IS_UNION (type)) {
+		pos = (integer_value_t) UNION_INDEX (type);
+		meta = (compound_t *) vec_pos (code->unions, pos);
+	}
+	else {
+		error ("invalid compound type %ld.", type);
+		return 0;
+	}
 	if (meta == NULL) {
-		error ("struct index %d not found.", pos);
+		error ("compound index %d not found.", pos);
 
 		return 0;
 	}
 
 	str = str_new (name, strlen (name));
-	if (struct_find_field (meta, str) != -1) {
+	if (compound_find_field (meta, str) != -1) {
 		str_free (str);
-		error ("struct field %s is already exists.", name);
+		error ("compound field %s is already exists.", name);
 
 		return 0;
 	}
 	str_free (str);
 
-	struct_push_field (meta, name, field);
+	compound_push_field (meta, name, field);
 
 	return 1;
 }
@@ -1156,10 +1197,10 @@ code_find_struct (code_t *code, const char *name)
 	str = str_new (name, strlen (name));
 	size = vec_size (code->structs);
 	for (size_t i = 0; i < size; i++) {
-		struct_t *meta;
+		compound_t *meta;
 
-		meta = (struct_t *) vec_pos (code->structs, (integer_value_t) i);
-		if (str_cmp (str, struct_get_name (meta)) == 0) {
+		meta = (compound_t *) vec_pos (code->structs, (integer_value_t) i);
+		if (str_cmp (str, compound_get_name (meta)) == 0) {
 			str_free (str);
 
 			return STRUCT_TYPE ((object_type_t) i);
@@ -1171,8 +1212,38 @@ code_find_struct (code_t *code, const char *name)
 	return OBJECT_TYPE_ERR;
 }
 
-struct_t *
+compound_t *
 code_get_struct (code_t *code, object_type_t type)
 {
-	return (struct_t *) vec_pos (code->structs, (integer_value_t) STRUCT_INDEX (type));
+	return (compound_t *) vec_pos (code->structs, (integer_value_t) STRUCT_INDEX (type));
+}
+
+object_type_t
+code_find_union (code_t *code, const char *name)
+{
+	size_t size;
+	str_t *str;
+
+	str = str_new (name, strlen (name));
+	size = vec_size (code->unions);
+	for (size_t i = 0; i < size; i++) {
+		compound_t *meta;
+
+		meta = (compound_t *) vec_pos (code->unions, (integer_value_t) i);
+		if (str_cmp (str, compound_get_name (meta)) == 0) {
+			str_free (str);
+
+			return UNION_TYPE ((object_type_t) i);
+		}
+	}
+
+	str_free (str);
+
+	return OBJECT_TYPE_ERR;
+}
+
+compound_t *
+code_get_union (code_t *code, object_type_t type)
+{
+	return (compound_t *) vec_pos (code->unions, (integer_value_t) UNION_INDEX (type));
 }
