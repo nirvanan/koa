@@ -1329,19 +1329,19 @@ void
 object_traverse (object_t *obj, traverse_f fun, void *udata)
 {
 	switch (OBJECT_TYPE (obj)) {
-	case OBJECT_TYPE_VEC:
-		vecobject_traverse (obj, fun, udata);
-		break;
-	case OBJECT_TYPE_DICT:
-		dictobject_traverse (obj, fun, udata);
-		break;
-	default:
-		if (OBJECT_IS_STRUCT (obj)) {
-			structobject_traverse (obj, fun, udata);
-		}
-		else if (OBJECT_IS_UNION (obj)) {
-			unionobject_traverse (obj, fun, udata);
-		}
+		case OBJECT_TYPE_VEC:
+			vecobject_traverse (obj, fun, udata);
+			break;
+		case OBJECT_TYPE_DICT:
+			dictobject_traverse (obj, fun, udata);
+			break;
+		default:
+			if (OBJECT_IS_STRUCT (obj)) {
+				structobject_traverse (obj, fun, udata);
+			}
+			else if (OBJECT_IS_UNION (obj)) {
+				unionobject_traverse (obj, fun, udata);
+			}
 	}
 }
 
