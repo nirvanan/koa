@@ -364,6 +364,6 @@ unionobject_init ()
 	}
 	g_dump_unset = strobject_new ("unset", strlen ("unset"), 1, NULL);
 	if (g_dump_unset == NULL) {
-		fatal_error ("failed to init union dump sep.");
+		fatal_error ("failed to init union dump unset tag.");
 	}
 }
