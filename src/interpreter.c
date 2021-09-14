@@ -280,7 +280,7 @@ recover:
 			b = code_get_varname (code, para);
 			a = (object_t *) stack_pop (g_s);
 			if (!OBJECT_IS_STRUCT (a) && !OBJECT_IS_UNION (a)) {
-				error ("not a struct.");
+				error ("not a compound.");
 
 				HANDLE_EXCEPTION;
 			}
