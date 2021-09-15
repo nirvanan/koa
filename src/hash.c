@@ -180,6 +180,8 @@ hash_fast_remove (hash_t *ha, void *hn)
 
 	ha->h[idx] = list_remove (ha->h[idx], LIST (node));
 
+	ha->size--;
+
 	pool_free ((void *) node);
 }
 

@@ -49,6 +49,9 @@ vecobject_traverse (object_t *obj, traverse_f fun, void *udata);
 int
 vecobject_append (object_t *obj, object_t *element);
 
+int
+vecobject_remove (object_t *obj, integer_value_t pos);
+
 void
 vecobject_init ();
 

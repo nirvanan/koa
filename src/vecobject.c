@@ -481,6 +481,15 @@ vecobject_append (object_t *obj, object_t *element)
 	return 1;
 }
 
+int
+vecobject_remove (object_t *obj, integer_value_t pos)
+{
+	vec_t *vec;
+
+	vec = vecobject_get_value (obj);
+	return vec_remove (vec, pos);
+}
+
 void
 vecobject_init ()
 {

@@ -75,7 +75,6 @@ _builtin_append (object_t *args)
 {
 	object_t *vec;
 
-
 	/* The first argument must be vec. */
 	vec = ARG (args, 0);
 	if (vec == NULL || !OBJECT_IS_VEC (vec)) {
@@ -98,6 +97,49 @@ _builtin_append (object_t *args)
 	return DUMMY;
 }
 
+static object_t *
+_builtin_remove (object_t *args)
+{
+	object_t *container;
+	object_t *target;
+
+	container = ARG (args, 0);
+	target = ARG (args, 1);
+	if (OBJECT_IS_VEC (container)) {
+		integer_value_t pos;
+
+		if (!INTEGER_TYPE (target)) {
+			error ("vec pos must be an integer type.");
+
+			return NULL;
+		}
+		pos = object_get_integer (target);
+
+		if (!vecobject_remove (container, pos)) {
+			return NULL;
+		}
+
+		return DUMMY;
+	}
+	else if (OBJECT_IS_DICT (container)) {
+		if (!NUMBERICAL_TYPE (target) && OBJECT_TYPE (target) != OBJECT_TYPE_STR) {
+			error ("dict index must be a number or str.");
+
+			return NULL;
+		}
+
+		if (!dictobject_remove (container, target)) {
+			return NULL;
+		}
+
+		return DUMMY;
+	}
+
+	error ("the first argument of remove must be a dict or a vec.");
+
+	return NULL;
+}
+
 typedef struct builtin_slot_s
 {
 	int id;
@@ -114,6 +156,7 @@ static builtin_slot_t g_builtin_slot_list[] =
 	{2, "hash", _builtin_hash, 0, 1, {OBJECT_TYPE_ALL}},
 	{3, "len", _builtin_len, 0, 1, {OBJECT_TYPE_ALL}},
 	{4, "append", _builtin_append, 1, 0, {}},
+	{5, "remove", _builtin_remove, 0, 2, {OBJECT_TYPE_ALL, OBJECT_TYPE_ALL}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 
@@ -129,7 +172,7 @@ builtin_execute (builtin_t *builtin, object_t *args)
 	builtin_slot_t *slot;
 
 	if (builtin->slot <= 0 || (size_t) builtin->slot > sizeof (g_builtin_slot_list)) {
-		fatal_error ("slot out of bound");
+		fatal_error ("slot out of bound.");
 	}
 
 	slot = &g_builtin_slot_list[builtin->slot - 1];

@@ -574,6 +574,26 @@ dictobject_traverse (object_t *obj, traverse_f fun, void *udata)
 	vec_free (pairs);
 }
 
+int
+dictobject_remove (object_t *obj, object_t *key)
+{
+	dict_t *dict;
+	object_t *origin_key;
+	void *value;
+
+	dict = dictobject_get_value (obj);
+	origin_key = dict_remove (dict, key, &value);
+	if (origin_key == NULL) {
+		return 0;
+	}
+
+	object_unref (origin_key);
+	object_unref ((object_t *) value);
+
+	return 1;
+}
+
+
 void
 dictobject_init ()
 {

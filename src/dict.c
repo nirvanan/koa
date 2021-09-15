@@ -239,8 +239,7 @@ dict_remove (dict_t *dict, void *key, void **value)
 	uint64_t hash;
 	dict_node_t *node;
 	int occupied;
-	void *orin_key;
-	void *copied_handle;
+	void *origin_key;
 
 	hash = dict->hf (key);
 	
@@ -248,45 +247,30 @@ dict_remove (dict_t *dict, void *key, void **value)
 	node = (dict_node_t *) hash_test (dict->h, key, hash);
 	if (node == NULL) {
 		*value = NULL;
-		error ("try to removing a nonexisting key.");
+		error ("key doesn't exist.");
 
 		return NULL;
 	}
 	
-	/* Backup the hash handle. */
-	copied_handle = hash_handle_copy (node->hn);
-	if (copied_handle == NULL) {
-		*value = NULL;
-
-		return NULL;
-	}
+	origin_key = node->first;
+	*value = node->second;
 
 	hash_fast_remove (dict->h, node->hn);
-
+	dict->size--;
 	/* Need rehash? */
 	occupied = hash_occupied (dict->h, hash);
 	if (occupied == 0) {
 		dict->used--;
-		if (dict_rehash (dict, dict->used - 1) == 0) {
-			*value = NULL;
-
-			/* Restore backup handle. */
-			hash_fast_add (dict->h, copied_handle);
-			dict->used++;
-
+		if (dict_rehash (dict, dict->used) == 0) {
+			pool_free ((void *) node);
+			
 			return NULL;
 		}
 	}
 
-	orin_key = node->first;
-	*value = node->second;
-
-	dict->size--;
-
-	pool_free ((void *) copied_handle);
 	pool_free ((void *) node);
 
-	return orin_key;
+	return origin_key;
 }
 
 size_t
