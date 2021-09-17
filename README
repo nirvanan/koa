@@ -10,6 +10,7 @@ Features
 - Stack-based virtual machine.
 - Simple object system.
 - Generation-based garbage collection.
+- Exception handling.
 - Easy-to-use coroutine utility.
 
 Standard
