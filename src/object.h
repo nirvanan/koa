@@ -81,7 +81,7 @@
 
 #define CONTAINER_TYPE(x) ((x)->head.type==OBJECT_TYPE_VEC||\
 	(x)->head.type==OBJECT_TYPE_DICT||\
-	(x)->head.type==OBJECT_TYPE_STRUCT)
+	(x)->head.type>=OBJECT_TYPE_STRUCT)
 
 #define CAST_TYPE(x) ((x)==OBJECT_TYPE_BOOL||\
 	(x)==OBJECT_TYPE_CHAR||\
