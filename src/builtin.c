@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "builtin.h"
 #include "pool.h"
@@ -140,6 +141,34 @@ _builtin_remove (object_t *args)
 	return NULL;
 }
 
+static object_t *
+_builtin_exit (object_t *args)
+{
+	object_t *exit_obj;
+	int exit_value;
+
+	exit_obj = ARG (args, 0);
+	exit_value = 0;
+	if (INTEGER_TYPE (exit_obj)) {
+		integer_value_t integer_value = object_get_integer (exit_obj);
+		exit_value = (int) integer_value;
+	}
+	else if (FLOATING_TYPE (exit_obj)){
+		floating_value_t floating_value = object_get_floating (exit_obj);
+		exit_value = (int) floating_value;
+	}
+	else {
+		error ("the argument of exit should be numberical.");
+
+		return NULL;
+	}
+
+	exit (exit_value);
+
+	/* Bite me. */
+	return DUMMY;
+}
+
 typedef struct builtin_slot_s
 {
 	int id;
@@ -157,6 +186,7 @@ static builtin_slot_t g_builtin_slot_list[] =
 	{3, "len", _builtin_len, 0, 1, {OBJECT_TYPE_ALL}},
 	{4, "append", _builtin_append, 1, 0, {}},
 	{5, "remove", _builtin_remove, 0, 2, {OBJECT_TYPE_ALL, OBJECT_TYPE_ALL}},
+	{6, "exit", _builtin_exit, 0, 1, {OBJECT_TYPE_ALL}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 
