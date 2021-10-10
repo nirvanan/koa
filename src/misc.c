@@ -24,7 +24,10 @@
 #include <unistd.h>
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
+#else
+#define PACKAGE_STRING "koa 0.01"
+#define PACKAGE_BUGREPORT "nirvanan@live.cn"
 #endif
 
 #include "misc.h"
