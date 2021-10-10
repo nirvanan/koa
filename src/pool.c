@@ -34,8 +34,8 @@
  * full, empty and used. Each page contains exactly one type of cells.
  */
 
-#define POOL_REQUEST_SIZE (1024*1024)
 #define PAGE_SIZE 4096
+#define POOL_REQUEST_SIZE (1024*PAGE_SIZE)
 #define MAX_CELL_SIZE 512
 #define INIT_POOL_NUM 1
 #define RECYCLE_CYCLE 100
