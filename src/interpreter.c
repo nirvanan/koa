@@ -48,12 +48,12 @@ else {\
 
 #define STACK_PUSH(s, o) (object_ref((o)),stack_push(s,(void*)(o)))
 
-static frame_t *g_current;
-static st_t *g_s;
-static int g_runtime_started;
-static int g_cmdline;
-static int g_gc_op_count;
-static code_t *g_global;
+static __thread frame_t *g_current;
+static __thread st_t *g_s;
+static __thread int g_runtime_started;
+static __thread int g_cmdline;
+static __thread int g_gc_op_count;
+static __thread code_t *g_global;
 
 static void
 interpreter_stack_rollback ()
@@ -163,7 +163,6 @@ recover:
 			a = code_get_varname (code, para);
 			b = (object_t *) stack_top (g_s);
 			c = frame_store_var (g_current, a, b);
-			object_unref (b);
 			if (c == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -1726,6 +1725,40 @@ interpreter_execute (const char *path)
 	g_runtime_started = 0;
 	
 	gc_collect ();
+}
+
+void
+interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value)
+{
+	object_t *obj;
+
+	*ret_value = NULL;
+	g_global = code;
+	g_runtime_started = 1;
+	g_current = frame_new (code, g_current, stack_get_sp (g_s), 1, 0);
+	if (g_current == NULL) {
+		fatal_error ("failed to create first frame in child thread.");
+	}
+	if (!frame_bind_args (g_current, args)) {
+		return;
+	}
+
+	UNUSED (interpreter_play (code, 1, g_current));
+
+	while (g_current) {
+		g_current = frame_free (g_current);
+	}
+
+	while (stack_get_sp (g_s) > 0) {
+		obj = stack_pop (g_s);
+		if (*ret_value == NULL) {
+			*ret_value = obj;
+		}
+		else {
+			object_unref (obj);
+		}
+	}
+	g_runtime_started = 0;
 }
 
 void

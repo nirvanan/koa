@@ -34,11 +34,13 @@
 #include "parser.h"
 #include "interpreter.h"
 #include "builtin.h"
-#include <time.h>
 #include "cmdline.h"
+#include "gc.h"
 
 void koa_init ()
 {
+	/* Init gc. */
+	gc_init ();
 	/* Init pool utility. */
 	pool_init ();
 	/* Init object caches. */
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
 	koa_init ();
 	int c = 0;
 
-	cmdline_start ();
+	//cmdline_start ();
 	while (0) {
 		object_t *val = dictobject_new (NULL);
 		object_t *idx = intobject_new (2, NULL);

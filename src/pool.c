@@ -36,6 +36,7 @@
 
 #define PAGE_SIZE 4096
 #define POOL_REQUEST_SIZE (1024*PAGE_SIZE)
+#define CHILD_INIT_REQUEST_SIZE (16*PAGE_SIZE) /* For child thread when starting. */
 #define MAX_CELL_SIZE 512
 #define INIT_POOL_NUM 1
 #define RECYCLE_CYCLE 100
@@ -80,15 +81,15 @@ typedef struct page_hash_s
 } page_hash_t;
 
 /* All pools. */
-static list_t *g_pool_list;
+static __thread list_t *g_pool_list;
 
 /* Page table for quick access. */
-static list_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
-static list_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
+static __thread list_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
+static __thread list_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
 
 /* Altough we have hash utility using pool, but at this moment
  * we can not use it, so we just make another one. */
-static list_t *g_page_hash[PAGE_HASH_BUCKET];
+static __thread list_t *g_page_hash[PAGE_HASH_BUCKET];
 
 static void
 pool_page_init (page_t *page, cell_type_t t)
@@ -146,7 +147,7 @@ pool_page_hash_remove (page_t *page)
 }
 
 static pool_t *
-pool_new (void *extra)
+pool_new (size_t request_size, void *extra)
 {
 	pool_t *new_pool;
 	void *pool_end;
@@ -154,13 +155,13 @@ pool_new (void *extra)
 
 	/* In some system, calloc is faster than malloc+memset.
 	 * For example, freebsd. */
-	new_pool = (pool_t *) calloc (1, POOL_REQUEST_SIZE);
+	new_pool = (pool_t *) calloc (1, request_size);
 	if (new_pool == NULL) {
 		return NULL;
 	}
 
 	/* Align pages. */
-	pool_t_end = (void *) new_pool + sizeof (page_t);
+	pool_t_end = (void *) new_pool + sizeof (pool_t);
 	new_pool->po = BLOCK_START (pool_t_end, PAGE_SIZE);
 	if (!BLOCK_ALIGNED (pool_t_end, PAGE_SIZE)) {
 		new_pool->po += PAGE_SIZE;
@@ -242,8 +243,10 @@ pool_get_page (size_t size, int *need_hash)
 		}
 	}
 
-	/* No empty page? Allocte a new pool! */
-	first_pool = (pool_t *) pool_new (NULL);
+	/* No empty page? Allocte a new pool!
+	 * Note that if current thread is not the main thread and
+	 * this is the first pool to allocate, make a small one. */
+	first_pool = (pool_t *) pool_new (g_pool_list == NULL? CHILD_INIT_REQUEST_SIZE: POOL_REQUEST_SIZE, NULL);
 	if (first_pool == NULL) {
 		return NULL;
 	}
@@ -453,14 +456,28 @@ pool_recycle ()
 	g_pool_list = list_cleanup (g_pool_list, pool_need_recycle, 1, NULL);
 }
 
+static int
+pool_free_list (list_t *list, void *data)
+{
+	free ((void *) list);
+
+	return 0;
+}
+
+void
+pool_free_all ()
+{
+	list_foreach (g_pool_list, pool_free_list, NULL);
+}
+
 void
 pool_init ()
 {
-	/* Init pool(s) when startup. */
+	/* Init pool(s) for main thread when startup. */
 	for (int i = 0; i < INIT_POOL_NUM; i++) {
 		pool_t *pool;
 		
-		pool = pool_new (NULL);
+		pool = pool_new (POOL_REQUEST_SIZE, NULL);
 		if (pool == NULL) {
 			fatal_error ("failed to allocate pool on startup.");
 		}

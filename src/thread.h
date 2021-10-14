@@ -1,5 +1,5 @@
 /*
- * gc.h
+ * thread.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,43 +18,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GC_H
-#define GC_H
+#ifndef THREAD_H
+#define THREAD_H
 
 #include "koa.h"
-#include "list.h"
+#include "code.h"
+#include "object.h"
 
-#define GC_REF(x) ((x)->gc_ref)
-#define GC_STATUS(x) ((x)->status)
-#define GC_NULL {LIST_NULL,GC_STATUS_UNTRACKED,0}
-#define GC_INIT(x) GC_REF((x))=0;\
-	GC_STATUS((x))=GC_STATUS_UNTRACKED;\
-	LIST_CLEAR(&(x)->link)
+long
+thread_create (code_t *code, object_t *args);
 
-typedef enum gc_status_e
-{
-	GC_STATUS_UNTRACKED,
-	GC_STATUS_REACHABLE,
-	GC_STATUS_UNREACHABLE
-} gc_status_t;
-
-typedef struct gc_head_s
-{
-	list_t link;
-	int gc_ref;
-	gc_status_t status;
-} gc_head_t;
+object_t *
+thread_join (long tr);
 
 void
-gc_track (void *obj);
+thread_cancel (long tr);
 
 void
-gc_untrack (void *obj);
+thread_init ();
 
-void
-gc_collect ();
-
-void
-gc_init ();
-
-#endif /* GC_H */
+#endif /* THREAD_H */

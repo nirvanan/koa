@@ -31,6 +31,9 @@ void
 interpreter_execute (const char *path);
 
 void
+interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value);
+
+void
 interpreter_traceback ();
 
 void

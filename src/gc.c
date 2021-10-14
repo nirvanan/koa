@@ -42,11 +42,12 @@ typedef struct generation_s
 	int count;
 } generation_t;
 
-static generation_t g_generation_list[GEN_NUM] = 
+/* Each thread track its own objects. */
+static __thread generation_t g_generation_list[GEN_NUM] = 
 {
-	{LIST_SINGLE (GEN_HEAD(0)), 500, 0},
-	{LIST_SINGLE (GEN_HEAD(1)), 10, 0},
-	{LIST_SINGLE (GEN_HEAD(2)), 10, 0}
+	{LIST_SINGLE (NULL), 500, 0},
+	{LIST_SINGLE (NULL), 10, 0},
+	{LIST_SINGLE (NULL), 10, 0}
 };
 
 void
@@ -254,5 +255,13 @@ gc_collect ()
 			gc_collect_gen (i);
 			break;
 		}
+	}
+}
+
+void
+gc_init ()
+{
+	for (int i = 0; i < GEN_NUM; i++) {
+		LIST_SET_SINGLE (GEN_HEAD (i));
 	}
 }

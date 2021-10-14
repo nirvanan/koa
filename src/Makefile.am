@@ -74,6 +74,8 @@ strobject.c \
 strobject.h \
 structobject.c \
 structobject.h \
+thread.c \
+thread.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \
