@@ -52,6 +52,9 @@ vecobject_append (object_t *obj, object_t *element);
 int
 vecobject_remove (object_t *obj, integer_value_t pos);
 
+object_t *
+vecobject_copy (object_t *obj);
+
 void
 vecobject_init ();
 

@@ -37,7 +37,6 @@
 #define PAGE_SIZE 4096
 #define POOL_REQUEST_SIZE (1024*PAGE_SIZE)
 #define CHILD_INIT_REQUEST_SIZE (16*PAGE_SIZE) /* For child thread when starting. */
-#define MAX_CELL_SIZE 512
 #define INIT_POOL_NUM 1
 #define RECYCLE_CYCLE 100
 
@@ -48,8 +47,6 @@
 #define CELL_SIZE(x) ((size_t)(x)*8)
 
 #define REQ_2_CELL_TYPE(x) ((int)((x)-1)/8+1)
-
-#define PAGE_HASH_BUCKET 196613
 
 typedef unsigned char cell_type_t;
 
@@ -80,16 +77,8 @@ typedef struct page_hash_s
 	page_t *p;
 } page_hash_t;
 
-/* All pools. */
-static __thread list_t *g_pool_list;
-
-/* Page table for quick access. */
-static __thread list_t *g_page_table[MAX_CELL_SIZE / 8 + 1];
-static __thread list_t *g_full_table[MAX_CELL_SIZE / 8 + 1];
-
-/* Altough we have hash utility using pool, but at this moment
- * we can not use it, so we just make another one. */
-static __thread list_t *g_page_hash[PAGE_HASH_BUCKET];
+static __thread allocator_t *g_allocator;
+static __thread allocator_t *g_second_allocator;
 
 static void
 pool_page_init (page_t *page, cell_type_t t)
@@ -113,20 +102,20 @@ pool_page_init (page_t *page, cell_type_t t)
 }
 
 static int
-pool_page_hash_add (page_t *page)
+pool_page_hash_add (allocator_t *allocator, page_t *page)
 {
 	int b;
 	page_hash_t *ph;
 
 	b = (intptr_t) page % PAGE_HASH_BUCKET;
 	/* Hash data can be allocated from pool! */
-	ph = (page_hash_t *) pool_alloc (sizeof (page_hash_t));
+	ph = (page_hash_t *) pool_alloc_allocator (allocator, sizeof (page_hash_t));
 	if (ph == NULL) {
 		return 0;
 	}
 
 	ph->p = page;
-	g_page_hash[b] = list_append (g_page_hash[b], LIST (ph));
+	allocator->page_hash[b] = list_append (allocator->page_hash[b], LIST (ph));
 	page->hash = ph;
 
 	return 1;
@@ -134,20 +123,20 @@ pool_page_hash_add (page_t *page)
 
 
 static void
-pool_page_hash_remove (page_t *page)
+pool_page_hash_remove (allocator_t *allocator, page_t *page)
 {
 	int b;
 	page_hash_t *ph;
 
 	b = (intptr_t) page % PAGE_HASH_BUCKET;
 	ph = (page_hash_t *) page->hash;
-	g_page_hash[b] = list_remove (g_page_hash[b], LIST (ph));
+	allocator->page_hash[b] = list_remove (allocator->page_hash[b], LIST (ph));
 
-	pool_free ((void *) ph);
+	pool_free_allocator (allocator, (void *) ph);
 }
 
 static pool_t *
-pool_new (size_t request_size, void *extra)
+pool_new (allocator_t *allocator, size_t request_size, void *extra)
 {
 	pool_t *new_pool;
 	void *pool_end;
@@ -181,29 +170,29 @@ pool_new (size_t request_size, void *extra)
 	new_pool->extra = extra;
 
 	/* Insert current pool to list. */
-	g_pool_list = list_append (g_pool_list, LIST (new_pool));
+	allocator->pool_list = list_append (allocator->pool_list, LIST (new_pool));
 
 	return new_pool;
 }
 
 static void
-pool_empty_page_out (pool_t *pool, cell_type_t t)
+pool_empty_page_out (allocator_t *allocator, pool_t *pool, cell_type_t t)
 {
 	page_t *page;
 
 	page = (page_t *) pool->free;
 	pool->free = list_remove (pool->free, LIST (page));
 	pool->used++;
-	g_page_table[t] = list_append (g_page_table[t], LIST (page));
+	allocator->page_table[t] = list_append (allocator->page_table[t], LIST (page));
 }
 
 static void
-pool_empty_page_in (pool_t *pool, page_t *page)
+pool_empty_page_in (allocator_t *allocator, pool_t *pool, page_t *page)
 {
 	cell_type_t t;
 	
 	t = page->t;
-	g_page_table[t] = list_remove (g_page_table[t], LIST (page));
+	allocator->page_table[t] = list_remove (allocator->page_table[t], LIST (page));
 	pool->free = list_append (pool->free, LIST (page));
 	pool->used--;
 
@@ -214,7 +203,7 @@ pool_empty_page_in (pool_t *pool, page_t *page)
 }
 
 static page_t *
-pool_get_page (size_t size, int *need_hash)
+pool_get_page (allocator_t *allocator, size_t size, int *need_hash)
 {
 	cell_type_t cell_idx;
 	list_t *l;
@@ -224,18 +213,18 @@ pool_get_page (size_t size, int *need_hash)
 	cell_idx = REQ_2_CELL_TYPE (size);
 
 	/* First we lookup used page table. */
-	if (g_page_table[cell_idx] != NULL) {
-		return (page_t *) g_page_table[cell_idx];
+	if (allocator->page_table[cell_idx] != NULL) {
+		return (page_t *) allocator->page_table[cell_idx];
 	}
 
 	/* Then, we pick up an empty page in an avaliable pool. */
-	for (l = g_pool_list; l; l = LIST_NEXT (l)) {
+	for (l = allocator->pool_list; l; l = LIST_NEXT (l)) {
 		pool_t *pool;
 
 		pool = (pool_t *) l;
 		if (pool->free != NULL) {
 			page = (page_t *) pool->free;
-			pool_empty_page_out (pool, cell_idx);
+			pool_empty_page_out (allocator, pool, cell_idx);
 			pool_page_init (page, cell_idx);
 			*need_hash = 1;
 
@@ -246,12 +235,13 @@ pool_get_page (size_t size, int *need_hash)
 	/* No empty page? Allocte a new pool!
 	 * Note that if current thread is not the main thread and
 	 * this is the first pool to allocate, make a small one. */
-	first_pool = (pool_t *) pool_new (g_pool_list == NULL? CHILD_INIT_REQUEST_SIZE: POOL_REQUEST_SIZE, NULL);
+	size_t init_size = allocator->pool_list == NULL? CHILD_INIT_REQUEST_SIZE: POOL_REQUEST_SIZE;
+	first_pool = (pool_t *) pool_new (allocator, init_size, NULL);
 	if (first_pool == NULL) {
 		return NULL;
 	}
 	page = (page_t *) first_pool->free;
-	pool_empty_page_out (first_pool, cell_idx);
+	pool_empty_page_out (allocator, first_pool, cell_idx);
 	pool_page_init (page, cell_idx);
 	*need_hash = 1;
 
@@ -259,7 +249,7 @@ pool_get_page (size_t size, int *need_hash)
 }
 
 static void *
-pool_get_cell (page_t *page)
+pool_get_cell (allocator_t *allocator, page_t *page)
 {
 	void *cell;
 	cell_type_t t;
@@ -275,8 +265,8 @@ pool_get_cell (page_t *page)
 	/* Full? */
 	if (page->free == NULL) {
 		t = page->t;
-		g_page_table[t] = list_remove (g_page_table[t], LIST (page));
-		g_full_table[t] = list_append (g_full_table[t], LIST (page));
+		allocator->page_table[t] = list_remove (allocator->page_table[t], LIST (page));
+		allocator->full_table[t] = list_append (allocator->full_table[t], LIST (page));
 	}
 
 	return cell;
@@ -284,6 +274,16 @@ pool_get_cell (page_t *page)
 
 void *
 pool_alloc (size_t size)
+{
+	if (g_second_allocator != NULL) {
+		return pool_alloc_allocator (g_second_allocator, size);
+	}
+
+	return pool_alloc_allocator (g_allocator, size);
+}
+
+void *
+pool_alloc_allocator (allocator_t *allocator, size_t size)
 {
 	page_t *page;
 	void *cell;
@@ -302,18 +302,18 @@ pool_alloc (size_t size)
 	}
 
 	need_hash = 0;
-	page = pool_get_page (size, &need_hash);
+	page = pool_get_page (allocator, size, &need_hash);
 	if (page == NULL) {
 		return NULL;
 	}
 
-	cell = pool_get_cell (page);
+	cell = pool_get_cell (allocator, page);
 	if (cell == NULL) {
 		return NULL;
 	}
 
-	if (need_hash && pool_page_hash_add (page) == 0) {
-		pool_free (cell);
+	if (need_hash && pool_page_hash_add (allocator, page) == 0) {
+		pool_free_allocator (allocator, cell);
 		error ("failed to hash page table.");
 
 		return NULL;
@@ -324,6 +324,16 @@ pool_alloc (size_t size)
 
 void *
 pool_calloc (size_t member, size_t size)
+{
+	if (g_second_allocator != NULL) {
+		return pool_calloc_allocator (g_second_allocator, member, size);
+	}
+
+	return pool_calloc_allocator (g_allocator, member, size);
+}
+
+void *
+pool_calloc_allocator (allocator_t *allocator, size_t member, size_t size)
 {
 	size_t total;
 	void *ret;
@@ -338,7 +348,7 @@ pool_calloc (size_t member, size_t size)
 		return ret;
 	}
 
-	ret = pool_alloc (total);
+	ret = pool_alloc_allocator (allocator, total);
 	if (ret == NULL) {
 		return NULL;
 	}
@@ -366,7 +376,7 @@ pool_find_page_fun (list_t *list, void *data)
 }
 
 static int
-pool_is_pool_cell (void *bl)
+pool_is_pool_cell (allocator_t *allocator, void *bl)
 {
 	page_t *page;
 	int h;
@@ -374,27 +384,36 @@ pool_is_pool_cell (void *bl)
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 	h = (intptr_t) page % PAGE_HASH_BUCKET;
 
-	list_foreach (g_page_hash[h], pool_find_page_fun, (void *) &page);
+	list_foreach (allocator->page_hash[h], pool_find_page_fun, (void *) &page);
 
 	return page == NULL;
 }
 
 static void
-pool_page_full_2_used (page_t *page)
+pool_page_full_2_used (allocator_t *allocator, page_t *page)
 {
 	cell_type_t t;
 
 	t = page->t;
-	g_full_table[t] = list_remove (g_full_table[t], LIST (page));
-	g_page_table[t] = list_append (g_page_table[t], LIST (page));
+	allocator->full_table[t] = list_remove (allocator->full_table[t], LIST (page));
+	allocator->page_table[t] = list_append (allocator->page_table[t], LIST (page));
 }
 
 void
 pool_free (void *bl)
 {
+	if (g_second_allocator != NULL) {
+		pool_free_allocator (g_second_allocator, bl);
+	}
+	pool_free_allocator (g_allocator, bl);
+}
+
+void
+pool_free_allocator (allocator_t *allocator, void *bl)
+{
 	page_t *page;
 
-	if (!pool_is_pool_cell (bl)) {
+	if (!pool_is_pool_cell (allocator, bl)) {
 		/* Use system free to release this block. */
 		free (bl);
 
@@ -405,7 +424,7 @@ pool_free (void *bl)
 
 	/* Page from full to used? */
 	if (page->free == NULL) {
-		pool_page_full_2_used (page);
+		pool_page_full_2_used (allocator, page);
 	}
 
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
@@ -415,8 +434,8 @@ pool_free (void *bl)
 
 	/* Page from used to free? */
 	if (page->allocated <= 0) {
-		pool_page_hash_remove (page);
-		pool_empty_page_in ((pool_t *) page->pool, page);
+		pool_page_hash_remove (allocator, page);
+		pool_empty_page_in (allocator, (pool_t *) page->pool, page);
 	}
 }
 
@@ -451,9 +470,9 @@ pool_recycle ()
 {
 	/* This is called by interperter, when a pool is being empty for
 	 * more than RECYCLE_CYCLE cycles, we recycle it. */
-	list_foreach (g_pool_list, pool_add_cycle, NULL);
+	list_foreach (g_allocator->pool_list, pool_add_cycle, NULL);
 
-	g_pool_list = list_cleanup (g_pool_list, pool_need_recycle, 1, NULL);
+	g_allocator->pool_list = list_cleanup (g_allocator->pool_list, pool_need_recycle, 1, NULL);
 }
 
 static int
@@ -467,22 +486,30 @@ pool_free_list (list_t *list, void *data)
 void
 pool_free_all ()
 {
-	list_foreach (g_pool_list, pool_free_list, NULL);
+	list_foreach (g_allocator->pool_list, pool_free_list, NULL);
+}
+
+void
+pool_set_second_allocator (allocator_t *allocator)
+{
+	g_second_allocator = allocator;
 }
 
 void
 pool_init ()
 {
+	g_allocator = calloc (1, sizeof (allocator_t));
+	if (g_allocator == NULL) {
+		fatal_error ("out of memory.");
+	}
+
 	/* Init pool(s) for main thread when startup. */
 	for (int i = 0; i < INIT_POOL_NUM; i++) {
 		pool_t *pool;
 		
-		pool = pool_new (POOL_REQUEST_SIZE, NULL);
+		pool = pool_new (g_allocator, POOL_REQUEST_SIZE, NULL);
 		if (pool == NULL) {
 			fatal_error ("failed to allocate pool on startup.");
 		}
 	}
-	memset (g_page_table, 0, sizeof (g_page_table));
-	memset (g_full_table, 0, sizeof (g_full_table));
-	memset (g_page_hash, 0, sizeof (g_page_hash));
 }

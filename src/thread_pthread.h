@@ -1,5 +1,5 @@
 /*
- * funcobject.h
+ * thread_pthread.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,44 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FUNCOBJECT_H
-#define FUNCOBJECT_H
+#ifndef THREAD_PTHREAD_H
+#define THREAD_PTHREAD_H
+
+#include <pthread.h>
 
 #include "koa.h"
-#include "object.h"
-#include "code.h"
-#include "builtin.h"
 
-typedef struct funcobject_s
-{
-	object_head_t head;
-	int is_builtin;
-	builtin_t *builtin;
-	code_t *val;
-} funcobject_t;
 
-object_t *
-funcobject_load_binary (FILE *f);
 
-object_t *
-funcobject_new (void *udata);
 
-object_t *
-funcobject_code_new (code_t *val, void *udata);
-
-object_t *
-funcobject_builtin_new (builtin_t *builtin, void *udata);
-
-code_t *
-funcobject_get_value (object_t *obj);
-
-builtin_t *
-funcobject_get_builtin (object_t *obj);
-
-int
-funcobject_is_builtin (object_t *obj);
-
-object_t *
-funcobject_copy (object_t *obj);
-
-#endif /* FUNCOBJECT_H */
+#endif /* THREAD_PTHREAD_H */

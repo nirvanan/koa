@@ -509,6 +509,21 @@ strobject_c_str (object_t *obj)
 	return str_c_str (strobject_get_value (obj));
 }
 
+object_t *
+strobject_copy (object_t *obj)
+{
+	str_t *new_str;
+	const char *c_str;
+
+	c_str = strobject_c_str (obj);
+	new_str = str_new (c_str, strlen (c_str));
+	if (new_str == NULL) {
+		return NULL;
+	}
+
+	return strobject_str_new (new_str, NULL);
+}
+
 void
 strobject_init ()
 {

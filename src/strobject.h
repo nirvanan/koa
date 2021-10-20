@@ -55,6 +55,9 @@ strobject_equal (object_t *obj1, object_t *obj2);
 const char *
 strobject_c_str (object_t *obj);
 
+object_t *
+strobject_copy (object_t *obj);
+
 void
 strobject_init ();
 

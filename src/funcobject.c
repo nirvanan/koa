@@ -73,15 +73,7 @@ static object_opset_t g_object_ops =
 void
 funcobject_op_free (object_t *obj)
 {
-	funcobject_t *func;
-
-	func = (funcobject_t *) obj;
-	if (func->builtin != NULL) {
-		builtin_free (func->builtin);
-	}
-	if (func->val != NULL) { 
-		code_free (func->val);
-	}
+	/* Do nothing. */
 }
 
 /* Print. */
@@ -324,4 +316,20 @@ funcobject_is_builtin (object_t *obj)
 	ob = (funcobject_t *) obj;
 
 	return ob->is_builtin;
+}
+
+object_t *
+funcobject_copy (object_t *obj)
+{
+	/* Just memcpy it. */
+	funcobject_t *new_obj;
+
+	new_obj = (funcobject_t *) pool_alloc (sizeof (funcobject_t));
+	if (new_obj == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	memcpy (new_obj, obj, sizeof (funcobject_t));
+
+	return (object_t *) new_obj;
 }

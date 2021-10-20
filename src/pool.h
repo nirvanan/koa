@@ -24,21 +24,45 @@
 #include <stddef.h>
 
 #include "koa.h"
+#include "list.h"
+
+#define MAX_CELL_SIZE 512
+#define PAGE_HASH_BUCKET 196613
+
+typedef struct allocator_s
+{
+    list_t *pool_list; /* All pools. */
+    list_t *page_table[MAX_CELL_SIZE / 8 + 1]; /* Page table for quick access. */
+    list_t *full_table[MAX_CELL_SIZE / 8 + 1]; /* All full pages. */
+    list_t *page_hash[PAGE_HASH_BUCKET];
+} allocator_t;
 
 void *
 pool_alloc (size_t size);
 
 void *
+pool_alloc_allocator (allocator_t *allocator, size_t size);
+
+void *
 pool_calloc (size_t member, size_t size);
+
+void *
+pool_calloc_allocator (allocator_t *allocator, size_t member, size_t size);
 
 void
 pool_free (void *bl);
+
+void
+pool_free_allocator (allocator_t *allocator, void *bl);
 
 void
 pool_recycle ();
 
 void
 pool_free_all ();
+
+void
+pool_set_second_allocator (allocator_t *allocator);
 
 void
 pool_init ();

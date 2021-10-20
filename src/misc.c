@@ -23,14 +23,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "misc.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#else
-#define PACKAGE_STRING "koa 0.01"
-#define PACKAGE_BUGREPORT "nirvanan@live.cn"
 #endif
 
-#include "misc.h"
+#ifndef PACKAGE_STRING
+#define PACKAGE_STRING "koa 0.01"
+#endif
+
+#ifndef PACKAGE_BUGREPORT
+#define PACKAGE_BUGREPORT "nirvanan@live.cn"
+#endif
 
 int
 misc_check_source_extension (const char *filename)

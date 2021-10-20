@@ -414,6 +414,55 @@ structobject_store_member (object_t *obj, object_t *name,
 	return value;
 }
 
+object_t *
+structobject_copy (object_t *obj)
+{
+	structobject_t *new_obj;
+	structobject_t *old_obj;
+	vec_t *new_members;
+	vec_t *old_members;
+	size_t size;
+
+	old_obj = (structobject_t *) obj;
+	old_members = old_obj->members;
+	size = vec_size (old_members);
+	new_members = vec_new (size);
+	if (new_members == NULL) {
+		return NULL;
+	}
+
+	new_obj = (structobject_t *) pool_alloc (sizeof (structobject_t));
+	if (new_obj == NULL) {
+		vec_free (new_members);
+		fatal_error ("out of memory.");
+	}
+
+	OBJECT_NEW_INIT (new_obj, OBJECT_TYPE (obj), OBJECT_UDATA (obj));
+	OBJECT_DIGEST_FUN (new_obj) = structobject_digest_fun;
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *new_field;
+
+		new_field = object_copy ((object_t *) vec_pos (old_members, i));
+		if (new_field == NULL) {
+			for (integer_value_t j = 0; j < i; j++) {
+				object_free ((object_t *) vec_pos (new_members, j));
+			}
+			vec_free (new_members);
+
+			return NULL;
+		}
+		vec_set (new_members, i, (void *) new_field);
+		object_ref (new_field);
+	}
+
+	new_obj->members = new_members;
+
+	gc_track ((void *) new_obj);
+
+	return (object_t *) new_obj;
+}
+
 void
 structobject_init ()
 {

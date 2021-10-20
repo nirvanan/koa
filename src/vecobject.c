@@ -490,6 +490,39 @@ vecobject_remove (object_t *obj, integer_value_t pos)
 	return vec_remove (vec, pos);
 }
 
+object_t *
+vecobject_copy (object_t *obj)
+{
+	vec_t *new_vec;
+	vec_t *old_vec;
+	size_t size;
+
+	old_vec = vecobject_get_value (obj);
+	size = vec_size (old_vec);
+	new_vec = vec_new (size);
+	if (new_vec == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *new_element;
+
+		new_element = object_copy ((object_t *) vec_pos (old_vec, i));
+		if (new_element == NULL) {
+			for (integer_value_t j = 0; j < i; j++) {
+				object_free ((object_t *) vec_pos (new_vec, j));
+			}
+			vec_free (new_vec);
+
+			return NULL;
+		}
+		vec_set (new_vec, i, (void *) new_element);
+		object_ref (new_element);
+	}
+
+	return vecobject_vec_new (new_vec, NULL);
+}
+
 void
 vecobject_init ()
 {

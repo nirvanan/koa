@@ -350,6 +350,37 @@ unionobject_store_member (object_t *obj, object_t *name,
 	return (object_t *) union_obj->value;
 }
 
+object_t *
+unionobject_copy (object_t *obj)
+{
+	unionobject_t *new_obj;
+	unionobject_t *old_obj;
+	object_t *new_value;
+
+	old_obj = (unionobject_t *) obj;
+	new_obj = (unionobject_t *) pool_alloc (sizeof (unionobject_t));
+	if (new_obj == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	OBJECT_NEW_INIT (new_obj, OBJECT_TYPE (obj), OBJECT_UDATA (obj));
+	OBJECT_DIGEST_FUN (new_obj) = unionobject_digest_fun;
+
+	new_value = object_copy ((object_t *) old_obj->value);
+	if (new_value == NULL) {
+		pool_free ((void *) new_obj);
+
+		return NULL;
+	}
+
+	new_obj->value = new_value;
+	object_ref (new_value);
+
+	gc_track ((void *) new_obj);
+
+	return (object_t *) new_obj;
+}
+
 void
 unionobject_init ()
 {

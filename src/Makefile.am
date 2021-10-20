@@ -76,6 +76,7 @@ structobject.c \
 structobject.h \
 thread.c \
 thread.h \
+thread_pthread.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \

@@ -371,6 +371,9 @@ object_len (object_t *obj);
 void
 object_traverse (object_t *obj, traverse_f fun, void *udata);
 
+object_t *
+object_copy (object_t *obj);
+
 void
 object_init ();
 

@@ -46,6 +46,10 @@ unionobject_get_member (object_t *obj, object_t *name, code_t *code);
 object_t *
 unionobject_store_member (object_t *obj, object_t *name,
 						  object_t *value, code_t *code);
+
+object_t *
+unionobject_copy (object_t *obj);
+
 void
 unionobject_init ();
 

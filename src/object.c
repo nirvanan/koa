@@ -1345,6 +1345,32 @@ object_traverse (object_t *obj, traverse_f fun, void *udata)
 	}
 }
 
+object_t *
+object_copy (object_t *obj)
+{
+	if (NUMBERICAL_TYPE (obj)) {
+		return object_cast (obj, OBJECT_TYPE (obj));
+	}
+
+	switch (OBJECT_TYPE (obj)) {
+		case OBJECT_TYPE_STR:
+			return strobject_copy (obj);
+		case OBJECT_TYPE_VEC:
+			return vecobject_copy (obj);
+		case OBJECT_TYPE_DICT:
+			return dictobject_copy (obj);
+		case OBJECT_TYPE_STRUCT:
+			return structobject_copy (obj);
+		case OBJECT_TYPE_UNION:
+			return unionobject_copy (obj);
+		case OBJECT_TYPE_FUNC:
+			return funcobject_copy (obj);
+		default:
+			error ("can not copy an %s.", TYPE_ID_NAME (OBJECT_TYPE (obj)));
+			return NULL;
+	}
+}
+
 void
 object_init ()
 {

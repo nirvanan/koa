@@ -47,6 +47,10 @@ structobject_get_member (object_t *obj, object_t *name, code_t *code);
 object_t *
 structobject_store_member (object_t *obj, object_t *name,
 						   object_t *value, code_t *code);
+
+object_t *
+structobject_copy (object_t *obj);
+
 void
 structobject_init ();
 

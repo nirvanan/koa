@@ -593,6 +593,64 @@ dictobject_remove (object_t *obj, object_t *key)
 	return 1;
 }
 
+object_t *
+dictobject_copy (object_t *obj)
+{
+	object_t *new_obj;
+	dict_t *new_dict;
+	dict_t *old_dict;
+	vec_t *pairs;
+	size_t size;
+
+	old_dict = dictobject_get_value (obj);
+	size = dict_size (old_dict);
+	new_dict = dict_new (dictobject_hash_fun, dictobject_test_fun);
+	if (new_dict == NULL) {
+		return NULL;
+	}
+
+	pairs = dict_pairs (old_dict);
+	if (pairs == NULL) {
+		dict_free (new_dict);
+
+		return NULL;
+	}
+
+	new_obj = dictobject_dict_new (new_dict, NULL);
+	if (new_obj == NULL) {
+		dict_free (new_dict);
+		vec_free (pairs);
+
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *old_key;
+		object_t *old_value;
+		object_t *new_key;
+		object_t *new_value;
+
+		old_key = (object_t *) DICT_PAIR_KEY (vec_pos (pairs, i));
+		old_value = (object_t *) DICT_PAIR_VALUE (vec_pos (pairs, i));
+		new_key = object_copy (old_key);
+		new_value = object_copy (old_value);
+		if (new_key == NULL || new_value == NULL) {
+			vec_free (pairs);
+			object_free (new_obj);
+			if (new_key != NULL) {
+				object_free (new_key);
+			}
+			if (new_value != NULL) {
+				object_free (new_value);
+			}
+		}
+		object_ipindex (new_obj, new_key, new_value);
+	}
+
+	vec_free (pairs);
+
+	return new_obj;
+}
 
 void
 dictobject_init ()

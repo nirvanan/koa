@@ -24,22 +24,33 @@
 #include "vecobject.h"
 #include "interpreter.h"
 
-typedef struct thread_param_s
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_PTHREAD_H
+#include "thread_pthread.h"
+#endif
+
+typedef struct thread_context_s
 {
 	code_t *code;
 	object_t *args;
-} thread_param_t;
+	object_t *ret_value;
+	list_t *pool_list; /* The pool list allocated in child thread. */
+} thread_context_t;
 
 static void *
 thread_func (void *arg)
 {
-	thread_param_t *param;
+	thread_context_t *context;
 	object_t *ret_value;
 
-	param = (thread_param_t *) arg;
-	interpreter_execute_thread (param->code, param->args, &ret_value);
+	context = (thread_context_t *) arg;
+	interpreter_execute_thread (context->code, context->args, &ret_value);
+	context->ret_value = ret_value;
 
-	return (void *) ret_value;	
+	return (void *) ret_value;
 }
 
 long
@@ -69,5 +80,5 @@ thread_cancel (long tr)
 void
 thread_init ()
 {
-
+	// __thread_init ();
 }

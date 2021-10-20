@@ -169,6 +169,16 @@ _builtin_exit (object_t *args)
 	return DUMMY;
 }
 
+static object_t *
+_builtin_copy (object_t *args)
+{
+	object_t *target;
+
+	target = ARG (args, 0);
+
+	return object_copy (target);
+}
+
 typedef struct builtin_slot_s
 {
 	int id;
@@ -186,7 +196,8 @@ static builtin_slot_t g_builtin_slot_list[] =
 	{3, "len", _builtin_len, 0, 1, {OBJECT_TYPE_ALL}},
 	{4, "append", _builtin_append, 1, 0, {}},
 	{5, "remove", _builtin_remove, 0, 2, {OBJECT_TYPE_ALL, OBJECT_TYPE_ALL}},
-	{6, "exit", _builtin_exit, 0, 1, {OBJECT_TYPE_ALL}},
+	{6, "copy", _builtin_copy, 0, 1, {OBJECT_TYPE_ALL}},
+	{7, "exit", _builtin_exit, 0, 1, {OBJECT_TYPE_ALL}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 
