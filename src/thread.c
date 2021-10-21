@@ -76,7 +76,6 @@ thread_func (void *arg)
 	builtin_init ();
 
 	interpreter_execute_thread (context->code, context->args, &ret_value);
-	object_free (context->args);
 
 	/* Dump the returned object to binary. */
 	ret_binary = NULL;
