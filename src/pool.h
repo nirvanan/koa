@@ -65,6 +65,12 @@ void
 pool_set_second_allocator (allocator_t *allocator);
 
 void
+pool_set_allocator (allocator_t *allocator);
+
+allocator_t *
+pool_make_new_allocator ();
+
+void
 pool_init ();
 
 #endif /* POOL_H */

@@ -39,7 +39,7 @@
 #define INT_CACHE_INDEX(x) ((size_t)((x)-INT_CACHE_MIN))
 
 /* Small ints should be cached. */
-static object_t *g_int_cache[INT_CACHE_SIZE];
+static __thread object_t *g_int_cache[INT_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *intobject_op_lnot (object_t *obj);

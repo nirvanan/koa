@@ -25,7 +25,34 @@
 
 #include "koa.h"
 
+static long
+_thread_create (void *(*func)(void *), void *arg)
+{
+	pthread_t th;
+	int status;
 
+	status = pthread_create (&th, NULL, func, arg);
+	if (status != 0) {
+		return 0;
+	}
+
+	return (long) th;
+}
+
+static void
+_thread_cancel (long th)
+{
+    UNUSED (pthread_cancel ((pthread_t) th));
+}
+
+static void
+_thread_init ()
+{
+#if defined(_AIX) && defined(__GNUC__)
+	extern void pthread_init(void);
+	pthread_init();
+#endif
+}
 
 
 #endif /* THREAD_PTHREAD_H */

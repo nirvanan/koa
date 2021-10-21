@@ -40,7 +40,7 @@
 #define LONG_CACHE_INDEX(x) ((size_t)((x)-LONG_CACHE_MIN))
 
 /* Small long should be cached. */
-static object_t *g_long_cache[LONG_CACHE_SIZE];
+static __thread object_t *g_long_cache[LONG_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *longobject_op_lnot (object_t *obj);
@@ -354,6 +354,12 @@ longobject_load_binary (FILE *f)
 	return longobject_new (val, NULL);
 }
 
+static uint64_t
+longobject_digest_fun (void *obj)
+{
+	return object_integer_hash (object_get_integer ((object_t *) obj));
+}
+
 object_t *
 longobject_new (long val, void *udata)
 {
@@ -372,6 +378,7 @@ longobject_new (long val, void *udata)
 	}
 
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_LONG, udata);
+	OBJECT_DIGEST_FUN (obj) = longobject_digest_fun;
 
 	obj->val = val;
 

@@ -29,7 +29,7 @@
 #include "strobject.h"
 
 /* Note that the 'null' object is shared everywhere. */
-static object_t *g_null_object;
+static __thread object_t *g_null_object;
 
 /* Object ops. */
 static void nullobject_op_print (object_t *obj);

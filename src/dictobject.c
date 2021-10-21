@@ -30,6 +30,11 @@
 #include "uint64object.h"
 #include "strobject.h"
 
+static __thread object_t *g_dump_head;
+static __thread object_t *g_dump_tail;
+static __thread object_t *g_dump_sep;
+static __thread object_t *g_dump_map;
+
 /* Object ops. */
 static void dictobject_op_free (object_t *obj);
 static void dictobject_op_print (object_t *obj);
@@ -41,11 +46,6 @@ static object_t *dictobject_op_ipindex (object_t *obj1,
 static object_t *dictobject_op_hash (object_t *obj);
 static object_t *dictobject_op_binary (object_t *obj);
 static object_t *dictobject_op_len (object_t *obj);
-
-static object_t *g_dump_head;
-static object_t *g_dump_tail;
-static object_t *g_dump_sep;
-static object_t *g_dump_map;
 
 static object_opset_t g_object_ops =
 {
@@ -644,7 +644,7 @@ dictobject_copy (object_t *obj)
 				object_free (new_value);
 			}
 		}
-		object_ipindex (new_obj, new_key, new_value);
+		UNUSED (object_ipindex (new_obj, new_key, new_value));
 	}
 
 	vec_free (pairs);

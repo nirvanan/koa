@@ -39,12 +39,12 @@
 #define HASH_M 0xc6a4a7935bd1e995
 #define INTERNAL_HASH_SIZE 4096
 
-static hash_t *g_internal_hash;
+static __thread hash_t *g_internal_hash;
 
-static unsigned int g_internal_hash_seed;
+static __thread unsigned int g_internal_hash_seed;
 
-static str_t *g_dump_head;
-static str_t *g_dump_tail;
+static __thread str_t *g_dump_head;
+static __thread str_t *g_dump_tail;
 
 /* Object ops. */
 static void strobject_op_free (object_t *obj);

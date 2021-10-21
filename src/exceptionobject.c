@@ -33,8 +33,8 @@
 #define DUMP_HEAD_LENGTH 12
 #define DUMP_TAIL_LENGTH 2
 
-static str_t *g_dump_head;
-static str_t *g_dump_tail;
+static __thread str_t *g_dump_head;
+static __thread str_t *g_dump_tail;
 
 /* Object ops. */
 static void exceptionobject_op_free (object_t *obj);

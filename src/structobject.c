@@ -31,9 +31,9 @@
 #include "uint64object.h"
 #include "strobject.h"
 
-static object_t *g_dump_head;
-static object_t *g_dump_tail;
-static object_t *g_dump_sep;
+static __thread object_t *g_dump_head;
+static __thread object_t *g_dump_tail;
+static __thread object_t *g_dump_sep;
 
 /* Object ops. */
 static void structobject_op_free (object_t *obj);

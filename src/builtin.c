@@ -25,11 +25,13 @@
 #include "pool.h"
 #include "error.h"
 #include "vec.h"
+#include "longobject.h"
 #include "vecobject.h"
 #include "dictobject.h"
 #include "strobject.h"
 #include "funcobject.h"
 #include "exceptionobject.h"
+#include "thread.h"
 
 #define MAX_ARGS 256
 
@@ -37,7 +39,7 @@
 #define ARG_SIZE(x) (vec_size(vecobject_get_value((x))))
 #define DUMMY (object_get_default(OBJECT_TYPE_VOID,NULL))
 
-static object_t *g_builtin;
+static __thread object_t *g_builtin;
 
 static object_t *
 _builtin_print (object_t *args)
@@ -142,6 +144,16 @@ _builtin_remove (object_t *args)
 }
 
 static object_t *
+_builtin_copy (object_t *args)
+{
+	object_t *target;
+
+	target = ARG (args, 0);
+
+	return object_copy (target);
+}
+
+static object_t *
 _builtin_exit (object_t *args)
 {
 	object_t *exit_obj;
@@ -170,13 +182,49 @@ _builtin_exit (object_t *args)
 }
 
 static object_t *
-_builtin_copy (object_t *args)
+_builtin_thread_create (object_t *args)
 {
-	object_t *target;
+	object_t *fun_obj;
+	object_t *thread_args;
+	size_t size;
+	vec_t *thread_args_vec;
+	long th;
 
-	target = ARG (args, 0);
+	size = ARG_SIZE (args);
+	if (ARG_SIZE (args) < 1) {
+		error ("missing func for thread_create.");
 
-	return object_copy (target);
+		return NULL;
+	}
+
+	fun_obj = ARG (args, 0);
+	if (!OBJECT_IS_FUNC (fun_obj)) {
+		error ("the first argument of thread_create should be a func.");
+
+		return NULL;
+	}
+
+	thread_args = vecobject_new (ARG_SIZE (args) - 1, NULL);
+	if (thread_args == NULL) {
+		return NULL;
+	}
+
+	thread_args_vec = vecobject_get_value (thread_args);
+	for (integer_value_t i = 1; i < (integer_value_t) size; i++) {
+		object_t *arg;
+
+		arg = ARG (args, i);
+		UNUSED (vec_set (thread_args_vec, i - 1, (void *) arg));
+		object_ref (arg);
+	}
+
+	th = thread_create (funcobject_get_value (fun_obj), thread_args);
+	object_free (thread_args);
+	if(th == 0) {
+		return NULL;
+	}
+
+	return longobject_new (th, NULL);
 }
 
 typedef struct builtin_slot_s
@@ -198,6 +246,7 @@ static builtin_slot_t g_builtin_slot_list[] =
 	{5, "remove", _builtin_remove, 0, 2, {OBJECT_TYPE_ALL, OBJECT_TYPE_ALL}},
 	{6, "copy", _builtin_copy, 0, 1, {OBJECT_TYPE_ALL}},
 	{7, "exit", _builtin_exit, 0, 1, {OBJECT_TYPE_ALL}},
+	{8, "thread_create", _builtin_thread_create, 1, 0, {}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 

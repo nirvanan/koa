@@ -30,8 +30,8 @@
 #include "strobject.h"
 
 /* Note that the 'true' and 'false' objects are shared everywhere. */
-static object_t *g_true_object;
-static object_t *g_false_object;
+static __thread object_t *g_true_object;
+static __thread object_t *g_false_object;
 
 /* Object ops. */
 static object_t *boolobject_op_lnot (object_t *obj);

@@ -157,7 +157,7 @@ pool_new (allocator_t *allocator, size_t request_size, void *extra)
 	}
 
 	/* Insert all pages into free list and hash. */
-	pool_end = (void *) new_pool + POOL_REQUEST_SIZE;
+	pool_end = (void *) new_pool + request_size;
 	for (void *p = new_pool->po; p + PAGE_SIZE <= pool_end; p += PAGE_SIZE) {
 		page_t *page;
 		
@@ -493,6 +493,27 @@ void
 pool_set_second_allocator (allocator_t *allocator)
 {
 	g_second_allocator = allocator;
+}
+
+void
+pool_set_allocator (allocator_t *allocator)
+{
+	if (g_allocator == NULL) {
+		g_allocator = allocator;
+	}
+}
+
+allocator_t *
+pool_make_new_allocator ()
+{
+	allocator_t *allocator;
+
+	allocator = calloc (1, sizeof (allocator_t));
+	if (allocator == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	return allocator;
 }
 
 void

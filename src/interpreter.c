@@ -51,9 +51,9 @@ else {\
 static __thread frame_t *g_current;
 static __thread st_t *g_s;
 static __thread int g_runtime_started;
-static __thread int g_cmdline;
+static int g_cmdline;
 static __thread int g_gc_op_count;
-static __thread code_t *g_global;
+static code_t *g_global;
 
 static void
 interpreter_stack_rollback ()
@@ -546,8 +546,7 @@ recover:
 			break;
 		case OP_BIND_ARGS:
 			a = (object_t *) stack_pop (g_s);
-			if (OPCODE_OP (frame_last_opcode (FRAME_UPPER (g_current))) != OP_MAKE_VEC ||
-				a == NULL || OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
+			if (OBJECT_TYPE (a) != OBJECT_TYPE_VEC) {
 				if (a != NULL) {
 					object_unref (a);
 				}
@@ -1735,13 +1734,18 @@ interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value)
 	*ret_value = NULL;
 	g_global = code;
 	g_runtime_started = 1;
+	g_s = stack_new ();
+	if (g_s == NULL) {
+		fatal_error ("failed to init interpreter.");
+	}
+
 	g_current = frame_new (code, g_current, stack_get_sp (g_s), 1, 0);
 	if (g_current == NULL) {
 		fatal_error ("failed to create first frame in child thread.");
 	}
-	if (!frame_bind_args (g_current, args)) {
-		return;
-	}
+
+	stack_push (g_s, args);
+	object_ref (args);
 
 	UNUSED (interpreter_play (code, 1, g_current));
 

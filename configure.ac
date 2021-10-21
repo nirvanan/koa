@@ -19,7 +19,7 @@ AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, isfinite)
 
 # Checks for header files.
-AC_CHECK_HEADERS([inttypes.h limits.h stddef.h stdint.h stdlib.h string.h])
+AC_CHECK_HEADERS([inttypes.h limits.h stddef.h stdint.h stdlib.h string.h pthread.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -37,6 +37,9 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([memset modf strtol])
+
+# Checks for pthread
+AX_PTHREAD
 
 # Enable debug or not. 
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [enable DEBUG mode(default=no)]),[], [enable_debug=no])

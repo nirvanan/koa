@@ -42,7 +42,7 @@
 #define CHAR_CACHE_INDEX(x) ((size_t)((x)-CHAR_CACHE_MIN))
 
 /* Char objects are all cached. */
-static object_t *g_char_cache[CHAR_CACHE_SIZE];
+static __thread object_t *g_char_cache[CHAR_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *charobject_op_lnot (object_t *obj);

@@ -36,6 +36,7 @@
 #include "builtin.h"
 #include "cmdline.h"
 #include "gc.h"
+#include "thread.h"
 
 void koa_init ()
 {
@@ -51,6 +52,8 @@ void koa_init ()
 	interpreter_init ();
 	/* Init builtin. */
 	builtin_init ();
+	/* Init thread. */
+	thread_init ();
 }
 
 int main(int argc, char *argv[])

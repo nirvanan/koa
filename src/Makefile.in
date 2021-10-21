@@ -288,8 +288,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = 
-AM_LDFLAGS = 
+AM_LIBS = @PTHREAD_LIBS@ @LIBS@
+AM_CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
+AM_CC = @PTHREAD_CC@
 koa_SOURCES = boolobject.c \
 boolobject.h \
 builtin.c \
