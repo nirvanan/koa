@@ -757,9 +757,6 @@ recover:
 			object_unref (a);
 			object_unref (b);
 			if (r == NULL) {
-				object_unref (a);
-				object_unref (b);
-
 				HANDLE_EXCEPTION;
 			}
 			break;
@@ -1717,7 +1714,7 @@ interpreter_execute (const char *path)
 	}
 
 	while (stack_get_sp (g_s) > 0) {
-		obj = stack_pop (g_s);
+		obj = (object_t *) stack_pop (g_s);
 		object_unref (obj);
 	}
 	code_free (code);
@@ -1730,6 +1727,7 @@ void
 interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value)
 {
 	object_t *obj;
+	int status;
 
 	*ret_value = NULL;
 	g_global = code;
@@ -1747,20 +1745,20 @@ interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value)
 	stack_push (g_s, args);
 	object_ref (args);
 
-	UNUSED (interpreter_play (code, 1, g_current));
+	status = interpreter_play (code, 1, g_current);
 
 	while (g_current) {
 		g_current = frame_free (g_current);
 	}
 
+	*ret_value = NULL;
+	obj = stack_top (g_s);
+	if (status) {
+		*ret_value = (object_t *) stack_pop (g_s);
+	}
 	while (stack_get_sp (g_s) > 0) {
-		obj = stack_pop (g_s);
-		if (*ret_value == NULL) {
-			*ret_value = obj;
-		}
-		else {
-			object_unref (obj);
-		}
+		obj = (object_t *) stack_pop (g_s);
+		object_unref (obj);
 	}
 	g_runtime_started = 0;
 }

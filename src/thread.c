@@ -75,11 +75,16 @@ thread_func (void *arg)
 	/* Init builtin. */
 	builtin_init ();
 
+	printf ("%lx ", context->args);
 	interpreter_execute_thread (context->code, context->args, &ret_value);
+	printf ("%lx\n", context->args);
 	object_free (context->args);
 
 	/* Dump the returned object to binary. */
-	ret_binary = object_binary (ret_value);
+	ret_binary = NULL;
+	if (ret_value != NULL) {
+		ret_binary = object_binary (ret_value);
+	}
 	if (ret_binary != NULL) {
 		ret_str = strobject_get_value (ret_binary);
 		context->ret_len = str_len (ret_str);
@@ -88,10 +93,10 @@ thread_func (void *arg)
 			fatal_error ("out of memory.");
 		}
 		memcpy (context->ret_binary, str_c_str (ret_str), context->ret_len);
+		object_free (ret_binary);
+		object_unref (ret_value);
 	}
 
-	object_unref (ret_value);
-	object_free (ret_binary);
 	pool_free_all ();
 
 	return (void *) context;
