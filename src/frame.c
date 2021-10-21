@@ -393,6 +393,9 @@ frame_recover_exception (frame_t *frame)
 void
 frame_set_exception (frame_t *frame, object_t *exception)
 {
+	if (frame->exception != NULL) {
+		frame_clear_exception (frame);
+	}
 	frame->exception = exception;
 	object_ref (exception);
 }

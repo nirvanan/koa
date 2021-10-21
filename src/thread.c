@@ -121,6 +121,8 @@ thread_create (code_t *code, object_t *args)
 	}
 
 	if (!code_check_args (code, vecobject_get_value (args))) {
+		free ((void *) context);
+
 		return 0L;
 	}
 
