@@ -75,9 +75,7 @@ thread_func (void *arg)
 	/* Init builtin. */
 	builtin_init ();
 
-	printf ("%lx ", context->args);
 	interpreter_execute_thread (context->code, context->args, &ret_value);
-	printf ("%lx\n", context->args);
 	object_free (context->args);
 
 	/* Dump the returned object to binary. */
