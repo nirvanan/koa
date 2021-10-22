@@ -75,6 +75,8 @@ thread_func (void *arg)
 	/* Init builtin. */
 	builtin_init ();
 
+	g_thread_context = dictobject_new (NULL);
+
 	interpreter_execute_thread (context->code, context->args, &ret_value);
 
 	/* Dump the returned object to binary. */
