@@ -28,6 +28,7 @@
 #include "builtin.h"
 #include "gc.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "intobject.h"
 #include "strobject.h"
@@ -107,7 +108,7 @@ interpreter_play (code_t *code, int global, frame_t *frame)
 	object_t *r;
 
 	if (frame == NULL) {
-		g_current = frame_new (code, g_current, stack_get_sp (g_s), global, 0);
+		g_current = frame_new (code, g_current, stack_get_sp (g_s), global, NULL, 0);
 		if (g_current == NULL) {
 			fatal_error ("failed to play code.");
 		}
@@ -124,6 +125,9 @@ recover:
 			fatal_error ("what's this?");
 		case OP_LOAD_CONST:
 			r = code_get_const (code, para);
+			if (!thread_is_main_thread () && !OBJECT_IS_DUMMY (r)) {
+				r = object_copy (r);
+			}
 			if (r == NULL) {
 				HANDLE_EXCEPTION;
 			}
@@ -1707,6 +1711,7 @@ interpreter_execute (const char *path)
 
 	g_global = code;
 	g_runtime_started = 1;
+	thread_set_main_thread ();
 	UNUSED (interpreter_play (code, 1, NULL));
 
 	while (g_current) {
@@ -1724,20 +1729,19 @@ interpreter_execute (const char *path)
 }
 
 void
-interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value)
+interpreter_execute_thread (code_t *code, object_t *args, dict_t *main_global, object_t **ret_value)
 {
 	object_t *obj;
 	int status;
 
 	*ret_value = NULL;
-	g_global = code;
 	g_runtime_started = 1;
 	g_s = stack_new ();
 	if (g_s == NULL) {
 		fatal_error ("failed to init interpreter.");
 	}
 
-	g_current = frame_new (code, g_current, stack_get_sp (g_s), 1, 0);
+	g_current = frame_new (code, g_current, stack_get_sp (g_s), 0, main_global, 0);
 	if (g_current == NULL) {
 		fatal_error ("failed to create first frame in child thread.");
 	}
@@ -1745,7 +1749,7 @@ interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value)
 	stack_push (g_s, args);
 	object_ref (args);
 
-	status = interpreter_play (code, 1, g_current);
+	status = interpreter_play (code, 0, g_current);
 
 	while (g_current) {
 		g_current = frame_free (g_current);
@@ -1838,6 +1842,12 @@ interpreter_set_cmdline (frame_t *frame, code_t *code)
 	g_current = frame;
 	g_cmdline = 1;
 	g_runtime_started = 1;
+}
+
+dict_t *
+interpreter_get_main_global ()
+{
+	return frame_get_global (g_current);
 }
 
 void

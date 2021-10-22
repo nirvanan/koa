@@ -117,7 +117,7 @@ cmdline_start ()
 		return;
 	}
 
-	frame = frame_new (code, NULL, 0, 1, 1);
+	frame = frame_new (code, NULL, 0, 1, NULL, 1);
 	if (frame == NULL) {
 		return;
 	}

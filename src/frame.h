@@ -53,7 +53,7 @@ typedef struct frame_s
 } frame_t;
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t bottom, int global, int cmdline);
+frame_new (code_t *code, frame_t *current, sp_t bottom, int is_global, dict_t *main_global, int cmdline);
 
 frame_t *
 frame_free (frame_t *frame);
@@ -111,6 +111,9 @@ frame_set_catched (frame_t *frame);
 
 void
 frame_reset_esp (frame_t *frame);
+
+dict_t *
+frame_get_global (frame_t *frame);
 
 #endif /* FRAME_H */
 

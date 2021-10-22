@@ -24,6 +24,7 @@
 #include "nullobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "uint64object.h"
 #include "strobject.h"
@@ -76,7 +77,7 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 	 * address is enough. Moreover, comparing 'null'
 	 * object to other objects will always be illegal
 	 * except for equality comparing. */
-	if (obj1 == obj2) {
+	if (OBJECT_IS_NULL (obj1) && OBJECT_IS_NULL (obj2)) {
 		return boolobject_new (true, NULL);
 	}
 	
@@ -130,7 +131,7 @@ nullobject_new (void *udata)
 {
 	nullobject_t *obj;
 
-	if (g_null_object != NULL) {
+	if (thread_is_main_thread () && g_null_object != NULL) {
 		return g_null_object;
 	}
 
@@ -148,6 +149,10 @@ nullobject_new (void *udata)
 void
 nullobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* The 'null' object should never be freed. */
 	g_null_object = nullobject_new (NULL);
 	if (g_null_object == NULL) {
@@ -158,5 +163,5 @@ nullobject_init ()
 
 	object_ref (g_null_object);
 
-	OBJECT_DIGEST (g_null_object) = (uint64_t) random ();
+	OBJECT_DIGEST (g_null_object) = 0;
 }

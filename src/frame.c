@@ -28,7 +28,7 @@
 #include "error.h"
 
 frame_t *
-frame_new (code_t *code, frame_t *current, sp_t bottom, int global, int cmdline)
+frame_new (code_t *code, frame_t *current, sp_t bottom, int is_global, dict_t *main_global, int cmdline)
 {
 	frame_t *frame;
 
@@ -41,8 +41,13 @@ frame_new (code_t *code, frame_t *current, sp_t bottom, int global, int cmdline)
 	frame->code = code;
 	frame->bottom = bottom;
 	frame_enter_block (frame, 0, bottom);
-	frame->global = global? frame->current->ns: FRAME_UPPER (frame)->global;
-	frame->is_global = global;
+	if (main_global != NULL) {
+		frame->global = main_global;
+	}
+	else {
+		frame->global = is_global? frame->current->ns: FRAME_UPPER (frame)->global;
+	}
+	frame->is_global = is_global;
 	frame->current->cmdline = cmdline;
 
 	return frame;
@@ -423,4 +428,10 @@ void
 frame_reset_esp (frame_t *frame)
 {
 	frame->esp = code_current_pos (frame->code) + 1;
+}
+
+dict_t *
+frame_get_global (frame_t *frame)
+{
+	return frame->global;
 }

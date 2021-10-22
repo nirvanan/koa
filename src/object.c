@@ -93,7 +93,7 @@ static object_opset_t g_dummy_ops =
 	NULL
 };
 
-static object_t g_dummy_object = 
+static __thread object_t g_dummy_object =
 {
 	{
 		GC_NULL, 
@@ -1344,6 +1344,8 @@ object_traverse (object_t *obj, traverse_f fun, void *udata)
 			}
 	}
 }
+
+
 
 object_t *
 object_copy (object_t *obj)

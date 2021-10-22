@@ -24,6 +24,7 @@
 #include "intobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "uint64object.h"
 #include "strobject.h"
@@ -365,7 +366,7 @@ intobject_new (int val, void *udata)
 	intobject_t *obj;
 
 	/* Return cached object. */
-	if (INT_HAS_CACHE (val) && g_int_cache[INT_CACHE_INDEX (val)] != NULL) {
+	if (thread_is_main_thread () && INT_HAS_CACHE (val) && g_int_cache[INT_CACHE_INDEX (val)] != NULL) {
 		return g_int_cache[INT_CACHE_INDEX (val)];
 	}
 
@@ -395,6 +396,10 @@ intobject_get_value (object_t *obj)
 void
 intobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make small int cache. */
 	for (int i = INT_CACHE_MIN; i <= INT_CACHE_MAX; i++) {
 		g_int_cache[INT_CACHE_INDEX (i)] = intobject_new (i, NULL);

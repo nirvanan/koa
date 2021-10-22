@@ -24,6 +24,7 @@
 #include "boolobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "str.h"
 #include "intobject.h"
 #include "uint64object.h"
@@ -192,11 +193,13 @@ boolobject_new (bool val, void *udata)
 {
 	boolobject_t *obj;
 
-	if (val && g_true_object != NULL) {
-		return g_true_object;
-	}
-	else if (!val && g_false_object != NULL) {
-		return g_false_object;
+	if (thread_is_main_thread ()) {
+		if (val && g_true_object != NULL) {
+			return g_true_object;
+		}
+		else if (!val && g_false_object != NULL) {
+			return g_false_object;
+		}
 	}
 
 	obj = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
@@ -225,6 +228,10 @@ boolobject_get_value (object_t *obj)
 void
 boolobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* This two objects should never be freed. */
 	g_true_object = boolobject_new (true, NULL);
 	if (g_true_object == NULL) {

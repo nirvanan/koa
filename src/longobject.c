@@ -24,6 +24,7 @@
 #include "longobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "intobject.h"
 #include "uint64object.h"
@@ -366,7 +367,7 @@ longobject_new (long val, void *udata)
 	longobject_t *obj;
 
 	/* Return cached object. */
-	if (LONG_HAS_CACHE (val) && g_long_cache[LONG_CACHE_INDEX (val)] != NULL) {
+	if (thread_is_main_thread () && LONG_HAS_CACHE (val) && g_long_cache[LONG_CACHE_INDEX (val)] != NULL) {
 		return g_long_cache[LONG_CACHE_INDEX (val)];
 	}
 
@@ -398,6 +399,10 @@ longobject_get_value (object_t *obj)
 void
 longobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make small int cache. */
 	for (long i = LONG_CACHE_MIN; i <= LONG_CACHE_MAX; i++) {
 		g_long_cache[LONG_CACHE_INDEX (i)] = longobject_new (i, NULL);

@@ -35,6 +35,12 @@ void
 thread_cancel (long tr);
 
 void
+thread_set_main_thread ();
+
+int
+thread_is_main_thread ();
+
+void
 thread_init ();
 
 #endif /* THREAD_H */

@@ -22,6 +22,7 @@
 #define INTERPRETER_H
 
 #include "koa.h"
+#include "dict.h"
 #include "frame.h"
 
 int
@@ -31,7 +32,7 @@ void
 interpreter_execute (const char *path);
 
 void
-interpreter_execute_thread (code_t *code, object_t *args, object_t **ret_value);
+interpreter_execute_thread (code_t *code, object_t *args, dict_t *main_global, object_t **ret_value);
 
 void
 interpreter_traceback ();
@@ -47,6 +48,9 @@ interpreter_set_exception (const char *exception);
 
 void
 interpreter_set_cmdline (frame_t *frame, code_t *code);
+
+dict_t *
+interpreter_get_main_global ();
 
 void
 interpreter_init ();

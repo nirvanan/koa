@@ -25,6 +25,7 @@
 #include "strobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
@@ -41,7 +42,7 @@
 
 static __thread hash_t *g_internal_hash;
 
-static __thread unsigned int g_internal_hash_seed;
+static unsigned int g_internal_hash_seed;
 
 static __thread str_t *g_dump_head;
 static __thread str_t *g_dump_tail;
@@ -93,7 +94,7 @@ void
 strobject_op_free (object_t *obj)
 {
 	/* If it's an interned str, delete it. */
-	if (str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH && HASED (obj)) {
+	if (thread_is_main_thread () && str_len (strobject_get_value (obj)) <= INTERNAL_STR_LENGTH && HASED (obj)) {
 		hash_fast_remove (g_internal_hash, HASH_HANDLE (obj));
 	}
 	str_free (strobject_get_value (obj));
@@ -372,7 +373,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 	}
 
 	/* If len is small, this object gonna be interned. */
-	if (len <= INTERNAL_STR_LENGTH && !no_hash) {
+	if (thread_is_main_thread () && len <= INTERNAL_STR_LENGTH && !no_hash) {
 		obj = (strobject_t *) hash_test (g_internal_hash, (void *) val,
 			strobject_murmur (val, len, g_internal_hash_seed));
 		if (obj != NULL) {
@@ -398,7 +399,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 	}
 
 	/* Add to internal hash. */
-	if (len <= INTERNAL_STR_LENGTH && !no_hash) {
+	if (thread_is_main_thread () && len <= INTERNAL_STR_LENGTH && !no_hash) {
 		void *hn;
 
 		hn = hash_add (g_internal_hash, (void *) obj);
@@ -527,15 +528,19 @@ strobject_copy (object_t *obj)
 void
 strobject_init ()
 {
-	g_internal_hash = hash_new (INTERNAL_HASH_SIZE,
-								strobject_hash_fun,
-								strobject_test_fun,
-								strobject_cleanup_fun);
-	if (g_internal_hash == NULL) {
-		fatal_error ("failed to init str internal hash.");
-	}
+	if (thread_is_main_thread ()) {
+		g_internal_hash = hash_new (INTERNAL_HASH_SIZE,
+									strobject_hash_fun,
+									strobject_test_fun,
+									strobject_cleanup_fun);
+		if (g_internal_hash == NULL) {
+			fatal_error ("failed to init str internal hash.");
+		}
 
-	g_internal_hash_seed = random () & ((~(unsigned int) 0));
+		if (g_internal_hash_seed == 0) {
+			g_internal_hash_seed = random () & ((~(unsigned int) 0));
+		}
+	}
 
 	/* Make dump head and tail. */
 	g_dump_head = str_new ("<str \"", DUMP_HEAD_LENGTH);

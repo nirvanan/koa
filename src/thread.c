@@ -52,10 +52,13 @@ typedef struct thread_context_s
 	object_t *args;
 	char *ret_binary;
 	size_t ret_len;
+	dict_t *main_global;
 	allocator_t *allocator;
 } thread_context_t;
 
 static __thread object_t *g_thread_context; /* Store all child thread context, long->uint64. */
+
+static __thread int g_is_main_thread;
 
 static void *
 thread_func (void *arg)
@@ -77,7 +80,7 @@ thread_func (void *arg)
 
 	g_thread_context = dictobject_new (NULL);
 
-	interpreter_execute_thread (context->code, context->args, &ret_value);
+	interpreter_execute_thread (context->code, context->args, context->main_global, &ret_value);
 
 	/* Dump the returned object to binary. */
 	ret_binary = NULL;
@@ -131,6 +134,7 @@ thread_create (code_t *code, object_t *args)
 	}
 
 	context->code = code;
+	context->main_global = interpreter_get_main_global ();
 	/* Make a new allocator, it is passed to the child thread. */
 	context->allocator = pool_make_new_allocator ();
 	if (context->allocator == NULL) {
@@ -194,6 +198,18 @@ void
 thread_cancel (long th)
 {
 	_thread_cancel (th);
+}
+
+void
+thread_set_main_thread ()
+{
+	g_is_main_thread = 1;
+}
+
+int
+thread_is_main_thread ()
+{
+	return g_is_main_thread;
 }
 
 void
