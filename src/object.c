@@ -97,6 +97,7 @@ static __thread object_t g_dummy_object =
 {
 	{
 		GC_NULL, 
+		0,
 		1,
 		OBJECT_TYPE_VOID,
 		0,
@@ -109,12 +110,18 @@ static __thread object_t g_dummy_object =
 void
 object_ref (object_t *obj)
 {
+	if (OBJECT_CONST (obj)) {
+		return;
+	}
 	obj->head.ref++;
 }
 
 void
 object_unref (object_t *obj)
 {
+	if (OBJECT_CONST (obj)) {
+		return;
+	}
 	obj->head.ref--;
 	if (obj->head.ref <= 0) {
 		object_free (obj);
@@ -124,7 +131,16 @@ object_unref (object_t *obj)
 void
 object_unref_without_free (object_t *obj)
 {
+	if (OBJECT_CONST (obj)) {
+		return;
+	}
 	obj->head.ref--;
+}
+
+void
+object_set_const (object_t *obj)
+{
+	OBJECT_CONST (obj) = 1;
 }
 
 integer_value_t
@@ -322,8 +338,8 @@ object_free (object_t *obj)
 {
 	void_una_op_f free_fun;
 
-	/* Refed objects should not be freed. */
-	if (OBJECT_REF (obj) > 0) {
+	/* Refed objects and consts should not be freed. */
+	if (OBJECT_REF (obj) > 0 || OBJECT_CONST (obj)) {
 		return;
 	}
 

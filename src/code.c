@@ -350,7 +350,7 @@ code_push_const (code_t *code, object_t *var, int *exist)
 
 	*exist = 0;
 
-	object_ref (var);
+	object_set_const (var);
 
 	/* Return the index of this new var. */
 	return vec_size (code->consts) - 1;

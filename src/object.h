@@ -101,6 +101,7 @@
 #define CAN_CAST(x, y) (CAST_TYPE((x))&&CAST_TYPE((y)))
 
 #define OBJECT_REF(x) ((x)->head.ref)
+#define OBJECT_CONST(x) ((x)->head.cnst)
 #define OBJECT_TYPE(x) ((x)->head.type)
 #define OBJECT_OPSET(x) ((object_opset_t *) ((x)->head.ops))
 #define OBJECT_OPSET_P(x) ((x)->head.ops)
@@ -110,6 +111,7 @@
 
 #define OBJECT_NEW_INIT(x, t, d) OBJECT_REF((x))=0;\
 	OBJECT_TYPE((x))=t;\
+	OBJECT_CONST((x))=0;\
 	OBJECT_OPSET_P((x))=(void*)&g_object_ops;\
 	OBJECT_DIGEST ((x))=0;\
 	OBJECT_UDATA ((x))=d;\
@@ -160,6 +162,8 @@
 #define OBJECT_IS_STRUCT(x) (OBJECT_TYPE((x))>=OBJECT_TYPE_STRUCT&&OBJECT_TYPE((x))<OBJECT_TYPE_UNION)
 #define OBJECT_IS_UNION(x) (OBJECT_TYPE((x))>=OBJECT_TYPE_UNION)
 
+#define OBJECT_IS_CONST(x) (OBJECT_CONST(x)>0)
+
 typedef enum object_type_e
 {
 	OBJECT_TYPE_ALL = -0x02,
@@ -199,6 +203,7 @@ typedef struct object_head_s
 {
 	gc_head_t gc;
 	int ref;
+	int cnst;
 	object_type_t type;
 	uint64_t digest;
 	digest_f digest_fun;
@@ -259,6 +264,9 @@ object_unref (object_t *obj);
 
 void
 object_unref_without_free (object_t *obj);
+
+void
+object_set_const (object_t *obj);
 
 integer_value_t
 object_get_integer (object_t *obj);
