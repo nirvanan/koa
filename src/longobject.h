@@ -34,6 +34,9 @@ object_t *
 longobject_load_binary (FILE *f);
 
 object_t *
+longobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 longobject_new (long val, void *udata);
 
 long

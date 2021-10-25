@@ -36,6 +36,9 @@ object_t *
 structobject_load_binary (object_type_t type, FILE *f);
 
 object_t *
+structobject_load_buf (object_type_t type, const char **buf, size_t *len);
+
+object_t *
 structobject_new (code_t *code, object_type_t type, void *udata);
 
 void

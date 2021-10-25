@@ -35,6 +35,9 @@ object_t *
 dictobject_load_binary (FILE *f);
 
 object_t *
+dictobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 dictobject_new (void *udata);
 
 object_t *

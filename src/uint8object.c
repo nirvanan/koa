@@ -343,6 +343,24 @@ uint8object_load_binary (FILE *f)
 	return uint8object_new (val, NULL);
 }
 
+object_t *
+uint8object_load_buf (const char **buf, size_t *len)
+{
+	uint8_t val;
+
+	if (*len < sizeof (uint8_t)) {
+		error ("failed to load uint8 buffer.");
+
+		return NULL;
+	}
+
+	val = *(uint8_t *) *buf;
+	*buf += sizeof (uint8_t);
+	*len -= sizeof (uint8_t);
+
+	return uint8object_new (val, NULL);
+}
+
 static uint64_t
 uint8object_digest_fun (void *obj)
 {

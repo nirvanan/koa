@@ -343,6 +343,24 @@ uint32object_load_binary (FILE *f)
 	return uint32object_new (val, NULL);
 }
 
+object_t *
+uint32object_load_buf (const char **buf, size_t *len)
+{
+	uint32_t val;
+
+	if (*len < sizeof (uint32_t)) {
+		error ("failed to load uint32 buffer.");
+
+		return NULL;
+	}
+
+	val = *(uint32_t *) *buf;
+	*buf += sizeof (uint32_t);
+	*len -= sizeof (uint32_t);
+
+	return uint32object_new (val, NULL);
+}
+
 static uint64_t
 uint32object_digest_fun (void *obj)
 {

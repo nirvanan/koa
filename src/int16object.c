@@ -343,6 +343,24 @@ int16object_load_binary (FILE *f)
 	return int16object_new (val, NULL);
 }
 
+object_t *
+int16object_load_buf (const char **buf, size_t *len)
+{
+	int16_t val;
+
+	if (*len < sizeof (int16_t)) {
+		error ("failed to load int16 buffer.");
+
+		return NULL;
+	}
+
+	val = *(int16_t *) *buf;
+	*buf += sizeof (int16_t);
+	*len -= sizeof (int16_t);
+
+	return int16object_new (val, NULL);
+}
+
 static uint64_t
 int16object_digest_fun (void *obj)
 {

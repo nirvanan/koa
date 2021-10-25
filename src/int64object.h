@@ -34,6 +34,9 @@ object_t *
 int64object_load_binary (FILE *f);
 
 object_t *
+int64object_load_buf (const char **buf, size_t *len);
+
+object_t *
 int64object_new (int64_t val, void *udata);
 
 int64_t

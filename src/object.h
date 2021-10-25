@@ -362,6 +362,9 @@ object_get_default (object_type_t type, void *udata);
 object_t *
 object_load_binary (FILE *f);
 
+object_t *
+object_load_buf (const char **buf, size_t *len);
+
 void
 object_print (object_t *obj);
 

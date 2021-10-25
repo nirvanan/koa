@@ -34,6 +34,9 @@ object_t *
 floatobject_load_binary (FILE *f);
 
 object_t *
+floatobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 floatobject_new (float val, void *udata);
 
 float

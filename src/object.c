@@ -1289,6 +1289,77 @@ object_load_binary (FILE *f)
 	return NULL;
 }
 
+object_t *
+object_load_buf (const char **buf, size_t *len)
+{
+	object_type_t type;
+
+	if (*len < sizeof (object_type_t)) {
+		error ("failed to load object type while loading buffer.");
+
+		return NULL;
+	}
+
+	type = *(object_type_t *) *buf;
+	*buf += sizeof (object_type_t);
+	*len -= sizeof (object_type_t);
+
+	switch (type) {
+		case OBJECT_TYPE_VOID:
+			return &g_dummy_object;
+		case OBJECT_TYPE_NULL:
+			return nullobject_load_buf (buf, len);
+		case OBJECT_TYPE_BOOL:
+			return boolobject_load_buf (buf, len);
+		case OBJECT_TYPE_CHAR:
+			return charobject_load_buf (buf, len);
+		case OBJECT_TYPE_INT:
+			return intobject_load_buf (buf, len);
+		case OBJECT_TYPE_LONG:
+			return longobject_load_buf (buf, len);
+		case OBJECT_TYPE_INT8:
+			return int8object_load_buf (buf, len);
+		case OBJECT_TYPE_UINT8:
+			return uint8object_load_buf (buf, len);
+		case OBJECT_TYPE_INT16:
+			return int16object_load_buf (buf, len);
+		case OBJECT_TYPE_UINT16:
+			return uint16object_load_buf (buf, len);
+		case OBJECT_TYPE_INT32:
+			return int32object_load_buf (buf, len);
+		case OBJECT_TYPE_UINT32:
+			return uint32object_load_buf (buf, len);
+		case OBJECT_TYPE_INT64:
+			return int64object_load_buf (buf, len);
+		case OBJECT_TYPE_UINT64:
+			return uint64object_load_buf (buf, len);
+		case OBJECT_TYPE_FLOAT:
+			return floatobject_load_buf (buf, len);
+		case OBJECT_TYPE_DOUBLE:
+			return doubleobject_load_buf (buf, len);
+		case OBJECT_TYPE_STR:
+			return strobject_load_buf (buf, len);
+		case OBJECT_TYPE_VEC:
+			return vecobject_load_buf (buf, len);
+		case OBJECT_TYPE_DICT:
+			return dictobject_load_buf (buf, len);
+		case OBJECT_TYPE_FUNC:
+			return NULL;
+		case OBJECT_TYPE_MOD:
+			return NULL;
+		default:
+			if (COMPOUND_IS_STRUCT (type)) {
+				return structobject_load_buf (type, buf, len);
+			}
+			else if (COMPOUND_IS_UNION (type)) {
+				return unionobject_load_buf (type, buf, len);
+			}
+			break;
+	}
+
+	return NULL;
+}
+
 void
 object_print (object_t *obj)
 {

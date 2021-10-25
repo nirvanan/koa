@@ -182,6 +182,24 @@ boolobject_load_binary (FILE *f)
 	return boolobject_new (val, NULL);
 }
 
+object_t *
+boolobject_load_buf (const char **buf, size_t *len)
+{
+	bool val;
+
+	if (*len < sizeof (bool)) {
+		error ("failed to load bool buffer.");
+
+		return NULL;
+	}
+
+	val = *(bool *) *buf;
+	*buf += sizeof (bool);
+	*len -= sizeof (bool);
+
+	return boolobject_new (val, NULL);
+}
+
 static uint64_t
 boolobject_digest_fun (void *obj)
 {

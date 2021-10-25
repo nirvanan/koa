@@ -34,6 +34,9 @@ object_t *
 uint8object_load_binary (FILE *f);
 
 object_t *
+uint8object_load_buf (const char **buf, size_t *len);
+
+object_t *
 uint8object_new (uint8_t val, void *udata);
 
 uint8_t

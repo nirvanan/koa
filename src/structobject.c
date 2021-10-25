@@ -236,7 +236,7 @@ structobject_load_binary (object_type_t type, FILE *f)
 	structobject_t *struct_obj;
 
 	if (fread (&size, sizeof (size_t), 1, f) != 1) {
-		error ("failed to load size while load vec.");
+		error ("failed to load size while load struct.");
 
 		return NULL;
 	}
@@ -250,6 +250,60 @@ structobject_load_binary (object_type_t type, FILE *f)
 		object_t *obj;
 
 		obj = object_load_binary (f);
+		if (obj == NULL) {
+			for (integer_value_t j = 0; j < (integer_value_t) i; j++) {
+				object_free ((object_t *) vec_pos (members, j));
+			}
+			vec_free (members);
+
+			return NULL;
+		}
+
+		UNUSED (vec_set (members, i, (void *) obj));
+		object_ref (obj);
+	}
+
+	struct_obj = (structobject_t *) pool_alloc (sizeof (structobject_t));
+	if (struct_obj == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	OBJECT_NEW_INIT (struct_obj, type, NULL);
+	OBJECT_DIGEST_FUN (struct_obj) = structobject_digest_fun;
+
+	struct_obj->members = members;
+
+	gc_track ((void *) struct_obj);
+
+	return (object_t *) struct_obj;
+}
+
+object_t *
+structobject_load_buf (object_type_t type, const char **buf, size_t *len)
+{
+	size_t size;
+	vec_t *members;
+	structobject_t *struct_obj;
+
+	if (*len < sizeof (size_t)) {
+		error ("failed to load size while load struct.");
+
+		return NULL;
+	}
+
+	size = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	members = vec_new (size);
+	if (members == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *obj;
+
+		obj = object_load_buf (buf, len);
 		if (obj == NULL) {
 			for (integer_value_t j = 0; j < (integer_value_t) i; j++) {
 				object_free ((object_t *) vec_pos (members, j));

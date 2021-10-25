@@ -247,6 +247,24 @@ doubleobject_load_binary (FILE *f)
 	return doubleobject_new (val, NULL);
 }
 
+object_t *
+doubleobject_load_buf (const char **buf, size_t *len)
+{
+	double val;
+
+	if (*len < sizeof (double)) {
+		error ("failed to load double buffer.");
+
+		return NULL;
+	}
+
+	val = *(double *) *buf;
+	*buf += sizeof (double);
+	*len -= sizeof (double);
+
+	return doubleobject_new (val, NULL);
+}
+
 static uint64_t
 doubleobject_digest_fun (void *obj)
 {

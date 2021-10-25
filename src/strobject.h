@@ -38,6 +38,9 @@ object_t *
 strobject_load_binary (FILE *f);
 
 object_t *
+strobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 strobject_new (const char *val, size_t len, int no_hash, void *udata);
 
 object_t *

@@ -479,6 +479,61 @@ dictobject_load_binary (FILE *f)
 	return dictobject_dict_new (dict, NULL);
 }
 
+object_t *
+dictobject_load_buf (const char **buf, size_t *len)
+{
+	size_t size;
+	dict_t *dict;
+
+	if (*len < sizeof (size_t)) {
+		error ("failed to load size while load dict.");
+
+		return NULL;
+	}
+
+	size = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	dict = dict_new (dictobject_hash_fun, dictobject_test_fun);
+	if (dict == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *key;
+		object_t *value;
+
+		key = object_load_buf (buf, len);
+		if (key == NULL) {
+			dict_free (dict);
+
+			return NULL;
+		}
+		value = object_load_buf (buf, len);
+		if (value == NULL) {
+			dict_free (dict);
+			object_free (key);
+
+			return NULL;
+		}
+
+
+		if (dict_set (dict, (void *) key, (void *) value) == NULL) {
+			dict_free (dict);
+			object_free (key);
+			object_free (value);
+
+			return NULL;
+		}
+
+		object_ref (key);
+		object_ref (value);
+	}
+
+	return dictobject_dict_new (dict, NULL);
+}
+
 static uint64_t
 dictobject_digest_fun (void *obj)
 {

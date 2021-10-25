@@ -192,6 +192,24 @@ charobject_load_binary (FILE *f)
 	return charobject_new (val, NULL);
 }
 
+object_t *
+charobject_load_buf (const char **buf, size_t *len)
+{
+	char val;
+
+	if (*len < sizeof (char)) {
+		error ("failed to load char buffer.");
+
+		return NULL;
+	}
+
+	val = *(char *) *buf;
+	*buf += sizeof (char);
+	*len -= sizeof (char);
+
+	return charobject_new (val, NULL);
+}
+
 static uint64_t
 charobject_digest_fun (void *obj)
 {

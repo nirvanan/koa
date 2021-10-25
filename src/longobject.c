@@ -355,6 +355,24 @@ longobject_load_binary (FILE *f)
 	return longobject_new (val, NULL);
 }
 
+object_t *
+longobject_load_buf (const char **buf, size_t *len)
+{
+	long val;
+
+	if (*len < sizeof (long)) {
+		error ("failed to load long buffer.");
+
+		return NULL;
+	}
+
+	val = *(long *) *buf;
+	*buf += sizeof (long);
+	*len -= sizeof (long);
+
+	return longobject_new (val, NULL);
+}
+
 static uint64_t
 longobject_digest_fun (void *obj)
 {

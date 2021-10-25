@@ -352,6 +352,47 @@ vecobject_load_binary (FILE *f)
 	return vecobject_vec_new (vec, NULL);
 }
 
+object_t *
+vecobject_load_buf (const char **buf, size_t *len)
+{
+	size_t size;
+	vec_t *vec;
+
+	if (*len < sizeof (size_t)) {
+		error ("failed to load size while load vec.");
+
+		return NULL;
+	}
+
+	size = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	vec = vec_new (size);
+	if (vec == NULL) {
+		return NULL;
+	}
+
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		object_t *obj;
+
+		obj = object_load_buf (buf, len);
+		if (obj == NULL) {
+			for (integer_value_t j = 0; j < (integer_value_t) i; j++) {
+				object_free ((object_t *) vec_pos (vec, j));
+			}
+			vec_free (vec);
+
+			return NULL;
+		}
+
+		UNUSED (vec_set (vec, i, (void *) obj));
+		object_ref (obj);
+	}
+
+	return vecobject_vec_new (vec, NULL);
+}
+
 static int
 vecobject_empty_init (vecobject_t *obj)
 {

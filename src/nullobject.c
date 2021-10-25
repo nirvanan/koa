@@ -119,6 +119,12 @@ nullobject_load_binary (FILE *f)
 	return nullobject_new (NULL);
 }
 
+object_t *
+nullobject_load_buf (const char **buf, size_t *len)
+{
+	return nullobject_new (NULL);
+}
+
 static uint64_t
 nullobject_digest_fun (void *obj)
 {

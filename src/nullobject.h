@@ -33,6 +33,9 @@ object_t *
 nullobject_load_binary (FILE *f);
 
 object_t *
+nullobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 nullobject_new (void *udata);
 
 void

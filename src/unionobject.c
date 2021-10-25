@@ -217,6 +217,39 @@ unionobject_load_binary (object_type_t type, FILE *f)
 }
 
 object_t *
+unionobject_load_buf (object_type_t type, const char **buf, size_t *len)
+{
+	unionobject_t *union_obj;
+	object_t *value_obj;
+
+	value_obj = object_load_buf (buf, len);
+	if (value_obj == NULL) {
+		return NULL;
+	}
+
+	union_obj = (unionobject_t *) pool_alloc (sizeof (unionobject_t));
+	if (union_obj == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	OBJECT_NEW_INIT (union_obj, type, NULL);
+	OBJECT_DIGEST_FUN (union_obj) = unionobject_digest_fun;
+
+	if (OBJECT_IS_DUMMY (value_obj)) {
+		object_free (value_obj);
+		union_obj->value = NULL;
+	}
+	else {
+		union_obj->value = value_obj;
+		object_ref (value_obj);
+	}
+
+	gc_track ((void *) union_obj);
+
+	return (object_t *) union_obj;
+}
+
+object_t *
 unionobject_new (code_t *code, object_type_t type, void *udata)
 {
 	unionobject_t *obj;

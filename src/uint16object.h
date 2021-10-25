@@ -34,6 +34,9 @@ object_t *
 uint16object_load_binary (FILE *f);
 
 object_t *
+uint16object_load_buf (const char **buf, size_t *len);
+
+object_t *
 uint16object_new (uint16_t val, void *udata);
 
 uint16_t

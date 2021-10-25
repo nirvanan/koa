@@ -352,6 +352,38 @@ strobject_load_binary (FILE *f)
 	return obj;
 }
 
+object_t *
+strobject_load_buf (const char **buf, size_t *len)
+{
+	size_t str_length;
+	char *data;
+	object_t *obj;
+
+	if (*len < sizeof (size_t)) {
+		error ("failed to load size while loading str.");
+
+		return NULL;
+	}
+
+	str_length = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	data = pool_calloc (str_length + 1, sizeof (char));
+	if (data == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	memcpy ((void *) data, (void *) *buf, str_length);
+	*buf += str_length;
+	*len -= str_length;
+
+	obj = strobject_new ((const char *) data, str_length, 1, NULL);
+	pool_free (data);
+
+	return obj;
+}
+
 static uint64_t
 strobject_digest_fun (void *obj)
 {

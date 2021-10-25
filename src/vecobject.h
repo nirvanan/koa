@@ -35,6 +35,9 @@ object_t *
 vecobject_load_binary (FILE *f);
 
 object_t *
+vecobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 vecobject_new (size_t len, void *udata);
 
 object_t *

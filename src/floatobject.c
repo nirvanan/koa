@@ -247,6 +247,24 @@ floatobject_load_binary (FILE *f)
 	return floatobject_new (val, NULL);
 }
 
+object_t *
+floatobject_load_buf (const char **buf, size_t *len)
+{
+	float val;
+
+	if (*len < sizeof (float)) {
+		error ("failed to load float buffer.");
+
+		return NULL;
+	}
+
+	val = *(float *) *buf;
+	*buf += sizeof (float);
+	*len -= sizeof (float);
+
+	return floatobject_new (val, NULL);
+}
+
 static uint64_t
 floatobject_digest_fun (void *obj)
 {

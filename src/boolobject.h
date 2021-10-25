@@ -36,6 +36,9 @@ object_t *
 boolobject_load_binary (FILE *f);
 
 object_t *
+boolobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 boolobject_new (bool val, void *udata);
 
 bool
