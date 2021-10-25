@@ -25,6 +25,7 @@
 #include "pool.h"
 #include "gc.h"
 #include "error.h"
+#include "thread.h"
 #include "compound.h"
 #include "nullobject.h"
 #include "boolobject.h"
@@ -417,17 +418,24 @@ unionobject_copy (object_t *obj)
 void
 unionobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make dump objects. */
 	g_dump_head = strobject_new ("<union <", strlen ("<union <"), 1, NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init union dump head.");
 	}
+	object_set_const (g_dump_head);
 	g_dump_tail = strobject_new (">>", strlen (">>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init union dump tail.");
 	}
+	object_set_const (g_dump_tail);
 	g_dump_unset = strobject_new ("unset", strlen ("unset"), 1, NULL);
 	if (g_dump_unset == NULL) {
 		fatal_error ("failed to init union dump unset tag.");
 	}
+	object_set_const (g_dump_unset);
 }

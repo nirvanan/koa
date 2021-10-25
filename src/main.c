@@ -40,6 +40,7 @@
 
 void koa_init ()
 {
+	thread_set_main_thread ();
 	/* Init gc. */
 	gc_init ();
 	/* Init pool utility. */

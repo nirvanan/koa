@@ -41,7 +41,7 @@
 #define LONG_CACHE_INDEX(x) ((size_t)((x)-LONG_CACHE_MIN))
 
 /* Small long should be cached. */
-static __thread object_t *g_long_cache[LONG_CACHE_SIZE];
+static object_t *g_long_cache[LONG_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *longobject_op_lnot (object_t *obj);
@@ -385,7 +385,7 @@ longobject_new (long val, void *udata)
 	longobject_t *obj;
 
 	/* Return cached object. */
-	if (thread_is_main_thread () && LONG_HAS_CACHE (val) && g_long_cache[LONG_CACHE_INDEX (val)] != NULL) {
+	if (LONG_HAS_CACHE (val) && g_long_cache[LONG_CACHE_INDEX (val)] != NULL) {
 		return g_long_cache[LONG_CACHE_INDEX (val)];
 	}
 
@@ -431,6 +431,6 @@ longobject_init ()
 		}
 
 		/* Should never be freed. */
-		object_ref (g_long_cache[LONG_CACHE_INDEX (i)]);
+		object_set_const (g_long_cache[LONG_CACHE_INDEX (i)]);
 	}
 }

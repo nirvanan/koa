@@ -23,14 +23,15 @@
 #include "pool.h"
 #include "gc.h"
 #include "error.h"
+#include "thread.h"
 #include "nullobject.h"
 #include "boolobject.h"
 #include "uint64object.h"
 #include "strobject.h"
 
-static __thread object_t *g_dump_head;
-static __thread object_t *g_dump_tail;
-static __thread object_t *g_dump_sep;
+static object_t *g_dump_head;
+static object_t *g_dump_tail;
+static object_t *g_dump_sep;
 
 /* Object ops. */
 static void vecobject_op_free (object_t *obj);
@@ -567,20 +568,24 @@ vecobject_copy (object_t *obj)
 void
 vecobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make dump objects. */
 	g_dump_head = strobject_new ("<vec [", strlen ("<vec ["), 1, NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init vec dump head.");
 	}
-	object_ref (g_dump_head);
+	object_set_const (g_dump_head);
 	g_dump_tail = strobject_new ("]>", strlen ("]>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init vec dump tail.");
 	}
-	object_ref (g_dump_tail);
+	object_set_const (g_dump_tail);
 	g_dump_sep = strobject_new (", ", strlen (", "), 1, NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init vec dump sep.");
 	}
-	object_ref (g_dump_sep);
+	object_set_const (g_dump_sep);
 }

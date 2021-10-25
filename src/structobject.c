@@ -25,15 +25,16 @@
 #include "pool.h"
 #include "gc.h"
 #include "error.h"
+#include "thread.h"
 #include "compound.h"
 #include "nullobject.h"
 #include "boolobject.h"
 #include "uint64object.h"
 #include "strobject.h"
 
-static __thread object_t *g_dump_head;
-static __thread object_t *g_dump_tail;
-static __thread object_t *g_dump_sep;
+static object_t *g_dump_head;
+static object_t *g_dump_tail;
+static object_t *g_dump_sep;
 
 /* Object ops. */
 static void structobject_op_free (object_t *obj);
@@ -520,17 +521,24 @@ structobject_copy (object_t *obj)
 void
 structobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make dump objects. */
 	g_dump_head = strobject_new ("<struct {", strlen ("<struct {"), 1, NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init struct dump head.");
 	}
+	object_set_const (g_dump_head);
 	g_dump_tail = strobject_new ("}>", strlen ("}>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init struct dump tail.");
 	}
+	object_set_const (g_dump_tail);
 	g_dump_sep = strobject_new (", ", strlen (", "), 1, NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init struct dump sep.");
 	}
+	object_set_const (g_dump_sep);
 }

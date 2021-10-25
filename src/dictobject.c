@@ -25,15 +25,16 @@
 #include "hash.h"
 #include "gc.h"
 #include "error.h"
+#include "thread.h"
 #include "nullobject.h"
 #include "boolobject.h"
 #include "uint64object.h"
 #include "strobject.h"
 
-static __thread object_t *g_dump_head;
-static __thread object_t *g_dump_tail;
-static __thread object_t *g_dump_sep;
-static __thread object_t *g_dump_map;
+static object_t *g_dump_head;
+static object_t *g_dump_tail;
+static object_t *g_dump_sep;
+static object_t *g_dump_map;
 
 /* Object ops. */
 static void dictobject_op_free (object_t *obj);
@@ -710,15 +711,21 @@ dictobject_copy (object_t *obj)
 void
 dictobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make dump objects. */
 	g_dump_head = strobject_new ("<dict {", strlen ("<dict {"), 1, NULL);
 	if (g_dump_head == NULL) {
 		fatal_error ("failed to init dict dump head.");
 	}
+	object_set_const (g_dump_head);
 	g_dump_tail = strobject_new ("}>", strlen ("}>"), 1, NULL);
 	if (g_dump_tail == NULL) {
 		fatal_error ("failed to init dict dump tail.");
 	}
+	object_set_const (g_dump_tail);
 	g_dump_sep = strobject_new (", ", strlen (", "), 1, NULL);
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init dict dump sep.");
@@ -727,4 +734,5 @@ dictobject_init ()
 	if (g_dump_map == NULL) {
 		fatal_error ("failed to init dict dump map.");
 	}
+	object_set_const (g_dump_map);
 }

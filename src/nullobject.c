@@ -30,7 +30,7 @@
 #include "strobject.h"
 
 /* Note that the 'null' object is shared everywhere. */
-static __thread object_t *g_null_object;
+static object_t *g_null_object;
 
 /* Object ops. */
 static void nullobject_op_print (object_t *obj);
@@ -137,7 +137,7 @@ nullobject_new (void *udata)
 {
 	nullobject_t *obj;
 
-	if (thread_is_main_thread () && g_null_object != NULL) {
+	if (g_null_object != NULL) {
 		return g_null_object;
 	}
 
@@ -167,7 +167,7 @@ nullobject_init ()
 		return;
 	}
 
-	object_ref (g_null_object);
+	object_set_const (g_null_object);
 
 	OBJECT_DIGEST (g_null_object) = 0;
 }

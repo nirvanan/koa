@@ -60,6 +60,8 @@ static __thread object_t *g_thread_context; /* Store all child thread context, l
 
 static __thread int g_is_main_thread;
 
+static int g_thread_init_done;
+
 static void *
 thread_func (void *arg)
 {
@@ -73,8 +75,6 @@ thread_func (void *arg)
 
 	/* Init gc. */
 	gc_init ();
-	/* Init object caches. */
-	object_init ();
 	/* Init builtin. */
 	builtin_init ();
 
@@ -216,5 +216,8 @@ void
 thread_init ()
 {
 	g_thread_context = dictobject_new (NULL);
-	_thread_init ();
+	if (!g_thread_init_done) {
+		_thread_init ();
+		g_thread_init_done = 1;
+	}
 }

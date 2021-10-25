@@ -1711,7 +1711,6 @@ interpreter_execute (const char *path)
 
 	g_global = code;
 	g_runtime_started = 1;
-	thread_set_main_thread ();
 	UNUSED (interpreter_play (code, 1, NULL));
 
 	while (g_current) {

@@ -1473,4 +1473,5 @@ object_init ()
 	dictobject_init ();
 	exceptionobject_init ();
 	structobject_init ();
+	unionobject_init ();
 }

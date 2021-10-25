@@ -31,8 +31,8 @@
 #include "strobject.h"
 
 /* Note that the 'true' and 'false' objects are shared everywhere. */
-static __thread object_t *g_true_object;
-static __thread object_t *g_false_object;
+static object_t *g_true_object;
+static object_t *g_false_object;
 
 /* Object ops. */
 static object_t *boolobject_op_lnot (object_t *obj);
@@ -211,13 +211,11 @@ boolobject_new (bool val, void *udata)
 {
 	boolobject_t *obj;
 
-	if (thread_is_main_thread ()) {
-		if (val && g_true_object != NULL) {
-			return g_true_object;
-		}
-		else if (!val && g_false_object != NULL) {
-			return g_false_object;
-		}
+	if (val && g_true_object != NULL) {
+		return g_true_object;
+	}
+	else if (!val && g_false_object != NULL) {
+		return g_false_object;
 	}
 
 	obj = (boolobject_t *) pool_alloc (sizeof (boolobject_t));
@@ -258,7 +256,7 @@ boolobject_init ()
 		return;
 	}
 
-	object_ref (g_true_object);
+	object_set_const (g_true_object);
 
 	g_false_object = boolobject_new (false, NULL);
 	if (g_false_object == NULL) {
@@ -267,5 +265,5 @@ boolobject_init ()
 		return;
 	}
 
-	object_ref (g_false_object);
+	object_set_const (g_false_object);
 }

@@ -40,7 +40,7 @@
 #define INT_CACHE_INDEX(x) ((size_t)((x)-INT_CACHE_MIN))
 
 /* Small ints should be cached. */
-static __thread object_t *g_int_cache[INT_CACHE_SIZE];
+static object_t *g_int_cache[INT_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *intobject_op_lnot (object_t *obj);
@@ -384,7 +384,7 @@ intobject_new (int val, void *udata)
 	intobject_t *obj;
 
 	/* Return cached object. */
-	if (thread_is_main_thread () && INT_HAS_CACHE (val) && g_int_cache[INT_CACHE_INDEX (val)] != NULL) {
+	if (INT_HAS_CACHE (val) && g_int_cache[INT_CACHE_INDEX (val)] != NULL) {
 		return g_int_cache[INT_CACHE_INDEX (val)];
 	}
 
@@ -428,6 +428,6 @@ intobject_init ()
 		}
 
 		/* Should never be freed. */
-		object_ref (g_int_cache[INT_CACHE_INDEX (i)]);
+		object_set_const (g_int_cache[INT_CACHE_INDEX (i)]);
 	}
 }

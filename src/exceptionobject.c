@@ -25,6 +25,7 @@
 #include "exceptionobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "charobject.h"
 #include "intobject.h"
@@ -33,8 +34,8 @@
 #define DUMP_HEAD_LENGTH 12
 #define DUMP_TAIL_LENGTH 2
 
-static __thread str_t *g_dump_head;
-static __thread str_t *g_dump_tail;
+static str_t *g_dump_head;
+static str_t *g_dump_tail;
 
 /* Object ops. */
 static void exceptionobject_op_free (object_t *obj);
@@ -251,6 +252,10 @@ exceptionobject_c_str (object_t *obj)
 void
 exceptionobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make dump head and tail. */
 	g_dump_head = str_new ("<exception \"", DUMP_HEAD_LENGTH);
 	if (g_dump_head == NULL) {

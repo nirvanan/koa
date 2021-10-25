@@ -44,8 +44,8 @@ static __thread hash_t *g_internal_hash;
 
 static unsigned int g_internal_hash_seed;
 
-static __thread str_t *g_dump_head;
-static __thread str_t *g_dump_tail;
+static str_t *g_dump_head;
+static str_t *g_dump_tail;
 
 /* Object ops. */
 static void strobject_op_free (object_t *obj);
@@ -560,18 +560,20 @@ strobject_copy (object_t *obj)
 void
 strobject_init ()
 {
-	if (thread_is_main_thread ()) {
-		g_internal_hash = hash_new (INTERNAL_HASH_SIZE,
-									strobject_hash_fun,
-									strobject_test_fun,
-									strobject_cleanup_fun);
-		if (g_internal_hash == NULL) {
-			fatal_error ("failed to init str internal hash.");
-		}
+	if (!thread_is_main_thread ()) {
+		return;
+	}
 
-		if (g_internal_hash_seed == 0) {
-			g_internal_hash_seed = random () & ((~(unsigned int) 0));
-		}
+	g_internal_hash = hash_new (INTERNAL_HASH_SIZE,
+								strobject_hash_fun,
+								strobject_test_fun,
+								strobject_cleanup_fun);
+	if (g_internal_hash == NULL) {
+		fatal_error ("failed to init str internal hash.");
+	}
+
+	if (g_internal_hash_seed == 0) {
+		g_internal_hash_seed = random () & ((~(unsigned int) 0));
 	}
 
 	/* Make dump head and tail. */
