@@ -184,14 +184,25 @@ thread_join (long th)
 {
 	object_t *th_obj;
 	object_t *context_obj;
+	object_t *return_obj;
 	thread_context_t *context;
 
 	/* Wait for child thread to exit. */
+	_thread_join (th);
 	th_obj = longobject_new (th, NULL);
 	context_obj = object_index (g_thread_context, th_obj);
 	context = (thread_context_t *) uint64object_get_value (context_obj);
 
-	return context->args;
+	if (context->ret_binary != NULL) {
+		return_obj = object_load_buf ((const char **) &context->ret_binary, &context->ret_len);
+		free ((void *) context->ret_binary);
+	}
+	UNUSED (dictobject_remove (g_thread_context, th_obj));
+	pool_free ((void *) context);
+	object_free (th_obj);
+	object_free (context_obj);
+
+	return return_obj;
 }
 
 void

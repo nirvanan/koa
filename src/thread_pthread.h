@@ -40,6 +40,12 @@ _thread_create (void *(*func)(void *), void *arg)
 }
 
 static void
+_thread_join (long th)
+{
+	UNUSED (pthread_join ((pthread_t) th, NULL));
+}
+
+static void
 _thread_cancel (long th)
 {
     UNUSED (pthread_cancel ((pthread_t) th));

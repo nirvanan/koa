@@ -227,6 +227,43 @@ _builtin_thread_create (object_t *args)
 	return longobject_new (th, NULL);
 }
 
+static object_t *
+_builtin_thread_join (object_t *args)
+{
+	object_t *arg;
+	object_t *ret_obj;
+
+	arg = ARG (args, 0);
+	arg = object_cast (ARG (args, 0), OBJECT_TYPE_LONG);
+	if (arg == NULL) {
+		return NULL;
+	}
+
+	ret_obj = thread_join (longobject_get_value (arg));
+	
+	object_free (arg);
+	
+	return ret_obj;
+}
+
+static object_t *
+_builtin_thread_cancel (object_t *args)
+{
+	object_t *arg;
+
+	arg = ARG (args, 0);
+	arg = object_cast (ARG (args, 0), OBJECT_TYPE_LONG);
+	if (arg == NULL) {
+		return NULL;
+	}
+
+	thread_cancel (longobject_get_value (arg));
+	
+	object_free (arg);
+	
+	return DUMMY;
+}
+
 typedef struct builtin_slot_s
 {
 	int id;
@@ -247,6 +284,8 @@ static builtin_slot_t g_builtin_slot_list[] =
 	{6, "copy", _builtin_copy, 0, 1, {OBJECT_TYPE_ALL}},
 	{7, "exit", _builtin_exit, 0, 1, {OBJECT_TYPE_ALL}},
 	{8, "thread_create", _builtin_thread_create, 1, 0, {}},
+	{9, "thread_join", _builtin_thread_join, 0, 1, {OBJECT_TYPE_ALL}},
+	{10, "thread_cancel", _builtin_thread_cancel, 0, 1, {OBJECT_TYPE_ALL}},
 	{0, NULL, NULL, 0, 0, {}}
 };
 
