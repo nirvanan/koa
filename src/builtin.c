@@ -24,6 +24,7 @@
 #include "builtin.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "vec.h"
 #include "longobject.h"
 #include "vecobject.h"
@@ -39,7 +40,7 @@
 #define ARG_SIZE(x) (vec_size(vecobject_get_value((x))))
 #define DUMMY (object_get_default(OBJECT_TYPE_VOID,NULL))
 
-static __thread object_t *g_builtin;
+static object_t *g_builtin;
 
 static object_t *
 _builtin_print (object_t *args)
@@ -425,6 +426,10 @@ builtin_init ()
 {
 	builtin_slot_t *slot;
 
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Insert all slots. */
 	g_builtin = dictobject_new (NULL);
 	if (g_builtin == NULL) {
@@ -449,10 +454,11 @@ builtin_init ()
 		if (suc == NULL) {
 			fatal_error ("failed to generate the reserved word dict.");
 		}
+		object_set_const (func);
 
 		slot++;
 	}
 	
-	object_ref (g_builtin);
+	object_set_const (g_builtin);
 	gc_untrack (g_builtin);
 }

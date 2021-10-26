@@ -26,6 +26,7 @@
 #include "charobject.h"
 #include "pool.h"
 #include "error.h"
+#include "thread.h"
 #include "boolobject.h"
 #include "intobject.h"
 #include "uint64object.h"
@@ -42,7 +43,7 @@
 #define CHAR_CACHE_INDEX(x) ((size_t)((x)-CHAR_CACHE_MIN))
 
 /* Char objects are all cached. */
-static __thread object_t *g_char_cache[CHAR_CACHE_SIZE];
+static object_t *g_char_cache[CHAR_CACHE_SIZE];
 
 /* Object ops. */
 static object_t *charobject_op_lnot (object_t *obj);
@@ -252,6 +253,10 @@ charobject_get_value (object_t *obj)
 void
 charobject_init ()
 {
+	if (!thread_is_main_thread ()) {
+		return;
+	}
+
 	/* Make char cache. */
 	for (char i = CHAR_CACHE_MIN; i <= CHAR_CACHE_MAX; i++) {
 		g_char_cache[CHAR_CACHE_INDEX (i)] = charobject_new (i, NULL);

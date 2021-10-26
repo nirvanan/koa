@@ -93,7 +93,7 @@ static object_opset_t g_dummy_ops =
 	NULL
 };
 
-static __thread object_t g_dummy_object =
+static object_t g_dummy_object =
 {
 	{
 		GC_NULL, 
