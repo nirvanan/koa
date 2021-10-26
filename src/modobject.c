@@ -147,6 +147,19 @@ modobject_load_binary (FILE *f)
 	return modobject_code_new (code, NULL);
 }
 
+object_t *
+modobject_load_buf (const char **buf, size_t *len)
+{
+	code_t *code;
+
+	code = code_load_buf (buf, len);
+	if (code == NULL) {
+		return NULL;
+	}
+
+	return modobject_code_new (code, NULL);
+}
+
 static uint64_t
 modobject_digest_fun (void *obj)
 {

@@ -80,7 +80,7 @@ compound_push_field (compound_t *meta, const char *name, object_type_t type)
 }
 
 static str_t *
-compound_load_name (FILE *f)
+compound_name_load_binary (FILE *f)
 {
 	size_t name_len;
 	char *name;
@@ -92,17 +92,58 @@ compound_load_name (FILE *f)
 
 		return NULL;
 	}
+
 	/* Read content. */
 	name = (char *) pool_alloc (name_len);
 	if (name == NULL) {
 		fatal_error ("out of memory.");
 	}
+
 	if (fread (name, sizeof (char), name_len, f) != name_len) {
 		pool_free ((void *) name);
 		error ("failed to load compound name content.");
 
 		return NULL;
 	}
+
+	str = str_new (name, name_len);
+	pool_free ((void *) name);
+
+	return str;
+}
+
+static str_t *
+compound_name_load_buf (const char **buf, size_t *len)
+{
+	size_t name_len;
+	char *name;
+	str_t *str;
+
+	/* Read name. */
+	if (*len < sizeof (size_t)) {
+		error ("failed to load size while load name.");
+
+		return NULL;
+	}
+
+	name_len = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	/* Read content. */
+	name = (char *) pool_alloc (name_len);
+	if (name == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	if (*len < name_len) {
+		pool_free ((void *) name);
+		error ("failed to load compound name content.");
+
+		return NULL;
+	}
+
+	memcpy ((void *) name, *buf, name_len);
 
 	str = str_new (name, name_len);
 	pool_free ((void *) name);
@@ -121,20 +162,55 @@ compound_field_load_binary (FILE *f)
 	}
 
 	/* Read name. */
-	field->name = compound_load_name (f);
+	field->name = compound_name_load_binary (f);
 	if (field->name == NULL) {
 		pool_free ((void *) field);
 
 		return NULL;
 	}
+
 	/* Read type. */
-	if (fread (&field->type, sizeof (int), 1, f) != 1) {
+	if (fread (&field->type, sizeof (object_type_t), 1, f) != 1) {
 		str_free (field->name);
 		pool_free ((void *) field);
 		error ("failed to load type while load compound field.");
 
 		return NULL;
 	}
+
+	return field;
+}
+
+static field_t *
+compound_field_load_buf (const char **buf, size_t *len)
+{
+	field_t *field;
+
+	field = (field_t *) pool_calloc (1, sizeof (field_t));
+	if (field == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	/* Read name. */
+	field->name = compound_name_load_buf (buf, len);
+	if (field->name == NULL) {
+		pool_free ((void *) field);
+
+		return NULL;
+	}
+
+	/* Read type. */
+	if (*len < sizeof (object_type_t)) {
+		str_free (field->name);
+		pool_free ((void *) field);
+		error ("failed to load type while load compound field.");
+
+		return NULL;
+	}
+
+	field->type = *(object_type_t *) *buf;
+	*buf += sizeof (object_type_t);
+	*len -= sizeof (object_type_t);
 
 	return field;
 }
@@ -151,7 +227,7 @@ compound_load_binary (FILE *f)
 	}
 
 	/* Read name. */
-	meta->name = compound_load_name (f);
+	meta->name = compound_name_load_binary (f);
 	if (meta->name == NULL) {
 		pool_free ((void *) meta);
 
@@ -171,6 +247,55 @@ compound_load_binary (FILE *f)
 		field_t *field;
 
 		field = compound_field_load_binary (f);
+		if (field == NULL) {
+			compound_free (meta);
+
+			return NULL;
+		}
+		UNUSED (vec_set (meta->fields, (integer_value_t) i, (void *) field));
+	}
+
+	return meta;
+}
+
+compound_t *
+compound_load_buf (const char **buf, size_t *len)
+{
+	compound_t *meta;
+	size_t fields_len;
+
+	meta = (compound_t *) pool_calloc (1, sizeof (compound_t));
+	if (meta == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	/* Read name. */
+	meta->name = compound_name_load_buf (buf, len);
+	if (meta->name == NULL) {
+		pool_free ((void *) meta);
+
+		return NULL;
+	}
+
+	/* Read fields length. */
+	if (*len < sizeof (size_t)) {
+		str_free (meta->name);
+		pool_free ((void *) meta);
+		error ("failed to load size while load compound fields.");
+
+		return NULL;
+	}
+
+	fields_len = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	meta->fields = vec_new (fields_len);
+	/* Read fields content. */
+	for (size_t i = 0; i < fields_len; i++) {
+		field_t *field;
+
+		field = compound_field_load_buf (buf, len);
 		if (field == NULL) {
 			compound_free (meta);
 

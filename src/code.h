@@ -231,6 +231,9 @@ code_save_binary (code_t *code);
 code_t *
 code_load_binary (const char *path, FILE *f);
 
+code_t *
+code_load_buf (const char **buf, size_t *len);
+
 object_t *
 code_get_const (code_t *code, para_t pos);
 

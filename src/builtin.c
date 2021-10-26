@@ -355,6 +355,32 @@ builtin_load_binary (FILE *f)
 	return builtin;
 }
 
+builtin_t *
+builtin_load_buf (const char **buf, size_t *len)
+{
+	int id;
+	builtin_t *builtin;
+
+	if (*len < sizeof (int)) {
+		error ("failed to load builtin buf.");
+
+		return NULL;
+	}
+
+	id = *(int *) *buf;
+	*buf += sizeof (int);
+	*len -= sizeof (int);
+
+	builtin = (builtin_t *) pool_calloc (1, sizeof (builtin_t));
+	if (builtin == NULL) {
+		return NULL;
+	}
+
+	builtin->slot = id;
+
+	return builtin;
+}
+
 void
 builtin_init ()
 {

@@ -896,6 +896,50 @@ code_binary_to_vec (FILE *f, size_t el)
 }
 
 static vec_t *
+code_buf_to_vec (const char **buf, size_t *len, size_t el)
+{
+	size_t size;
+	vec_t *vec;
+
+	vec = vec_new (0);
+	if (vec == NULL) {
+		return NULL;
+	}
+
+	if (*len < sizeof (size_t)) {
+		vec_free (vec);
+		error ("read buf failed.");
+
+		return NULL;
+	}
+
+	size = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	for (int i = 0; i < size; i++) {
+		void *data;
+
+		data = pool_alloc (el);
+		if (*len < el) {
+			pool_free (data);
+			vec_free (vec);
+
+			return NULL;
+		}
+		memcpy (data, (void *) *buf, el);
+		if (!vec_push_back (vec, data)) {
+			pool_free (data);
+			vec_free (vec);
+
+			return NULL;
+		}
+	}
+
+	return vec;
+}
+
+static vec_t *
 code_binary_to_object (FILE *f)
 {
 	vec_t *vec;
@@ -903,6 +947,28 @@ code_binary_to_object (FILE *f)
 	object_t *obj;
 
 	obj = object_load_binary (f);
+	if (obj == NULL) {
+		return NULL;
+	}
+	vec = vecobject_get_value (obj);
+	size = vec_size (vec);
+	gc_untrack (obj);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		gc_untrack ((object_t *) vec_pos(vec, i)); 
+	}
+	pool_free ((void *) obj);
+
+	return vec;
+}
+
+static vec_t *
+code_buf_to_object (const char **buf, size_t *len)
+{
+	vec_t *vec;
+	size_t size;
+	object_t *obj;
+
+	obj = object_load_buf (buf, len);
 	if (obj == NULL) {
 		return NULL;
 	}
@@ -945,6 +1011,39 @@ code_binary_to_compound (FILE *f)
 	return vec;
 }
 
+static vec_t *
+code_buf_to_compound (const char **buf, size_t *len)
+{
+	vec_t *vec;
+	size_t size;
+
+	if (*len < sizeof (size_t)) {
+		error ("failed to load size while load compounds.");
+
+		return NULL;
+	}
+
+	size = *(size_t *) *buf;
+	*buf += sizeof (size_t);
+	*len -= sizeof (size_t);
+
+	vec = vec_new (size);
+	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
+		compound_t *meta;
+
+		meta = compound_load_buf (buf, len);
+		if (meta == NULL) {
+			vec_foreach (vec, code_vec_compound_free_fun, NULL);
+			vec_free (vec);
+
+			return NULL;
+		}
+		UNUSED (vec_set (vec, i, (void *) meta));
+	}
+
+	return vec;
+}
+
 static str_t *
 code_binary_to_str (FILE *f)
 {
@@ -952,6 +1051,22 @@ code_binary_to_str (FILE *f)
 	object_t *obj;
 
 	obj = object_load_binary (f);
+	if (obj == NULL) {
+		return NULL;
+	}
+	str = strobject_get_value (obj);
+	pool_free ((void *) obj);
+
+	return str;
+}
+
+static str_t *
+code_buf_to_str (const char **buf, size_t *len)
+{
+	str_t *str;
+	object_t *obj;
+
+	obj = object_load_buf (buf, len);
 	if (obj == NULL) {
 		return NULL;
 	}
@@ -1060,6 +1175,62 @@ code_load_binary (const char *path, FILE *f)
 
 	if (f == NULL) {
 		UNUSED (fclose (b));
+	}
+
+	return code;
+}
+
+static int
+code_buf_to_plain (void *dest, const char **buf, size_t *len, size_t el)
+{
+	if (*len < el) {
+		error ("invalid code buf.");
+
+		return 0;
+	}
+
+	memcpy (dest, (void *) buf, el);
+	*buf += el;
+	*len -= el;
+
+	return 1;
+}
+
+code_t *
+code_load_buf (const char **buf, size_t *len)
+{
+	code_t *code;
+
+	code = (code_t *) pool_calloc (1, sizeof (code_t));
+	if (code == NULL) {
+		fatal_error ("out of memory.");
+	}
+
+	code->opcodes = code_buf_to_vec (buf, len, sizeof (opcode_t));
+	code->lineinfo = code_buf_to_vec (buf, len, sizeof (uint32_t));
+	code->types = code_buf_to_vec (buf, len, sizeof (object_type_t));
+	code->consts = code_buf_to_object (buf, len);
+	code->varnames = code_buf_to_object (buf, len);
+	code->structs = code_buf_to_compound (buf, len);
+	code->unions = code_buf_to_compound (buf, len);
+	code->name = code_buf_to_str (buf, len);
+	code->filename = code_buf_to_str (buf, len);
+	if (code->opcodes == NULL || code->lineinfo == NULL ||
+		code->types == NULL || code->consts == NULL ||
+		code->varnames == NULL || code->structs == NULL ||
+		code->unions == NULL || code->name == NULL || code->filename == NULL) {
+		code_free (code);
+
+		return NULL;
+	}
+
+	if (code_buf_to_plain ((void *) &code->func, buf, len, sizeof (int)) != 1 ||
+		code_buf_to_plain ((void *) &code->lineno, buf, len, sizeof (int)) != 1 ||
+		code_buf_to_plain ((void *) &code->args, buf, len, sizeof (int)) != 1 ||
+		code_buf_to_plain ((void *) &code->ret_type, buf, len, sizeof (object_type_t)) != 1) {
+		code_free (code);
+
+		return NULL;
 	}
 
 	return code;

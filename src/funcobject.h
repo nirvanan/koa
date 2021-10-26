@@ -38,6 +38,9 @@ object_t *
 funcobject_load_binary (FILE *f);
 
 object_t *
+funcobject_load_buf (const char **buf, size_t *len);
+
+object_t *
 funcobject_new (void *udata);
 
 object_t *

@@ -1360,9 +1360,9 @@ object_load_buf (const char **buf, size_t *len)
 		case OBJECT_TYPE_DICT:
 			return dictobject_load_buf (buf, len);
 		case OBJECT_TYPE_FUNC:
-			return NULL;
+			return funcobject_load_buf (buf, len);
 		case OBJECT_TYPE_MOD:
-			return NULL;
+			return modobject_load_buf (buf, len);
 		default:
 			if (COMPOUND_IS_STRUCT (type)) {
 				return structobject_load_buf (type, buf, len);

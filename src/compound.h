@@ -52,6 +52,9 @@ compound_push_field (compound_t *meta, const char *name, object_type_t type);
 compound_t *
 compound_load_binary (FILE *f);
 
+compound_t *
+compound_load_buf (const char **buf, size_t *len);
+
 str_t *
 compound_to_binary (compound_t *meta);
 

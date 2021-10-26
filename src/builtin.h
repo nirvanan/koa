@@ -55,6 +55,9 @@ builtin_binary (builtin_t *builtin);
 builtin_t *
 builtin_load_binary (FILE *f);
 
+builtin_t *
+builtin_load_buf (const char **buf, size_t *len);
+
 void
 builtin_init ();
 
