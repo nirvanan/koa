@@ -206,10 +206,11 @@ thread_join (long th)
 		free ((void *) context->ret_binary);
 	}
 
+	object_ref (th_obj);
 	UNUSED (dictobject_remove (g_thread_context, th_obj));
 	pool_allocator_free (context->allocator);
 	pool_free ((void *) context);
-	object_free (th_obj);
+	object_unref (th_obj);
 
 	return return_obj;
 }
