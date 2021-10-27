@@ -517,6 +517,12 @@ pool_make_new_allocator ()
 }
 
 void
+pool_allocator_free (allocator_t *allocator)
+{
+	free ((void *) allocator);
+}
+
+void
 pool_init ()
 {
 	g_allocator = calloc (1, sizeof (allocator_t));

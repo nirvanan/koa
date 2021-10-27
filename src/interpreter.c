@@ -1733,7 +1733,6 @@ interpreter_execute_thread (code_t *code, object_t *args, dict_t *main_global, o
 	object_t *obj;
 	int status;
 
-	*ret_value = NULL;
 	g_runtime_started = 1;
 	g_s = stack_new ();
 	if (g_s == NULL) {

@@ -26,7 +26,7 @@
 #include "pool.h"
 #include "error.h"
 
-#define DICT_REQ_BUCKET 16 /* Initial allocation size. */
+#define DICT_REQ_BUCKET 8 /* Initial allocation size. */
 
 #define MAX_DICT_BUCKET INT_MAX
 
