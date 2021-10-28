@@ -730,6 +730,7 @@ dictobject_init ()
 	if (g_dump_sep == NULL) {
 		fatal_error ("failed to init dict dump sep.");
 	}
+	object_set_const (g_dump_sep);
 	g_dump_map = strobject_new (": ", strlen (": "), 1, NULL);
 	if (g_dump_map == NULL) {
 		fatal_error ("failed to init dict dump map.");
