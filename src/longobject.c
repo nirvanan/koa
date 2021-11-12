@@ -116,7 +116,7 @@ longobject_op_dump (object_t *obj)
 {
 	char buf[DUMP_BUF_SIZE];
 
-	snprintf (buf, DUMP_BUF_SIZE, "<int %ld>", longobject_get_value (obj));
+	snprintf (buf, DUMP_BUF_SIZE, "<long %ld>", longobject_get_value (obj));
 
 	return strobject_new (buf, strlen (buf), 1, NULL);
 }
