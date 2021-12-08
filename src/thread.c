@@ -189,13 +189,19 @@ thread_join (long th)
 	object_t *return_obj;
 	thread_context_t *context;
 
-	/* Wait for child thread to exit. */
-	UNUSED (_thread_join (th));
 	th_obj = longobject_new (th, NULL);
 	context_obj = object_index (g_thread_context, th_obj);
-	context = (thread_context_t *) uint64object_get_value (context_obj);
+	if (context_obj == NULL) {
+		error ("the target thread is not a direct child: %ld", th);
+
+		return NULL;
+	}
+
+	/* Wait for child thread to exit. */
+	UNUSED (_thread_join (th));
 
 	return_obj = NULL;
+	context = (thread_context_t *) uint64object_get_value (context_obj);
 	if (context->ret_binary != NULL) {
 		const char *buf;
 		size_t len;
