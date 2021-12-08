@@ -192,7 +192,7 @@ thread_join (long th)
 	th_obj = longobject_new (th, NULL);
 	context_obj = object_index (g_thread_context, th_obj);
 	if (context_obj == NULL) {
-		error ("the target thread is not a direct child: %ld", th);
+		error ("the target thread is not a direct child: %ld.", th);
 
 		return NULL;
 	}
