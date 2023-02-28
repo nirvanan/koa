@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.71])
 AC_INIT([koa],[0.01],[nirvanan@live.cn])
 AC_CONFIG_SRCDIR([src/str.c])
 AC_CONFIG_HEADERS([config.h])
@@ -9,10 +9,10 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_MAINTAINER_MODE
 
-AM_INIT_AUTOMAKE([1.15 -Wall no-define tar-ustar no-dist-gzip dist-xz])
+AM_INIT_AUTOMAKE([1.16 -Wall no-define tar-ustar no-dist-gzip dist-xz])
 
 # Checks for programs.
-AC_PROG_CC_C99
+AC_PROG_CC
 
 # Checks for libraries.
 AC_CHECK_LIB(m, isnan)
@@ -43,6 +43,7 @@ AX_PTHREAD
 
 # Enable debug or not. 
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [enable DEBUG mode(default=no)]),[], [enable_debug=no])
+
 AS_IF([test "x$enable_debug" = "xyes"], [CFLAGS="-g2 -O0 -DDEBUG -Wall -pg"], 
 	  [test "x$enable_debug" = "xno"], [CFLAGS="-O3 -Wall"], [])
 
