@@ -24,6 +24,7 @@
 #include <pthread.h>
 
 #include "koa.h"
+#include "error.h"
 
 static long
 _thread_create (void *(*func)(void *), void *arg)
@@ -34,6 +35,15 @@ _thread_create (void *(*func)(void *), void *arg)
 	status = pthread_create (&th, NULL, func, arg);
 	if (status != 0) {
 		return 0;
+	}
+
+	/* Detach this new thread. */
+	status = pthread_detach (th);
+	if (status != 0) {
+		status = pthread_cancel (th);
+		if (status != 0) {
+			fatal_error ("failed to cancel thread when detach failed.");
+		}
 	}
 
 	return (long) th;

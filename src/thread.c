@@ -54,6 +54,7 @@ typedef struct thread_context_s
 	size_t ret_len;
 	dict_t *main_global;
 	allocator_t *allocator;
+	_Atomic char done;
 } thread_context_t;
 
 static __thread object_t *g_thread_context; /* Store all child thread context, long->uint64. */
@@ -102,6 +103,11 @@ thread_func (void *arg)
 	object_free (g_thread_context);
 
 	pool_free_all ();
+
+	pool_allocator_free (context->allocator);
+	context->allocator = NULL;
+
+	context->done = 1;
 
 	return (void *) context;
 }
@@ -178,6 +184,8 @@ thread_create (code_t *code, object_t *args)
 	context_obj = uint64object_new ((uint64_t) context, NULL);
 	UNUSED (object_ipindex (g_thread_context, th_obj, context_obj));
 
+	context->done = 0;
+
 	return th;
 }
 
@@ -214,7 +222,6 @@ thread_join (long th)
 
 	object_ref (th_obj);
 	UNUSED (dictobject_remove (g_thread_context, th_obj));
-	pool_allocator_free (context->allocator);
 	pool_free ((void *) context);
 	object_unref (th_obj);
 
