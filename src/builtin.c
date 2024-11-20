@@ -323,9 +323,9 @@ builtin_execute (builtin_t *builtin, object_t *args)
 
 			arg = vec_pos (v, (integer_value_t) i);
 			if (OBJECT_TYPE (arg) != slot->types[i] && slot->types[i] != OBJECT_TYPE_ALL) {
-				 error ("wrong argument type at position %d.", i + 1);
+				error ("wrong argument type at position %d.", i + 1);
 
-				 return NULL;
+				return NULL;
 			}
 		}
 	}
