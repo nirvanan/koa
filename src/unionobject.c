@@ -102,7 +102,7 @@ unionobject_op_print (object_t *obj)
 	else {
 		printf ("unset");
 	}
-	printf (">");	
+	printf (">");
 }
 
 static object_t *

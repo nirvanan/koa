@@ -44,7 +44,7 @@ vec_new (size_t size)
 	if (req < VEC_REQ_SIZE) {
 		req = VEC_REQ_SIZE;
 	}
-	
+
 	vec = pool_alloc (sizeof (vec_t));
 	if (vec == NULL) {
 		fatal_error ("out of memory.");
@@ -158,7 +158,7 @@ vec_check_and_resize (vec_t *vec, size_t req)
 		if (new_v == NULL) {
 			fatal_error ("out of memory.");
 		}
-		
+
 		memcpy (new_v, vec->v, vec->size * sizeof (void *));
 		pool_free ((void *) vec->v);
 		vec->v = new_v;

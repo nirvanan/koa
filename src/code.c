@@ -445,7 +445,7 @@ code_modify_opcode (code_t *code, para_t pos,
 		prev_line = (uint32_t *) vec_pos (code->lineinfo, (integer_value_t) p);
 		*prev_line = line;
 	}
-	
+
 	return 1;
 }
 
@@ -593,10 +593,10 @@ code_vec_to_binary (vec_t *vec, size_t el)
 		if (res == NULL) {
 			return NULL;
 		}
-		
+
 		temp = res;
 	}
-	
+
 	return temp;
 }
 
@@ -954,7 +954,7 @@ code_binary_to_object (FILE *f)
 	size = vec_size (vec);
 	gc_untrack (obj);
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		gc_untrack ((object_t *) vec_pos(vec, i)); 
+		gc_untrack ((object_t *) vec_pos(vec, i));
 	}
 	pool_free ((void *) obj);
 
@@ -976,7 +976,7 @@ code_buf_to_object (const char **buf, size_t *len)
 	size = vec_size (vec);
 	gc_untrack (obj);
 	for (integer_value_t i = 0; i < (integer_value_t) size; i++) {
-		gc_untrack ((object_t *) vec_pos(vec, i)); 
+		gc_untrack ((object_t *) vec_pos(vec, i));
 	}
 	pool_free ((void *) obj);
 

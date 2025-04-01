@@ -153,7 +153,7 @@ hash_remove_fun (list_t *list, void *data)
 	remove = (hash_remove_cleanup_t *) data;
 
 	remove->ha->size--;
-	
+
 	return (int) (node->value == remove->data);
 }
 

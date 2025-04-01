@@ -182,11 +182,11 @@ funcobject_op_binary (object_t *obj)
 	if (bin == NULL) {
 		return NULL;
 	}
-	
+
 	ret = object_add (type, bin);
 	object_free (type);
 	object_free (bin);
-	
+
 	return ret;
 }
 

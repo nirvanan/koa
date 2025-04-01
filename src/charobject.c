@@ -143,12 +143,12 @@ charobject_op_eq (object_t *obj1, object_t *obj2)
 
 	if (NUMBERICAL_TYPE (obj2)) {
 		char val1;
-	
+
 		val1 = charobject_get_value (obj1);
 
 		return boolobject_new (val1 == NUMBERICAL_GET_VALUE (obj2), NULL);
 	}
-	
+
 	return boolobject_new (false, NULL);
 }
 
@@ -265,7 +265,7 @@ charobject_init ()
 
 			return;
 		}
-		
+
 		/* Should never be freed. */
 		object_ref (g_char_cache[CHAR_CACHE_INDEX (i)]);
 	}

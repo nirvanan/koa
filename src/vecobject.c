@@ -296,10 +296,10 @@ vecobject_op_binary (object_t *obj)
 		if (res == NULL) {
 			return NULL;
 		}
-		
+
 		temp = res;
 	}
-	
+
 	return temp;
 }
 

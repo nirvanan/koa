@@ -179,7 +179,7 @@ frame_enter_block (frame_t *frame, para_t out, sp_t bottom)
 
 	return 1;
 }
-	
+
 int
 frame_leave_block (frame_t *frame)
 {

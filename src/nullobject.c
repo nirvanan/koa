@@ -80,7 +80,7 @@ nullobject_op_eq (object_t *obj1, object_t *obj2)
 	if (OBJECT_IS_NULL (obj1) && OBJECT_IS_NULL (obj2)) {
 		return boolobject_new (true, NULL);
 	}
-	
+
 	return boolobject_new (false, NULL);
 }
 

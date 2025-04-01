@@ -305,12 +305,12 @@ intobject_op_eq (object_t *obj1, object_t *obj2)
 
 	if (NUMBERICAL_TYPE (obj2)) {
 		int val1;
-	
+
 		val1 = intobject_get_value (obj1);
 
 		return boolobject_new (val1 == NUMBERICAL_GET_VALUE (obj2), NULL);
 	}
-	
+
 	return boolobject_new (false, NULL);
 }
 
@@ -423,7 +423,7 @@ intobject_init ()
 		g_int_cache[INT_CACHE_INDEX (i)] = intobject_new (i, NULL);
 		if (g_int_cache[INT_CACHE_INDEX (i)] == NULL) {
 			fatal_error ("failed to init object system.");
-	
+
 			return;
 		}
 

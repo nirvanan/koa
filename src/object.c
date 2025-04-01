@@ -96,7 +96,7 @@ static object_opset_t g_dummy_ops =
 static object_t g_dummy_object =
 {
 	{
-		GC_NULL, 
+		GC_NULL,
 		0,
 		1,
 		OBJECT_TYPE_VOID,
@@ -415,18 +415,18 @@ object_add (object_t *obj1, object_t *obj2)
 		}
 
 		add_fun = (OBJECT_OPSET (obj1))->add;
-		
+
 		return add_fun (obj1, obj2);
 	}
 	else if (OBJECT_TYPE (obj1) == OBJECT_TYPE_VEC) {
 		if (OBJECT_TYPE (obj1) != OBJECT_TYPE (obj2)) {
 			error ("invalid right operand type %s for '+'.", TYPE_NAME (obj2));
-		
+
 			return NULL;
 		}
 
 		add_fun = (OBJECT_OPSET (obj1))->add;
-		
+
 		return add_fun (obj1, obj2);
 	}
 
@@ -437,7 +437,7 @@ object_add (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '+'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -466,7 +466,7 @@ object_add (object_t *obj1, object_t *obj2)
 	add_fun = (OBJECT_OPSET (left))->add;
 	res = add_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -485,7 +485,7 @@ object_sub (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '-'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -514,7 +514,7 @@ object_sub (object_t *obj1, object_t *obj2)
 	sub_fun = (OBJECT_OPSET (left))->sub;
 	res = sub_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -533,7 +533,7 @@ object_mul (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '*'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -562,7 +562,7 @@ object_mul (object_t *obj1, object_t *obj2)
 	mul_fun = (OBJECT_OPSET (left))->mul;
 	res = mul_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -581,12 +581,12 @@ object_div (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '/'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 	if (object_is_zero (obj2)) {
 		error ("division by zero.");
-		
+
 		return NULL;
 	}
 
@@ -615,7 +615,7 @@ object_div (object_t *obj1, object_t *obj2)
 	div_fun = (OBJECT_OPSET (left))->div;
 	res = div_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -634,12 +634,12 @@ object_mod (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '%'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 	if (object_is_zero (obj2)) {
 		error ("division by zero.");
-		
+
 		return NULL;
 	}
 
@@ -668,7 +668,7 @@ object_mod (object_t *obj1, object_t *obj2)
 	mod_fun = (OBJECT_OPSET (left))->mod;
 	res = mod_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -715,7 +715,7 @@ object_bit_and (object_t *obj1, object_t *obj2)
 	}
 	if (!INTEGER_TYPE (obj2)) {
 		error ("invalid right operand type %s for '&'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -744,7 +744,7 @@ object_bit_and (object_t *obj1, object_t *obj2)
 	and_fun = (OBJECT_OPSET (left))->and;
 	res = and_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -763,7 +763,7 @@ object_bit_or (object_t *obj1, object_t *obj2)
 	}
 	if (!INTEGER_TYPE (obj2)) {
 		error ("invalid right operand type %s for '|'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -792,7 +792,7 @@ object_bit_or (object_t *obj1, object_t *obj2)
 	or_fun = (OBJECT_OPSET (left))->or;
 	res = or_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -811,7 +811,7 @@ object_bit_xor (object_t *obj1, object_t *obj2)
 	}
 	if (!INTEGER_TYPE (obj2)) {
 		error ("invalid right operand type %s for '^'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -840,7 +840,7 @@ object_bit_xor (object_t *obj1, object_t *obj2)
 	xor_fun = (OBJECT_OPSET (left))->xor;
 	res = xor_fun (left, right);
 	object_bin_cleanup (obj1, left, obj2, right);
-	
+
 	return res;
 }
 
@@ -856,7 +856,7 @@ object_logic_and (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '&&'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -877,7 +877,7 @@ object_logic_or (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for '||'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -900,7 +900,7 @@ object_left_shift (object_t *obj1, object_t *obj2)
 	}
 	if (!INTEGER_TYPE (obj2)) {
 		error ("invalid right operand type %s for '<<'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -933,7 +933,7 @@ object_right_shift (object_t *obj1, object_t *obj2)
 	}
 	if (!INTEGER_TYPE (obj2)) {
 		error ("invalid right operand type %s for '>>'.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -994,7 +994,7 @@ object_compare (object_t *obj1, object_t *obj2)
 	}
 	if (!NUMBERICAL_TYPE (obj2)) {
 		error ("invalid right operand type %s for comparation.", TYPE_NAME (obj2));
-		
+
 		return NULL;
 	}
 
@@ -1011,7 +1011,7 @@ object_index (object_t *obj1, object_t *obj2)
 	index_fun = (OBJECT_OPSET (obj1))->index;
 	if (index_fun == NULL) {
 		error ("left operand %s has no index routine.", TYPE_NAME (obj1));
-		
+
 		return NULL;
 	}
 
@@ -1026,7 +1026,7 @@ object_ipindex (object_t *obj1, object_t *obj2, object_t *obj3)
 	ipindex_fun = (OBJECT_OPSET (obj1))->ipindex;
 	if (ipindex_fun == NULL) {
 		error ("left operand %s has no inplace index routine.", TYPE_NAME (obj1));
-		
+
 		return NULL;
 	}
 
@@ -1085,7 +1085,7 @@ object_floating_hash (floating_value_t val)
 		}
 	}
 
-	return object_integer_hash (int_to_hash);	
+	return object_integer_hash (int_to_hash);
 }
 
 uint64_t
@@ -1107,7 +1107,7 @@ object_hash (object_t *obj)
 	/* At this stage, this is impossible, =_=. */
 	if (hash_fun == NULL) {
 		error ("type %s has no hash routine.", TYPE_NAME (obj));
-		
+
 		return NULL;
 	}
 
@@ -1126,7 +1126,7 @@ object_digest (object_t *obj)
 	digest_fun = obj->head.digest_fun;
 	if (digest_fun == NULL) {
 		error ("type %s has no hash routine.", TYPE_NAME (obj));
-		
+
 		return 0;
 	}
 
@@ -1158,10 +1158,10 @@ object_binary (object_t *obj)
 		object_free (head_obj);
 
 		error ("type %s has no binary routine.", TYPE_NAME (obj));
-		
+
 		return NULL;
 	}
-	
+
 	content_obj = binary_fun (obj);
 	if (content_obj == NULL) {
 		object_free (head_obj);
@@ -1392,7 +1392,7 @@ object_print (object_t *obj)
 		error ("%s has no print routine.", TYPE_NAME (obj));
 
 		return;
-	}	
+	}
 
 	print_fun (obj);
 }
@@ -1407,7 +1407,7 @@ object_len (object_t *obj)
 		error ("%s has no len routine.", TYPE_NAME (obj));
 
 		return NULL;
-	}	
+	}
 
 	return len_fun (obj);
 }

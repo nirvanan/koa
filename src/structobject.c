@@ -108,7 +108,7 @@ structobject_op_print (object_t *obj)
 			printf (",");
 		}
 	}
-	printf ("}");	
+	printf ("}");
 }
 
 static object_t *
@@ -216,10 +216,10 @@ structobject_op_binary (object_t *obj)
 		if (res == NULL) {
 			return NULL;
 		}
-		
+
 		temp = res;
 	}
-	
+
 	return temp;
 }
 

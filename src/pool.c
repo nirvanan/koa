@@ -160,7 +160,7 @@ pool_new (allocator_t *allocator, size_t request_size, void *extra)
 	pool_end = (void *) new_pool + request_size;
 	for (void *p = new_pool->po; p + PAGE_SIZE <= pool_end; p += PAGE_SIZE) {
 		page_t *page;
-		
+
 		page = (page_t *) p;
 		new_pool->free = list_append (new_pool->free, LIST (page));
 		page->pool = new_pool;
@@ -190,7 +190,7 @@ static void
 pool_empty_page_in (allocator_t *allocator, pool_t *pool, page_t *page)
 {
 	cell_type_t t;
-	
+
 	t = page->t;
 	allocator->page_table[t] = list_remove (allocator->page_table[t], LIST (page));
 	pool->free = list_append (pool->free, LIST (page));
@@ -258,7 +258,7 @@ pool_get_cell (allocator_t *allocator, page_t *page)
 	if (page->free == NULL) {
 		return NULL;
 	}
-	
+
 	cell = page->free;
 	page->allocated++;
 	page->free = *((void **) cell);
@@ -419,7 +419,7 @@ pool_free_allocator (allocator_t *allocator, void *bl)
 
 		return;
 	}
-	
+
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 
 	/* Page from full to used? */
@@ -446,7 +446,7 @@ pool_add_cycle (list_t *list, void *data)
 
 	UNUSED (data);
 	p = (pool_t *) list;
-	
+
 	if (p->used <= 0) {
 		p->cycle++;
 	}
@@ -461,7 +461,7 @@ pool_need_recycle (list_t *list, void *data)
 
 	UNUSED (data);
 	p = (pool_t *) list;
-	
+
 	return p->cycle > RECYCLE_CYCLE;
 }
 
@@ -533,7 +533,7 @@ pool_init ()
 	/* Init pool(s) for main thread when startup. */
 	for (int i = 0; i < INIT_POOL_NUM; i++) {
 		pool_t *pool;
-		
+
 		pool = pool_new (g_allocator, POOL_REQUEST_SIZE, NULL);
 		if (pool == NULL) {
 			fatal_error ("failed to allocate pool on startup.");

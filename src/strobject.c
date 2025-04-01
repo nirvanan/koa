@@ -301,7 +301,7 @@ strobject_op_binary (object_t *obj)
 	if (len_obj == NULL) {
 		return NULL;
 	}
-	
+
 	res = object_add (len_obj, obj);
 	object_free (len_obj);
 

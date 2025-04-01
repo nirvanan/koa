@@ -551,7 +551,7 @@ lex_read_octal_char (reader_t *reader, token_t *token)
 	return 1;
 }
 
-static int 
+static int
 lex_read_escaped_char (reader_t *reader, token_t *token)
 {
 	lex_next_char (reader);
@@ -645,7 +645,7 @@ lex_read_char (reader_t *reader, token_t *token)
 static token_t *
 lex_read_str (reader_t *reader, token_t *token)
 {
-	lex_next_char (reader);	
+	lex_next_char (reader);
 	for (;;) {
 		if (reader->current == '\\') {
 			lex_read_escaped_char (reader, token);
@@ -869,7 +869,7 @@ lex_read_numberical (reader_t *reader, token_t *token)
 			break;
 		}
 	}
-	
+
 	return token;
 }
 
@@ -882,7 +882,7 @@ lex_end_of_stream (reader_t *reader, token_t *token)
 
 		return NULL;
 	}
-	
+
 	token->type = TOKEN_END;
 
 	return token;
@@ -895,7 +895,7 @@ lex_read_identifier (reader_t *reader, token_t *token)
 	object_t *res;
 
 	lex_save_char (reader, token, -1, 1);
-	
+
 	for (;;) {
 		if (LEX_IS_ALNUM (reader->current)) {
 			lex_save_char (reader, token, -1, 1);

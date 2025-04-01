@@ -241,9 +241,9 @@ _builtin_thread_join (object_t *args)
 	}
 
 	ret_obj = thread_join (longobject_get_value (arg));
-	
+
 	object_free (arg);
-	
+
 	return ret_obj;
 }
 
@@ -259,9 +259,9 @@ _builtin_thread_cancel (object_t *args)
 	}
 
 	thread_cancel (longobject_get_value (arg));
-	
+
 	object_free (arg);
-	
+
 	return DUMMY;
 }
 
@@ -316,7 +316,7 @@ builtin_execute (builtin_t *builtin, object_t *args)
 		if (size != slot->args) {
 			error ("wrong number of arguments, required: %d, passed: %d.", slot->args, size);
 
-			return NULL; 
+			return NULL;
 		}
 		for (size_t i = 0; i < size; i++) {
 			object_t *arg;
@@ -458,7 +458,7 @@ builtin_init ()
 
 		slot++;
 	}
-	
+
 	object_set_const (g_builtin);
 	gc_untrack (g_builtin);
 }

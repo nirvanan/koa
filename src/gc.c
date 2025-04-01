@@ -43,7 +43,7 @@ typedef struct generation_s
 } generation_t;
 
 /* Each thread track its own objects. */
-static __thread generation_t g_generation_list[GEN_NUM] = 
+static __thread generation_t g_generation_list[GEN_NUM] =
 {
 	{LIST_SINGLE (NULL), 500, 0},
 	{LIST_SINGLE (NULL), 10, 0},

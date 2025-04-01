@@ -36,7 +36,7 @@ dict_hash_fun (void *data)
 	dict_node_t *node;
 
 	node = (dict_node_t *) data;
-	
+
 	return node->d->hf (node->first);
 }
 
@@ -175,7 +175,7 @@ dict_set (dict_t *dict, void *key, void *value)
 	int occupied;
 
 	hash = dict->hf (key);
-	
+
 	/* Already a node with this key? */
 	node = (dict_node_t *) hash_test (dict->h, key, hash);
 	if (node != NULL) {
@@ -184,7 +184,7 @@ dict_set (dict_t *dict, void *key, void *value)
 
 		return prev_value;
 	}
-	
+
 	/* Need rehash? */
 	occupied = hash_occupied (dict->h, hash);
 	if (occupied == 0) {
@@ -208,7 +208,7 @@ dict_set (dict_t *dict, void *key, void *value)
 
 		return NULL;
 	}
-	
+
 	dict->size++;
 	dict->used += occupied? 0: 1;
 
@@ -242,7 +242,7 @@ dict_remove (dict_t *dict, void *key, void **value)
 	void *origin_key;
 
 	hash = dict->hf (key);
-	
+
 	/* Key is not presented? */
 	node = (dict_node_t *) hash_test (dict->h, key, hash);
 	if (node == NULL) {
@@ -251,7 +251,7 @@ dict_remove (dict_t *dict, void *key, void **value)
 
 		return NULL;
 	}
-	
+
 	origin_key = node->first;
 	*value = node->second;
 
@@ -263,7 +263,7 @@ dict_remove (dict_t *dict, void *key, void **value)
 		dict->used--;
 		if (dict_rehash (dict, dict->used) == 0) {
 			pool_free ((void *) node);
-			
+
 			return NULL;
 		}
 	}

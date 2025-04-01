@@ -384,7 +384,7 @@ dictobject_op_binary (object_t *obj)
 			return NULL;
 		}
 	}
-	
+
 	vec_free (pairs);
 
 	return temp;

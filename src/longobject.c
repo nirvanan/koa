@@ -306,12 +306,12 @@ longobject_op_eq (object_t *obj1, object_t *obj2)
 
 	if (NUMBERICAL_TYPE (obj2)) {
 		long val1;
-	
+
 		val1 = longobject_get_value (obj1);
 
 		return boolobject_new (val1 == NUMBERICAL_GET_VALUE (obj2), NULL);
 	}
-	
+
 	return boolobject_new (false, NULL);
 }
 

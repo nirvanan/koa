@@ -1723,7 +1723,7 @@ interpreter_execute (const char *path)
 	}
 	code_free (code);
 	g_runtime_started = 0;
-	
+
 	gc_collect ();
 }
 

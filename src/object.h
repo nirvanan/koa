@@ -220,7 +220,7 @@ typedef object_t *(*una_op_f) (object_t *obj);
 
 typedef void (*void_una_op_f) (object_t *obj);
 
-typedef object_t *(*bin_op_f) (object_t *obj1, object_t *obj2); 
+typedef object_t *(*bin_op_f) (object_t *obj1, object_t *obj2);
 
 typedef object_t *(*ter_op_f) (object_t *obj1, object_t *obj2, object_t *ob3);
 

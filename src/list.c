@@ -78,7 +78,7 @@ int
 list_find (list_t *list, void *data)
 {
 	list_t *l;
-   
+
 	if (list != NULL && (void *) list == data) {
 		return 1;
 	}

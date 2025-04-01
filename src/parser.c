@@ -72,7 +72,7 @@ static int parser_conditional_expression (parser_t *parser, code_t *code,
 										  int skip);
 static int parser_declaration (parser_t *parser, code_t *code,
 							   object_type_t type, const char *first_id);
-static object_t *parser_dict_constant (parser_t *parser, code_t *code);							   
+static object_t *parser_dict_constant (parser_t *parser, code_t *code);
 
 static char
 parser_file_reader (void *udata)
@@ -920,7 +920,7 @@ parser_while_statement (parser_t *parser, code_t *code)
 
 /* switch-statement:
  * switch ( expression ) statement */
-static int 
+static int
 parser_switch_statement (parser_t *parser, code_t *code)
 {
 	uint32_t line;
@@ -1022,7 +1022,7 @@ parser_switch_statement (parser_t *parser, code_t *code)
 					OPCODE (OP_PUSH_BLOCKS, blocks), 0)) {
 					return 0;
 				}
-				/* The next must be a matching JUMP_DEFAULT. */ 
+				/* The next must be a matching JUMP_DEFAULT. */
 				parser_adjust_default (code, start_pos, insert_pos, i);
 				if (last_jump_case != -1 &&
 					!code_modify_opcode (code, last_jump_case,
@@ -1378,7 +1378,7 @@ parser_labeled_statement (parser_t *parser, code_t *code,
 
 	/* Skip ':'. */
 	if (!parser_test_and_next (parser, TOKEN (':'),
-		"missing matching ':' for label statement.")) { 
+		"missing matching ':' for label statement.")) {
 			return 0;
 	}
 
@@ -1480,7 +1480,7 @@ parser_try_statement (parser_t *parser, code_t *code)
  * expression-statement
  * selection-statement
  * iteration-statement
- * jump-statement 
+ * jump-statement
  * try-statement */
 static int
 parser_statement (parser_t *parser, code_t *code,
@@ -1520,8 +1520,8 @@ parser_statement (parser_t *parser, code_t *code,
 
 				/* Emit an LEAVE_BLOCK. */
 				line = TOKEN_LINE (parser->token);
-				
-				return code_push_opcode (code, 
+
+				return code_push_opcode (code,
 										 OPCODE (OP_LEAVE_BLOCK, 0), line);
 			}
 			break;
@@ -1865,7 +1865,7 @@ parser_conditional_expression (parser_t *parser, code_t *code, int skip)
 /* argument-expression-list:
  * assignment-expression
  * assignment-expression , argument-expression-list */
-static int 
+static int
 parser_argument_expression_list (parser_t *parser, code_t *code)
 {
 	para_t size;
@@ -1887,12 +1887,12 @@ parser_argument_expression_list (parser_t *parser, code_t *code)
 			break;
 		}
 	}
-	
+
 	/* Check argument list size. */
 	if (size > MAX_PARA) {
 		return parser_syntax_error (parser, "number of arguments exceeded.");
 	}
-	
+
 	/* Emit a MAKE_VEC. */
 	if (size > 0 &&
 		!code_push_opcode (code, OPCODE (OP_MAKE_VEC, size), line)) {
@@ -1936,10 +1936,10 @@ parser_expression_postfix (parser_t *parser, code_t *code)
 		if (!parser_expression (parser, code)) {
 			return 0;
 		}
-		
+
 		/* Skip ']'. */
 		if (!parser_test_and_next (parser, TOKEN (']'),
-			"missing matching ']' for indexing.")) { 
+			"missing matching ']' for indexing.")) {
 			return 0;
 		}
 
@@ -2037,7 +2037,7 @@ parser_expression_postfix_list (parser_t *parser, code_t *code)
 /* expression:
  * assignment-expression
  * assignment-expression , expression */
-static int 
+static int
 parser_expression (parser_t *parser, code_t *code)
 {
 	if (!parser_assignment_expression (parser, code)) {
@@ -2318,7 +2318,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 {
 	para_t pos;
 	uint32_t line;
-	
+
 	if (leading_par) {
 		if (!parser_expression (parser, code)) {
 			return 0;
@@ -2419,7 +2419,7 @@ parser_primary_expression (parser_t *parser, code_t *code, int leading_par)
 		}
 		case TOKEN_STRING:
 			pos = parser_push_const (code,
-									 OBJECT_TYPE_STR, 
+									 OBJECT_TYPE_STR,
 									 strobject_new (TOKEN_ID (parser->token),
 									 strlen (TOKEN_ID (parser->token)), 0,
 									 NULL));
@@ -2530,7 +2530,7 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 				para = OPCODE_PARA (last);
 
 				return type == TOKEN_INC?
-					code_modify_opcode (code, -1, 
+					code_modify_opcode (code, -1,
 										OPCODE (OP_VAR_INC, para), line):
 					code_modify_opcode (code, -1,
 										OPCODE (OP_VAR_DEC, para), line);
@@ -2548,7 +2548,7 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 				para = OPCODE_PARA (last);
 
 				return type == TOKEN_INC?
-					code_modify_opcode (code, -1, 
+					code_modify_opcode (code, -1,
 										OPCODE (OP_MEMBER_INC, para), line):
 					code_modify_opcode (code, -1,
 										OPCODE (OP_MEMBER_DEC, para), line);
@@ -2572,7 +2572,7 @@ parser_unary_expression (parser_t *parser, code_t *code, int leading_par)
 
 				/* Emit an unary operation. */
 				return code_push_opcode (code,
-					OPCODE (parser_get_unary_op (type), 0), line);	
+					OPCODE (parser_get_unary_op (type), 0), line);
 			}
 			break;
 	}
@@ -2608,7 +2608,7 @@ parser_cast_expression (parser_t *parser, code_t *code)
 		else if (COMPOUND_IS_UNION (type)) {
 			return parser_syntax_error (parser, "can not cast to union.");
 		}
-		
+
 		parser_next_token (parser);
 		/* Skip ')'. */
 		if (!parser_test_and_next (parser, TOKEN (')'),
@@ -2676,7 +2676,7 @@ parser_assignment_expression (parser_t *parser, code_t *code)
 		if (!parser_adjust_assignment (code, start_pos, assign_pos, end_pos)) {
 			return 0;
 		}
-		
+
 		/* Need to remove that LOAD_* opcode and emit an assignment. */
 		op = OP_UNKNOWN;
 		switch (OPCODE_OP (last)) {
@@ -2847,7 +2847,7 @@ parser_compound_statement (parser_t *parser, code_t *code,
 {
 	/* Skip '{'. */
 	parser_next_token (parser);
-	
+
 	/* Check empty body. */
 	if (!parser_check (parser, TOKEN ('}'))) {
 		if (!parser_block_item_list (parser, code, ut, upper_pos)) {
@@ -2887,7 +2887,7 @@ parser_parameter_declaration (parser_t *parser, code_t *code)
 	if (!parser_check (parser, TOKEN_IDENTIFIER)) {
 		return parser_syntax_error (parser, "missing identifier name.");
 	}
-	
+
 	/* Insert a default value for this parameter, this is used while
 	 * checking arguments. */
 	/* Insert parameter local var and const. */
@@ -3414,7 +3414,7 @@ parser_check_binary (const char *path)
 
 		return -1;
 	}
-	
+
 	res = misc_file_is_older (path, f);
 	pool_free ((void *) f);
 
