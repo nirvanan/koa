@@ -169,6 +169,12 @@ primary-expression:
 	string-literal
 	( expression )
 
+constant:
+	integer-constant
+	floating-constant
+	character-constant
+	null
+
 expression:
 	assignment-expression
 	assignment-expression , expression
