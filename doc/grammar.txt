@@ -19,6 +19,14 @@ type-specifier:
 	bool
 	char
 	int
+	int8
+	uint8
+	int16
+	uint16
+	int32
+	uint32
+	int64
+	uint64
 	long
 	float
 	double
@@ -26,6 +34,7 @@ type-specifier:
 	vec
 	dict
 	func
+	void
 	struct identifier
 	union identifier
 
