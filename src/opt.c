@@ -45,7 +45,7 @@ static opt_config_t g_all_opts[] = {
     {NULL, NULL, NULL, 0}
 };
 
-static void
+static int
 opt_check_path ()
 {
     opt_config_t *cu;
@@ -57,10 +57,12 @@ opt_check_path ()
                 error ("koa: need input-file when %s or %s option specified.", cu->opt, cu->long_opt);
                 misc_print_usage (1);
 
-                return;
+                return 0;
             }
         }
     }
+
+    return 1;
 }
 
 opt_t *
@@ -106,7 +108,9 @@ opt_parse_opts (int args, char *argv[])
         cur++;
     }
 
-    opt_check_path ();
+    if (!opt_check_path ()) {
+        return NULL;
+    }
 
     return &g_opts;
 }
