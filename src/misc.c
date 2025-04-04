@@ -43,6 +43,7 @@ Usage: koa [OPTION]... [INPUT-FILE]\n\n\
   -v, --version\t\toutput version information\n\
   -p, --print\t\tprint op codes of input-file\n\
   -h, --help\t\toutput this usage information\n\n\
+If input-file is not specified, koa will enter interactive mode.\n\n\
 Copyright (C) 2018 Gordin Li.\n\
 This is free software; see the source for copying conditions.\n\
 please send bug report to <%s>.\n\

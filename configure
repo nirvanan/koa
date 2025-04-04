@@ -4912,6 +4912,12 @@ then :
   printf "%s\n" "#define HAVE_PTHREAD_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "unistd.h" "ac_cv_header_unistd_h" "$ac_includes_default"
+if test "x$ac_cv_header_unistd_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_UNISTD_H 1" >>confdefs.h
+
+fi
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -5128,6 +5134,18 @@ printf "%s\n" "#define _UINT64_T 1" >>confdefs.h
 
 
 printf "%s\n" "#define uint64_t $ac_cv_c_uint64_t" >>confdefs.h
+;;
+  esac
+
+ac_fn_c_find_uintX_t "$LINENO" "8" "ac_cv_c_uint8_t"
+case $ac_cv_c_uint8_t in #(
+  no|yes) ;; #(
+  *)
+
+printf "%s\n" "#define _UINT8_T 1" >>confdefs.h
+
+
+printf "%s\n" "#define uint8_t $ac_cv_c_uint8_t" >>confdefs.h
 ;;
   esac
 
