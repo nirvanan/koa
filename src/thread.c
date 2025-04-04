@@ -26,6 +26,7 @@
 #include "str.h"
 #include "dict.h"
 #include "object.h"
+#include "intobject.h"
 #include "longobject.h"
 #include "uint64object.h"
 #include "strobject.h"
@@ -196,6 +197,7 @@ thread_join (long th)
 	object_t *context_obj;
 	object_t *return_obj;
 	thread_context_t *context;
+	int status;
 
 	th_obj = longobject_new (th, NULL);
 	context_obj = object_index (g_thread_context, th_obj);
@@ -206,7 +208,13 @@ thread_join (long th)
 	}
 
 	/* Wait for child thread to exit. */
-	UNUSED (_thread_join (th));
+	status = _thread_join (th);
+	if (status != 0) {
+		error ("failed to join child: %ld.", th);
+		object_free (th_obj);
+
+		return NULL;
+	}
 
 	return_obj = NULL;
 	context = (thread_context_t *) uint64object_get_value (context_obj);
@@ -228,10 +236,24 @@ thread_join (long th)
 	return return_obj;
 }
 
-void
+object_t *
+thread_detach (long th)
+{
+	int status;
+
+	status = _thread_detach (th);
+
+	return intobject_new (status, NULL);
+}
+
+object_t *
 thread_cancel (long th)
 {
-	_thread_cancel (th);
+	int status;
+
+	status = _thread_cancel (th);
+
+	return intobject_new (status, NULL);
 }
 
 void

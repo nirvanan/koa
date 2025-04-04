@@ -37,28 +37,24 @@ _thread_create (void *(*func)(void *), void *arg)
 		return 0;
 	}
 
-	/* Detach this new thread. */
-	status = pthread_detach (th);
-	if (status != 0) {
-		status = pthread_cancel (th);
-		if (status != 0) {
-			fatal_error ("failed to cancel thread when detach failed.");
-		}
-	}
-
 	return (long) th;
 }
 
-static void
+static int
 _thread_join (long th)
 {
-	UNUSED (pthread_join ((pthread_t) th, NULL));
+	return pthread_join ((pthread_t) th, NULL);
 }
 
-static void
+static int
+_thread_detach (long th) {
+	return pthread_detach ((pthread_t) th);
+}
+
+static int
 _thread_cancel (long th)
 {
-    UNUSED (pthread_cancel ((pthread_t) th));
+    return pthread_cancel ((pthread_t) th);
 }
 
 static void

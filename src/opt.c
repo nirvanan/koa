@@ -60,6 +60,8 @@ opt_check_path ()
                 return 0;
             }
         }
+
+        cu++;
     }
 
     return 1;

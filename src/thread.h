@@ -31,7 +31,10 @@ thread_create (code_t *code, object_t *args);
 object_t *
 thread_join (long tr);
 
-void
+object_t *
+thread_detach (long tr);
+
+object_t *
 thread_cancel (long tr);
 
 void
