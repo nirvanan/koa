@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -37,13 +38,30 @@
 #define PACKAGE_BUGREPORT "nirvanan@live.cn"
 #endif
 
+static char *g_usage_str = "\
+Usage: koa [OPTION]... [INPUT-FILE]\n\n\
+  -v, --version\t\toutput version information\n\
+  -p, --print\t\tprint op codes of input-file\n\
+  -h, --help\t\toutput this usage information\n\n\
+Copyright (C) 2018 Gordin Li.\n\
+This is free software; see the source for copying conditions.\n\
+please send bug report to <%s>.\n\
+";
+
+static char *g_version_str = "\
+%s\n\
+Copyright (C) 2018 Gordin Li.\n\
+This is free software; see the source for copying conditions.\n\
+please send bug report to <%s>.\n\
+";
+
 int
 misc_check_source_extension (const char *filename)
 {
 	size_t len;
 
 	len = strlen (filename);
-	if (len < 2 || filename[len - 2] != '.' || filename[len - 1] != 'k') {
+	if (len < 2 || filename[len - 2] != '.' || filename[len - 1] != KOA_SOURCE_EXTENSION) {
 		return 0;
 	}
 
@@ -96,4 +114,26 @@ const char *
 misc_get_bugreport ()
 {
 	return PACKAGE_BUGREPORT;
+}
+
+void
+misc_print_usage (int status)
+{
+	FILE *out;
+
+	out = status? stderr: stdout;
+	fprintf (out, g_usage_str, PACKAGE_BUGREPORT);
+}
+
+void
+misc_print_opt_error (const char *opt)
+{
+	fprintf (stderr, "koa: invalid option %s\n", opt);
+	misc_print_usage (1);
+}
+
+void
+misc_print_version ()
+{
+	fprintf (stdout, g_version_str, PACKAGE_STRING, PACKAGE_BUGREPORT);
 }

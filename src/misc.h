@@ -38,4 +38,13 @@ misc_get_package_full ();
 const char *
 misc_get_bugreport ();
 
+void
+misc_print_usage ();
+
+void
+misc_print_opt_error (const char *opt);
+
+void
+misc_print_version ();
+
 #endif /* MISC_H */

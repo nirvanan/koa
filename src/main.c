@@ -22,21 +22,16 @@
 #include <stdlib.h>
 #include "pool.h"
 #include "object.h"
-#include "intobject.h"
-#include "strobject.h"
-#include "vecobject.h"
-#include "dictobject.h"
-#include "doubleobject.h"
-#include "charobject.h"
-#include "str.h"
 #include "lex.h"
 #include "code.h"
-#include "parser.h"
 #include "interpreter.h"
 #include "builtin.h"
 #include "cmdline.h"
+#include "parser.h"
 #include "gc.h"
 #include "thread.h"
+#include "opt.h"
+#include "misc.h"
 
 void koa_init ()
 {
@@ -59,46 +54,46 @@ void koa_init ()
 
 int main(int argc, char *argv[])
 {
+	opt_t *opts;
+
+	opts = opt_parse_opts (argc, argv);
+	if (opts == NULL) {
+		return 0;
+	}
+
+	if (opts->help) {
+		misc_print_usage (0);
+
+		/* Quit after printing. */
+		return 0;
+	}
+	if (opts->version) {
+		misc_print_version ();
+
+		/* Quit after printing. */
+		return 0;
+	}
+
 	koa_init ();
-	int c = 0;
 
-	//cmdline_start ();
-	while (0) {
-		object_t *val = dictobject_new (NULL);
-		object_t *idx = intobject_new (2, NULL);
-		object_t *str = charobject_new ('f', NULL);
+	if (opts->print) {
+		code_t *code;
 
-		object_ipindex (val, idx, str);
-		object_print (val);
-		object_free (val);
-		c++;
-		if (c % 600000 == 0)
-			printf ("%d\n", c);
+		code = parser_load_file (opts->path);
+		if (code == NULL) {
+			return 0;
+		}
+		code_print (code);
+
+		/* Quit after printing. */
+		return 0;
 	}
 
-	while (1) {
-		code_t *code = parser_load_file ("/home/nirvanan/test.k");
-		if (code) {
-			code_print (code);
-			//object_t *str = code_binary (code);
-			//object_t *str = vecobject_new (40000, NULL);
-			//object_t *bin = object_binary (str);
-			//code_save_binary (code);
-			code_free (code);
-			//object_free (str);
-			//object_free (bin);
-		}
-		else {
-			printf ("wrong\n");
-		}
-		//system("rm /home/likehui/test.b");
-		break;
+	if (opts->path[0] != '\0') {
+		interpreter_execute (opts->path);
 	}
-
-	int e = -5;
-	while (e--) {
-		interpreter_execute ("/home/nirvanan/test.k");
-			printf ("done %d\n", e);
+	else {
+		cmdline_start ();
 	}
 
 	return 0;

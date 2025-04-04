@@ -1,5 +1,5 @@
 /*
- * koa.h
+ * opt.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,17 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef KOA_H
-#define KOA_H
+#ifndef OPT_H
+#define OPT_H
 
-#define UNUSED(x) (void)(x)
+#include "koa.h"
 
-/* This type can hold all integer values of koa objects. */
-typedef long long integer_value_t;
+#define MAX_PATH_LENGTH 1000
 
-/* This type can hold all floating values of koa objects. */
-typedef double floating_value_t;
+typedef struct opt_s {
+    int help;
+    int print;
+    int version;
+    char path[MAX_PATH_LENGTH + 1];
+} opt_t;
 
-#define KOA_SOURCE_EXTENSION 'k'
+opt_t *
+opt_parse_opts (int args, char *argv[]);
 
-#endif /* KOA_H */
+#endif /* OPT_H */

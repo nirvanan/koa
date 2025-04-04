@@ -63,6 +63,8 @@ nullobject.c \
 nullobject.h \
 object.c \
 object.h \
+opt.c \
+opt.h \
 parser.c \
 parser.h \
 pool.c \

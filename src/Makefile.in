@@ -113,7 +113,7 @@ am_koa_OBJECTS = boolobject.$(OBJEXT) builtin.$(OBJEXT) \
 	int64object.$(OBJEXT) int8object.$(OBJEXT) lex.$(OBJEXT) \
 	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
 	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
-	object.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
+	object.$(OBJEXT) opt.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
 	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
 	structobject.$(OBJEXT) thread.$(OBJEXT) uint16object.$(OBJEXT) \
 	uint32object.$(OBJEXT) uint64object.$(OBJEXT) \
@@ -151,13 +151,13 @@ am__depfiles_remade = ./$(DEPDIR)/boolobject.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/longobject.Po ./$(DEPDIR)/main.Po \
 	./$(DEPDIR)/misc.Po ./$(DEPDIR)/modobject.Po \
 	./$(DEPDIR)/nullobject.Po ./$(DEPDIR)/object.Po \
-	./$(DEPDIR)/parser.Po ./$(DEPDIR)/pool.Po ./$(DEPDIR)/stack.Po \
-	./$(DEPDIR)/str.Po ./$(DEPDIR)/strobject.Po \
-	./$(DEPDIR)/structobject.Po ./$(DEPDIR)/thread.Po \
-	./$(DEPDIR)/uint16object.Po ./$(DEPDIR)/uint32object.Po \
-	./$(DEPDIR)/uint64object.Po ./$(DEPDIR)/uint8object.Po \
-	./$(DEPDIR)/unionobject.Po ./$(DEPDIR)/vec.Po \
-	./$(DEPDIR)/vecobject.Po
+	./$(DEPDIR)/opt.Po ./$(DEPDIR)/parser.Po ./$(DEPDIR)/pool.Po \
+	./$(DEPDIR)/stack.Po ./$(DEPDIR)/str.Po \
+	./$(DEPDIR)/strobject.Po ./$(DEPDIR)/structobject.Po \
+	./$(DEPDIR)/thread.Po ./$(DEPDIR)/uint16object.Po \
+	./$(DEPDIR)/uint32object.Po ./$(DEPDIR)/uint64object.Po \
+	./$(DEPDIR)/uint8object.Po ./$(DEPDIR)/unionobject.Po \
+	./$(DEPDIR)/vec.Po ./$(DEPDIR)/vecobject.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -368,6 +368,8 @@ nullobject.c \
 nullobject.h \
 object.c \
 object.h \
+opt.c \
+opt.h \
 parser.c \
 parser.h \
 pool.c \
@@ -514,6 +516,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/modobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nullobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stack.Po@am__quote@ # am--include-marker
@@ -705,6 +708,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/modobject.Po
 	-rm -f ./$(DEPDIR)/nullobject.Po
 	-rm -f ./$(DEPDIR)/object.Po
+	-rm -f ./$(DEPDIR)/opt.Po
 	-rm -f ./$(DEPDIR)/parser.Po
 	-rm -f ./$(DEPDIR)/pool.Po
 	-rm -f ./$(DEPDIR)/stack.Po
@@ -794,6 +798,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/modobject.Po
 	-rm -f ./$(DEPDIR)/nullobject.Po
 	-rm -f ./$(DEPDIR)/object.Po
+	-rm -f ./$(DEPDIR)/opt.Po
 	-rm -f ./$(DEPDIR)/parser.Po
 	-rm -f ./$(DEPDIR)/pool.Po
 	-rm -f ./$(DEPDIR)/stack.Po

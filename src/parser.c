@@ -3375,7 +3375,7 @@ static int
 parser_check_source (const char *path)
 {
 	if (!misc_check_source_extension (path)) {
-		error ("source file extension must be \".k\".");
+		error ("source file extension must be \".%c\".", KOA_SOURCE_EXTENSION);
 
 		return 0;
 	}
