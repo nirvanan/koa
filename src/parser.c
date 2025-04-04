@@ -3375,13 +3375,13 @@ static int
 parser_check_source (const char *path)
 {
 	if (!misc_check_source_extension (path)) {
-		error ("source file extension must be \".%c\".", KOA_SOURCE_EXTENSION);
+		error ("koa: source file extension must be \".%c\".", KOA_SOURCE_EXTENSION);
 
 		return 0;
 	}
 
 	if (!misc_check_file_access (path, 1, 0)) {
-		error ("file doesn't exist or no access: %s.", path);
+		error ("koa: file doesn't exist or no access: %s.", path);
 
 		return 0;
 	}

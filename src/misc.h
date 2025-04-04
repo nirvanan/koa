@@ -42,9 +42,6 @@ void
 misc_print_usage (int status);
 
 void
-misc_print_opt_error (const char *opt);
-
-void
 misc_print_version ();
 
 #endif /* MISC_H */

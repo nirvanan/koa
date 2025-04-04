@@ -127,13 +127,6 @@ misc_print_usage (int status)
 }
 
 void
-misc_print_opt_error (const char *opt)
-{
-	fprintf (stderr, "koa: invalid option %s\n", opt);
-	misc_print_usage (1);
-}
-
-void
 misc_print_version ()
 {
 	fprintf (stdout, g_version_str, PACKAGE_STRING, PACKAGE_BUGREPORT);

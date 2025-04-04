@@ -35,17 +35,37 @@ typedef struct opt_config_s {
     const char *long_opt;
     int *flag; /* Flag to set. */
     int quit; /* If set, no more opts will be parsed. */
+    int check_path; /* Need path specified if opt is given. */
 } opt_config_t;
 
 static opt_config_t g_all_opts[] = {
-    {"-p", "--print", &g_opts.print, 0},
-    {"-h", "--help", &g_opts.help, 1},
-    {"-v", "--version", &g_opts.version, 1},
+    {"-p", "--print", &g_opts.print, 0, 1},
+    {"-h", "--help", &g_opts.help, 1, 0},
+    {"-v", "--version", &g_opts.version, 1, 0},
     {NULL, NULL, NULL, 0}
 };
 
+static void
+opt_check_path ()
+{
+    opt_config_t *cu;
+
+    cu = &g_all_opts[0];
+    while (cu->opt != NULL) {
+        if (*cu->flag && cu->check_path) {
+            if (g_opts.path[0] == '\0') {
+                error ("koa: need input-file when %s or %s option specified.", cu->opt, cu->long_opt);
+                misc_print_usage (1);
+
+                return;
+            }
+        }
+    }
+}
+
 opt_t *
-opt_parse_opts (int args, char *argv[]) {
+opt_parse_opts (int args, char *argv[])
+{
     int cur;
 
     cur = 1;
@@ -77,13 +97,16 @@ opt_parse_opts (int args, char *argv[]) {
 
         /* Meet an invalid opt, show an error message and print usage. */
         if (!hit) {
-            misc_print_opt_error (argv[cur]);
+            error ("koa: invalid option %s", argv[cur]);
+            misc_print_usage (1);
 
             return NULL;
         }
 
         cur++;
     }
+
+    opt_check_path ();
 
     return &g_opts;
 }
