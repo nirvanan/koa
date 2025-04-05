@@ -39,8 +39,13 @@
 	TOKEN_TYPE((x))==TOKEN_NULL||\
 	TOKEN_TYPE((x))==TOKEN_BOOL||\
 	TOKEN_TYPE((x))==TOKEN_CHAR||\
+	TOKEN_TYPE((x))==TOKEN_UCHAR||\
+	TOKEN_TYPE((x))==TOKEN_SHORT||\
+	TOKEN_TYPE((x))==TOKEN_USHORT||\
 	TOKEN_TYPE((x))==TOKEN_INT||\
+	TOKEN_TYPE((x))==TOKEN_UINT||\
 	TOKEN_TYPE((x))==TOKEN_LONG||\
+	TOKEN_TYPE((x))==TOKEN_ULONG||\
 	TOKEN_TYPE((x))==TOKEN_INT8||\
 	TOKEN_TYPE((x))==TOKEN_UINT8||\
 	TOKEN_TYPE((x))==TOKEN_INT16||\
@@ -103,8 +108,13 @@ typedef enum token_type_e
 	TOKEN_NULL, /* Type-specifier: null. */
 	TOKEN_BOOL, /* Type-specifier: bool. */
 	TOKEN_CHAR, /* Type-specifier: char. */
+	TOKEN_UCHAR, /* Type-specifier: uchar. */
+	TOKEN_SHORT, /* Type-specifier: short. */
+	TOKEN_USHORT, /* Type-specifier: ushort. */
 	TOKEN_INT, /* Type-specifier: int. */
+	TOKEN_UINT, /* Type-specifier: uint. */
 	TOKEN_LONG, /* Type-specifier: long. */
+	TOKEN_ULONG, /* Type-specifier: ulong. */
 	TOKEN_INT8, /* Type-specifier: int8. */
 	TOKEN_UINT8, /* Type-specifier: uint8. */
 	TOKEN_INT16, /* Type-specifier: int16. */

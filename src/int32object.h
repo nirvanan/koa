@@ -42,7 +42,4 @@ int32object_new (int32_t val, void *udata);
 int32_t
 int32object_get_value (object_t *obj);
 
-void
-int32object_init ();
-
 #endif /* INT32OBJECT_H */

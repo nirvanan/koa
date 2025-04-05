@@ -69,6 +69,8 @@ parser.c \
 parser.h \
 pool.c \
 pool.h \
+shortobject.c \
+shortobject.h \
 stack.c \
 stack.h \
 str.c \
@@ -80,6 +82,8 @@ structobject.h \
 thread.c \
 thread.h \
 thread_pthread.h \
+ucharobject.c \
+ucharobject.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \
@@ -88,8 +92,14 @@ uint64object.c \
 uint64object.h \
 uint8object.c \
 uint8object.h \
+uintobject.c \
+uintobject.h \
+ulongobject.c \
+ulongobject.h \
 unionobject.c \
 unionobject.h \
+ushortobject.c \
+ushortobject.h \
 vec.c \
 vec.h \
 vecobject.c \

@@ -1,5 +1,5 @@
 /*
- * uint8object.h
+ * shortobject.h
  * This file is part of koa
  *
  * Copyright (C) 2018 - Gordon Li
@@ -18,28 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UINT8OBJECT_H
-#define UINT8OBJECT_H
+#ifndef SHORTOBJECT_H
+#define SHORTOBJECT_H
 
 #include "koa.h"
 #include "object.h"
 
-typedef struct uint8object_s
+typedef struct shortobject_s
 {
 	object_head_t head;
-	uint8_t val;
-} uint8object_t;
+	short val;
+} shortobject_t;
 
 object_t *
-uint8object_load_binary (FILE *f);
+shortobject_load_binary (FILE *f);
 
 object_t *
-uint8object_load_buf (const char **buf, size_t *len);
+shortobject_load_buf (const char **buf, size_t *len);
 
 object_t *
-uint8object_new (uint8_t val, void *udata);
+shortobject_new (short val, void *udata);
 
-uint8_t
-uint8object_get_value (object_t *obj);
+short
+shortobject_get_value (object_t *obj);
 
-#endif /* UINT8OBJECT_H */
+#endif /* SHORTOBJECT_H */

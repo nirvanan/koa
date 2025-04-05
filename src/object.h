@@ -36,8 +36,13 @@
 
 #define INTEGER_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL||\
 	(x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_UCHAR||\
+	(x)->head.type==OBJECT_TYPE_SHORT||\
+	(x)->head.type==OBJECT_TYPE_USHORT||\
 	(x)->head.type==OBJECT_TYPE_INT||\
+	(x)->head.type==OBJECT_TYPE_UINT||\
 	(x)->head.type==OBJECT_TYPE_LONG||\
+	(x)->head.type==OBJECT_TYPE_ULONG||\
 	(x)->head.type==OBJECT_TYPE_INT8||\
 	(x)->head.type==OBJECT_TYPE_UINT8||\
 	(x)->head.type==OBJECT_TYPE_INT16||\
@@ -49,6 +54,7 @@
 
 #define SIGNED_TYPE(x) ((x)->head.type==OBJECT_TYPE_CHAR||\
 	(x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_SHORT||\
 	(x)->head.type==OBJECT_TYPE_INT||\
 	(x)->head.type==OBJECT_TYPE_LONG||\
 	(x)->head.type==OBJECT_TYPE_INT8||\
@@ -56,8 +62,11 @@
 	(x)->head.type==OBJECT_TYPE_INT32||\
 	(x)->head.type==OBJECT_TYPE_INT64||)
 
-#define UNSIGNED_TYPE (x) ((x)->head.type==OBJECT_TYPE_UINT8||\
-	(x)->head.type==OBJECT_TYPE_UINT16||\
+#define UNSIGNED_TYPE (x) ((x)->head.type==OBJECT_TYPE_UCHAR||\
+	(x)->head.type==OBJECT_TYPE_USHORT||\
+	(x)->head.type==OBJECT_TYPE_UINT||\
+	(x)->head.type==OBJECT_TYPE_ULONG||\
+	(x)->head.type==OBJECT_TYPE_UINT8||\
 	(x)->head.type==OBJECT_TYPE_UINT32||\
 	(x)->head.type==OBJECT_TYPE_UINT64)
 
@@ -66,8 +75,13 @@
 
 #define NUMBERICAL_TYPE(x) ((x)->head.type==OBJECT_TYPE_BOOL||\
 	(x)->head.type==OBJECT_TYPE_CHAR||\
+	(x)->head.type==OBJECT_TYPE_UCHAR||\
+	(x)->head.type==OBJECT_TYPE_SHORT||\
+	(x)->head.type==OBJECT_TYPE_USHORT||\
 	(x)->head.type==OBJECT_TYPE_INT||\
+	(x)->head.type==OBJECT_TYPE_UINT||\
 	(x)->head.type==OBJECT_TYPE_LONG||\
+	(x)->head.type==OBJECT_TYPE_ULONG||\
 	(x)->head.type==OBJECT_TYPE_INT8||\
 	(x)->head.type==OBJECT_TYPE_UINT8||\
 	(x)->head.type==OBJECT_TYPE_INT16||\
@@ -85,8 +99,13 @@
 
 #define CAST_TYPE(x) ((x)==OBJECT_TYPE_BOOL||\
 	(x)==OBJECT_TYPE_CHAR||\
+	(x)==OBJECT_TYPE_UCHAR||\
+	(x)==OBJECT_TYPE_SHORT||\
+	(x)==OBJECT_TYPE_USHORT||\
 	(x)==OBJECT_TYPE_INT||\
+	(x)==OBJECT_TYPE_UINT||\
 	(x)==OBJECT_TYPE_LONG||\
+	(x)==OBJECT_TYPE_ULONG||\
 	(x)==OBJECT_TYPE_INT8||\
 	(x)==OBJECT_TYPE_UINT8||\
 	(x)==OBJECT_TYPE_INT16||\
@@ -141,8 +160,13 @@
 #define OBJECT_IS_NULL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_NULL)
 #define OBJECT_IS_BOOL(x) (OBJECT_TYPE((x))==OBJECT_TYPE_BOOL)
 #define OBJECT_IS_CHAR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_CHAR)
+#define OBJECT_IS_UCHAR(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UCHAR)
+#define OBJECT_IS_SHORT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_SHORT)
+#define OBJECT_IS_USHORT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_USHORT)
 #define OBJECT_IS_INT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT)
+#define OBJECT_IS_UINT(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UINT)
 #define OBJECT_IS_LONG(x) (OBJECT_TYPE((x))==OBJECT_TYPE_LONG)
+#define OBJECT_IS_ULONG(x) (OBJECT_TYPE((x))==OBJECT_TYPE_ULONG)
 #define OBJECT_IS_INT8(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT8)
 #define OBJECT_IS_UINT8(x) (OBJECT_TYPE((x))==OBJECT_TYPE_UINT8)
 #define OBJECT_IS_INT16(x) (OBJECT_TYPE((x))==OBJECT_TYPE_INT16)
@@ -172,25 +196,30 @@ typedef enum object_type_e
 	OBJECT_TYPE_NULL = 0x01,
 	OBJECT_TYPE_BOOL = 0x02,
 	OBJECT_TYPE_CHAR = 0x03,
-	OBJECT_TYPE_INT = 0x04,
-	OBJECT_TYPE_LONG = 0x05,
-	OBJECT_TYPE_INT8 = 0x06,
-	OBJECT_TYPE_UINT8 = 0x07,
-	OBJECT_TYPE_INT16 = 0x08,
-	OBJECT_TYPE_UINT16 = 0x09,
-	OBJECT_TYPE_INT32 = 0x0a,
-	OBJECT_TYPE_UINT32 = 0x0b,
-	OBJECT_TYPE_INT64 = 0x0c,
-	OBJECT_TYPE_UINT64 = 0x0d,
-	OBJECT_TYPE_FLOAT = 0x0e,
-	OBJECT_TYPE_DOUBLE = 0x0f,
-	OBJECT_TYPE_STR = 0x10,
-	OBJECT_TYPE_VEC = 0x11,
-	OBJECT_TYPE_DICT = 0x12,
-	OBJECT_TYPE_FUNC = 0x13,
-	OBJECT_TYPE_MOD = 0x14,
-	OBJECT_TYPE_FRAME = 0x15,
-	OBJECT_TYPE_EXCEPTION = 0x16,
+	OBJECT_TYPE_UCHAR = 0x04,
+	OBJECT_TYPE_SHORT = 0x05,
+	OBJECT_TYPE_USHORT = 0x06,
+	OBJECT_TYPE_INT = 0x07,
+	OBJECT_TYPE_UINT = 0x08,
+	OBJECT_TYPE_LONG = 0x09,
+	OBJECT_TYPE_ULONG = 0x0a,
+	OBJECT_TYPE_INT8 = 0x0b,
+	OBJECT_TYPE_UINT8 = 0x0c,
+	OBJECT_TYPE_INT16 = 0x0d,
+	OBJECT_TYPE_UINT16 = 0x0e,
+	OBJECT_TYPE_INT32 = 0x0f,
+	OBJECT_TYPE_UINT32 = 0x10,
+	OBJECT_TYPE_INT64 = 0x11,
+	OBJECT_TYPE_UINT64 = 0x12,
+	OBJECT_TYPE_FLOAT = 0x13,
+	OBJECT_TYPE_DOUBLE = 0x14,
+	OBJECT_TYPE_STR = 0x15,
+	OBJECT_TYPE_VEC = 0x16,
+	OBJECT_TYPE_DICT = 0x17,
+	OBJECT_TYPE_FUNC = 0x18,
+	OBJECT_TYPE_MOD = 0x19,
+	OBJECT_TYPE_FRAME = 0x1a,
+	OBJECT_TYPE_EXCEPTION = 0x1b,
 	/* This value is the type of the first struct type of code object. */
 	OBJECT_TYPE_STRUCT = 0xff,
 	/* Similar to struct, this is the first type of all unions. */

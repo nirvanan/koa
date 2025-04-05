@@ -42,7 +42,4 @@ uint64object_new (uint64_t val, void *udata);
 uint64_t
 uint64object_get_value (object_t *obj);
 
-void
-uint64object_init ();
-
 #endif /* UINT64OBJECT_H */

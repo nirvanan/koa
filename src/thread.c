@@ -27,7 +27,7 @@
 #include "dict.h"
 #include "object.h"
 #include "intobject.h"
-#include "longobject.h"
+#include "ulongobject.h"
 #include "uint64object.h"
 #include "strobject.h"
 #include "vecobject.h"
@@ -181,7 +181,7 @@ thread_create (code_t *code, object_t *args)
 
 		return 0L;
 	}
-	th_obj = longobject_new (th, NULL);
+	th_obj = ulongobject_new (th, NULL);
 	context_obj = uint64object_new ((uint64_t) context, NULL);
 	UNUSED (object_ipindex (g_thread_context, th_obj, context_obj));
 
@@ -199,7 +199,7 @@ thread_join (long th)
 	thread_context_t *context;
 	int status;
 
-	th_obj = longobject_new (th, NULL);
+	th_obj = ulongobject_new (th, NULL);
 	context_obj = object_index (g_thread_context, th_obj);
 	if (context_obj == NULL) {
 		error ("the target thread is not a direct child: %ld.", th);

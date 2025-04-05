@@ -42,7 +42,4 @@ int8object_new (int8_t val, void *udata);
 int8_t
 int8object_get_value (object_t *obj);
 
-void
-int8object_init ();
-
 #endif /* INT8OBJECT_H */

@@ -29,8 +29,13 @@
 #include "nullobject.h"
 #include "boolobject.h"
 #include "charobject.h"
+#include "ucharobject.h"
+#include "shortobject.h"
+#include "ushortobject.h"
 #include "intobject.h"
+#include "uintobject.h"
 #include "longobject.h"
+#include "ulongobject.h"
 #include "int8object.h"
 #include "uint8object.h"
 #include "int16object.h"
@@ -66,8 +71,13 @@ static const char *g_type_name[] =
 	"null",
 	"bool",
 	"char",
+	"uchar",
+	"short",
+	"ushort",
 	"int",
+	"uint",
 	"long",
+	"ulong",
 	"int8",
 	"uint8",
 	"int16",
@@ -151,10 +161,20 @@ object_get_integer (object_t *obj)
 			return (integer_value_t) boolobject_get_value (obj);
 		case OBJECT_TYPE_CHAR:
 			return (integer_value_t) charobject_get_value (obj);
+		case OBJECT_TYPE_UCHAR:
+			return (integer_value_t) ucharobject_get_value (obj);
+		case OBJECT_TYPE_SHORT:
+			return (integer_value_t) shortobject_get_value (obj);
+		case OBJECT_TYPE_USHORT:
+			return (integer_value_t) ushortobject_get_value (obj);
 		case OBJECT_TYPE_INT:
 			return (integer_value_t) intobject_get_value (obj);
+		case OBJECT_TYPE_UINT:
+			return (integer_value_t) uintobject_get_value (obj);
 		case OBJECT_TYPE_LONG:
 			return (integer_value_t) longobject_get_value (obj);
+		case OBJECT_TYPE_ULONG:
+			return (integer_value_t) ulongobject_get_value (obj);
 		case OBJECT_TYPE_INT8:
 			return (integer_value_t) int8object_get_value (obj);
 		case OBJECT_TYPE_UINT8:
@@ -215,10 +235,20 @@ object_cast (object_t *obj, object_type_t type)
 				return boolobject_new ((bool) val, NULL);
 			case OBJECT_TYPE_CHAR:
 				return charobject_new ((char) val, NULL);
+			case OBJECT_TYPE_UCHAR:
+				return ucharobject_new ((unsigned char) val, NULL);
+			case OBJECT_TYPE_SHORT:
+				return shortobject_new ((short) val, NULL);
+			case OBJECT_TYPE_USHORT:
+				return ushortobject_new ((unsigned short int) val, NULL);
 			case OBJECT_TYPE_INT:
 				return intobject_new ((int) val, NULL);
+			case OBJECT_TYPE_UINT:
+				return uintobject_new ((unsigned int) val, NULL);
 			case OBJECT_TYPE_LONG:
 				return longobject_new ((long) val, NULL);
+			case OBJECT_TYPE_ULONG:
+				return ulongobject_new ((unsigned long int) val, NULL);
 			case OBJECT_TYPE_INT8:
 				return int8object_new ((int8_t) val, NULL);
 			case OBJECT_TYPE_UINT8:
@@ -253,10 +283,20 @@ object_cast (object_t *obj, object_type_t type)
 				return boolobject_new ((bool) val, NULL);
 			case OBJECT_TYPE_CHAR:
 				return charobject_new ((char) val, NULL);
+			case OBJECT_TYPE_UCHAR:
+				return ucharobject_new ((unsigned char) val, NULL);
+			case OBJECT_TYPE_SHORT:
+				return shortobject_new ((short) val, NULL);
+			case OBJECT_TYPE_USHORT:
+				return ushortobject_new ((unsigned short int) val, NULL);
 			case OBJECT_TYPE_INT:
 				return intobject_new ((int) val, NULL);
+			case OBJECT_TYPE_UINT:
+				return uintobject_new ((unsigned int) val, NULL);
 			case OBJECT_TYPE_LONG:
 				return longobject_new ((long) val, NULL);
+			case OBJECT_TYPE_ULONG:
+				return ulongobject_new ((unsigned long int) val, NULL);
 			case OBJECT_TYPE_INT8:
 				return int8object_new ((int8_t) val, NULL);
 			case OBJECT_TYPE_UINT8:

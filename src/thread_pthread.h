@@ -26,7 +26,7 @@
 #include "koa.h"
 #include "error.h"
 
-static long
+static unsigned long int
 _thread_create (void *(*func)(void *), void *arg)
 {
 	pthread_t th;
@@ -37,7 +37,7 @@ _thread_create (void *(*func)(void *), void *arg)
 		return 0;
 	}
 
-	return (long) th;
+	return (unsigned long int) th;
 }
 
 static int

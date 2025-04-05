@@ -114,11 +114,13 @@ am_koa_OBJECTS = boolobject.$(OBJEXT) builtin.$(OBJEXT) \
 	list.$(OBJEXT) longobject.$(OBJEXT) main.$(OBJEXT) \
 	modobject.$(OBJEXT) misc.$(OBJEXT) nullobject.$(OBJEXT) \
 	object.$(OBJEXT) opt.$(OBJEXT) parser.$(OBJEXT) pool.$(OBJEXT) \
-	stack.$(OBJEXT) str.$(OBJEXT) strobject.$(OBJEXT) \
-	structobject.$(OBJEXT) thread.$(OBJEXT) uint16object.$(OBJEXT) \
+	shortobject.$(OBJEXT) stack.$(OBJEXT) str.$(OBJEXT) \
+	strobject.$(OBJEXT) structobject.$(OBJEXT) thread.$(OBJEXT) \
+	ucharobject.$(OBJEXT) uint16object.$(OBJEXT) \
 	uint32object.$(OBJEXT) uint64object.$(OBJEXT) \
-	uint8object.$(OBJEXT) unionobject.$(OBJEXT) vec.$(OBJEXT) \
-	vecobject.$(OBJEXT)
+	uint8object.$(OBJEXT) uintobject.$(OBJEXT) \
+	ulongobject.$(OBJEXT) unionobject.$(OBJEXT) \
+	ushortobject.$(OBJEXT) vec.$(OBJEXT) vecobject.$(OBJEXT)
 koa_OBJECTS = $(am_koa_OBJECTS)
 koa_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -152,12 +154,15 @@ am__depfiles_remade = ./$(DEPDIR)/boolobject.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/misc.Po ./$(DEPDIR)/modobject.Po \
 	./$(DEPDIR)/nullobject.Po ./$(DEPDIR)/object.Po \
 	./$(DEPDIR)/opt.Po ./$(DEPDIR)/parser.Po ./$(DEPDIR)/pool.Po \
-	./$(DEPDIR)/stack.Po ./$(DEPDIR)/str.Po \
-	./$(DEPDIR)/strobject.Po ./$(DEPDIR)/structobject.Po \
-	./$(DEPDIR)/thread.Po ./$(DEPDIR)/uint16object.Po \
+	./$(DEPDIR)/shortobject.Po ./$(DEPDIR)/stack.Po \
+	./$(DEPDIR)/str.Po ./$(DEPDIR)/strobject.Po \
+	./$(DEPDIR)/structobject.Po ./$(DEPDIR)/thread.Po \
+	./$(DEPDIR)/ucharobject.Po ./$(DEPDIR)/uint16object.Po \
 	./$(DEPDIR)/uint32object.Po ./$(DEPDIR)/uint64object.Po \
-	./$(DEPDIR)/uint8object.Po ./$(DEPDIR)/unionobject.Po \
-	./$(DEPDIR)/vec.Po ./$(DEPDIR)/vecobject.Po
+	./$(DEPDIR)/uint8object.Po ./$(DEPDIR)/uintobject.Po \
+	./$(DEPDIR)/ulongobject.Po ./$(DEPDIR)/unionobject.Po \
+	./$(DEPDIR)/ushortobject.Po ./$(DEPDIR)/vec.Po \
+	./$(DEPDIR)/vecobject.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -374,6 +379,8 @@ parser.c \
 parser.h \
 pool.c \
 pool.h \
+shortobject.c \
+shortobject.h \
 stack.c \
 stack.h \
 str.c \
@@ -385,6 +392,8 @@ structobject.h \
 thread.c \
 thread.h \
 thread_pthread.h \
+ucharobject.c \
+ucharobject.h \
 uint16object.c \
 uint16object.h \
 uint32object.c \
@@ -393,8 +402,14 @@ uint64object.c \
 uint64object.h \
 uint8object.c \
 uint8object.h \
+uintobject.c \
+uintobject.h \
+ulongobject.c \
+ulongobject.h \
 unionobject.c \
 unionobject.h \
+ushortobject.c \
+ushortobject.h \
 vec.c \
 vec.h \
 vecobject.c \
@@ -519,16 +534,21 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shortobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stack.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/structobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ucharobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint16object.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint32object.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint64object.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uint8object.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uintobject.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ulongobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unionobject.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ushortobject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vecobject.Po@am__quote@ # am--include-marker
 
@@ -711,16 +731,21 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/opt.Po
 	-rm -f ./$(DEPDIR)/parser.Po
 	-rm -f ./$(DEPDIR)/pool.Po
+	-rm -f ./$(DEPDIR)/shortobject.Po
 	-rm -f ./$(DEPDIR)/stack.Po
 	-rm -f ./$(DEPDIR)/str.Po
 	-rm -f ./$(DEPDIR)/strobject.Po
 	-rm -f ./$(DEPDIR)/structobject.Po
 	-rm -f ./$(DEPDIR)/thread.Po
+	-rm -f ./$(DEPDIR)/ucharobject.Po
 	-rm -f ./$(DEPDIR)/uint16object.Po
 	-rm -f ./$(DEPDIR)/uint32object.Po
 	-rm -f ./$(DEPDIR)/uint64object.Po
 	-rm -f ./$(DEPDIR)/uint8object.Po
+	-rm -f ./$(DEPDIR)/uintobject.Po
+	-rm -f ./$(DEPDIR)/ulongobject.Po
 	-rm -f ./$(DEPDIR)/unionobject.Po
+	-rm -f ./$(DEPDIR)/ushortobject.Po
 	-rm -f ./$(DEPDIR)/vec.Po
 	-rm -f ./$(DEPDIR)/vecobject.Po
 	-rm -f Makefile
@@ -801,16 +826,21 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/opt.Po
 	-rm -f ./$(DEPDIR)/parser.Po
 	-rm -f ./$(DEPDIR)/pool.Po
+	-rm -f ./$(DEPDIR)/shortobject.Po
 	-rm -f ./$(DEPDIR)/stack.Po
 	-rm -f ./$(DEPDIR)/str.Po
 	-rm -f ./$(DEPDIR)/strobject.Po
 	-rm -f ./$(DEPDIR)/structobject.Po
 	-rm -f ./$(DEPDIR)/thread.Po
+	-rm -f ./$(DEPDIR)/ucharobject.Po
 	-rm -f ./$(DEPDIR)/uint16object.Po
 	-rm -f ./$(DEPDIR)/uint32object.Po
 	-rm -f ./$(DEPDIR)/uint64object.Po
 	-rm -f ./$(DEPDIR)/uint8object.Po
+	-rm -f ./$(DEPDIR)/uintobject.Po
+	-rm -f ./$(DEPDIR)/ulongobject.Po
 	-rm -f ./$(DEPDIR)/unionobject.Po
+	-rm -f ./$(DEPDIR)/ushortobject.Po
 	-rm -f ./$(DEPDIR)/vec.Po
 	-rm -f ./$(DEPDIR)/vecobject.Po
 	-rm -f Makefile

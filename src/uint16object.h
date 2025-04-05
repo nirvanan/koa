@@ -42,7 +42,4 @@ uint16object_new (uint16_t val, void *udata);
 uint16_t
 uint16object_get_value (object_t *obj);
 
-void
-uint16object_init ();
-
 #endif /* UINT16OBJECT_H */
