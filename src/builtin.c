@@ -46,9 +46,19 @@ static object_t *
 _builtin_print (object_t *args)
 {
 	object_t *arg;
+	int st;
 
-	arg = ARG (args, 0);
-	object_print (arg);
+	st = 0;
+	for (int i = 0; ARG (args, i) != NULL; i++) {
+		if (st) {
+			printf (" ");
+		}
+		else {
+			st = 1;
+		}
+		arg = ARG (args, i);
+		object_print (arg);
+	}
 	printf ("\n");
 
 	return DUMMY;
@@ -297,7 +307,7 @@ typedef struct builtin_slot_s
 
 static builtin_slot_t g_builtin_slot_list[] =
 {
-	{1, "print", _builtin_print, 0, 1, {OBJECT_TYPE_ALL}},
+	{1, "print", _builtin_print, 1, 0, {}},
 	{2, "hash", _builtin_hash, 0, 1, {OBJECT_TYPE_ALL}},
 	{3, "len", _builtin_len, 0, 1, {OBJECT_TYPE_ALL}},
 	{4, "append", _builtin_append, 1, 0, {}},
