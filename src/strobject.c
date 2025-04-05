@@ -423,6 +423,7 @@ strobject_new (const char *val, size_t len, int no_hash, void *udata)
 
 	obj->hn = NULL;
 	obj->hashed = 0;
+	obj->str_hash = 0;
 	obj->val = str_new (val, len);
 	if (obj->val == NULL) {
 		pool_free ((void *) obj);
@@ -463,6 +464,9 @@ strobject_str_new (str_t *val, void *udata)
 	OBJECT_NEW_INIT (obj, OBJECT_TYPE_STR, udata);
 	OBJECT_DIGEST_FUN (obj) = strobject_digest_fun;
 
+	obj->hn = NULL;
+	obj->hashed = 0;
+	obj->str_hash = 0;
 	obj->val = val;
 
 	return (object_t *) obj;
@@ -516,12 +520,19 @@ uint64_t
 strobject_get_hash (object_t *obj)
 {
 	str_t *str;
+	strobject_t *str_obj;
+
+	str_obj = (strobject_t *) obj;
+	if (str_obj->str_hash != 0) {
+		return str_obj->str_hash;
+	}
 
 	str = strobject_get_value (obj);
 
-	return strobject_murmur (str_c_str (str),
-							 str_len (str),
-							 g_internal_hash_seed);
+	str_obj->str_hash = strobject_murmur (str_c_str (str), str_len (str),
+										  g_internal_hash_seed);
+
+	return str_obj->str_hash;
 }
 
 int

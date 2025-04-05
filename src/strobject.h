@@ -32,6 +32,7 @@ typedef struct strobject_s
 	str_t *val;
 	void *hn; /* For quick dehash. */
 	int hashed;
+	uint64_t str_hash;
 } strobject_t;
 
 object_t *
