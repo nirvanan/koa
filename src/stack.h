@@ -21,15 +21,18 @@
 #ifndef STACK_H
 #define STACK_H
 
+#include <stddef.h>
+
 #include "koa.h"
-#include "vec.h"
 
 typedef integer_value_t sp_t;
 
 typedef struct st_s
 {
-	vec_t *v;
 	sp_t sp;
+	sp_t top;
+	size_t cap;
+	void **v;
 } st_t;
 
 typedef void (*stack_foreach_f) (void *data);

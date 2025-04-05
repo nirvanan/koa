@@ -18,28 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "stack.h"
 #include "pool.h"
 #include "error.h"
 
+#define STACK_INIT_SIZE 32
+
 st_t *
 stack_new ()
 {
-	vec_t *v;
 	st_t *stack;
-
-	v = vec_new (0);
-	if (v == NULL) {
-		return NULL;
-	}
 
 	stack = (st_t *) pool_calloc (1, sizeof (st_t));
 	if (stack == NULL) {
-		vec_free (v);
 		fatal_error ("out of memory.");
 	}
 
-	stack->v = v;
+	stack->top = STACK_INIT_SIZE;
+	stack->cap = STACK_INIT_SIZE;
+	stack->v = (void **) pool_calloc (STACK_INIT_SIZE, sizeof (void *));
 
 	return stack;
 }
@@ -47,20 +46,31 @@ stack_new ()
 void
 stack_free (st_t *stack)
 {
-	vec_free (stack->v);
+	pool_free ((void *) stack->v);
 	pool_free ((void *) stack);
 }
 
 int
 stack_push (st_t *stack, void *data)
 {
-	if (vec_push_back (stack->v, data)) {
-		stack->sp++;
+	/* Double the stack if it is full. */
+	if (stack->sp >= stack->top) {
+		void *new_v;
 
-		return 1;
+		new_v = (void **) pool_calloc (stack->cap * 2, sizeof (void *));
+		if (new_v == NULL) {
+			fatal_error ("out of memory.");
+		}
+		memcpy (new_v, stack->v, stack->cap * sizeof (void *));
+		stack->top = stack->top * 2;
+		stack->cap = stack->cap * 2;
+		pool_free ((void *) stack->v);
+		stack->v = new_v;
 	}
 
-	return 0;
+	stack->v[stack->sp++] = data;
+
+	return 1;
 }
 
 void *
@@ -72,27 +82,26 @@ stack_pop (st_t *stack)
 		return NULL;
 	}
 
-	ret = vec_last (stack->v);
-	if (vec_pop_back (stack->v)) {
-		stack->sp--;
+	ret = stack->v[--stack->sp];
 
-		return ret;
-	}
-
-	return NULL;
+	return ret;
 }
 
 void *
 stack_top (st_t *stack)
 {
-	return vec_last (stack->v);
+	if (stack->sp <= 0) {
+		return NULL;
+	}
+
+	return stack->v[stack->sp - 1];
 }
 
 void
 stack_foreach (st_t *stack, stack_foreach_f fun)
 {
 	for (integer_value_t pos = stack->sp - 1; pos >= 0; pos--) {
-		fun (vec_pos (stack->v, pos));
+		fun (stack->v[pos]);
 	}
 }
 
@@ -105,5 +114,5 @@ stack_get_sp (st_t *stack)
 void *
 stack_set (st_t *stack, integer_value_t pos, void *data)
 {
-	return vec_set (stack->v, pos, data);
+	return stack->v[pos] = data;
 }
