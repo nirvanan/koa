@@ -65,6 +65,7 @@ typedef struct pool_s
 {
 	list_t link;
 	void *po;
+	void *po_end;
 	void *extra;
 	int used;
 	list_t *free;
@@ -158,6 +159,7 @@ pool_new (allocator_t *allocator, size_t request_size, void *extra)
 
 	/* Insert all pages into free list and hash. */
 	pool_end = (void *) new_pool + request_size;
+	new_pool->po_end = pool_end;
 	for (void *p = new_pool->po; p + PAGE_SIZE <= pool_end; p += PAGE_SIZE) {
 		page_t *page;
 
@@ -358,37 +360,6 @@ pool_calloc_allocator (allocator_t *allocator, size_t member, size_t size)
 	return ret;
 }
 
-static int
-pool_find_page_fun (list_t *list, void *data)
-{
-	page_hash_t *ph;
-	page_t **page;
-
-	ph = (page_hash_t *) list;
-	page = (page_t **) data;
-	if (ph->p == *page) {
-		*page = NULL;
-
-		return 1;
-	}
-
-	return 0;
-}
-
-static int
-pool_is_pool_cell (allocator_t *allocator, void *bl)
-{
-	page_t *page;
-	int h;
-
-	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
-	h = (intptr_t) page % PAGE_HASH_BUCKET;
-
-	list_foreach (allocator->page_hash[h], pool_find_page_fun, (void *) &page);
-
-	return page == NULL;
-}
-
 static void
 pool_page_full_2_used (allocator_t *allocator, page_t *page)
 {
@@ -412,13 +383,6 @@ void
 pool_free_allocator (allocator_t *allocator, void *bl)
 {
 	page_t *page;
-
-	if (!pool_is_pool_cell (allocator, bl)) {
-		/* Use system free to release this block. */
-		free (bl);
-
-		return;
-	}
 
 	page = (page_t *) BLOCK_START (bl, PAGE_SIZE);
 
