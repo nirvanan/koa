@@ -12,11 +12,11 @@ AM_MAINTAINER_MODE
 AM_INIT_AUTOMAKE([1.16 -Wall no-define tar-ustar no-dist-gzip dist-xz])
 
 # Checks for programs.
+user_CFLAGS=$CFLAGS
 AC_PROG_CC
 
 # Checks for libraries.
-AC_CHECK_LIB(m, isnan)
-AC_CHECK_LIB(m, isfinite)
+AC_CHECK_LIB([m], [isnan])
 
 # Checks for header files.
 AC_CHECK_HEADERS([inttypes.h limits.h stddef.h stdint.h stdlib.h string.h pthread.h unistd.h])
@@ -41,12 +41,20 @@ AC_CHECK_FUNCS([memset modf strtol])
 
 # Checks for pthread
 AX_PTHREAD
+LIBS="$PTHREAD_LIBS $LIBS"
+CC="$PTHREAD_CC"
 
-# Enable debug or not. 
-AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [enable DEBUG mode(default=no)]),[], [enable_debug=no])
+# Enable debug or not.
+AC_ARG_ENABLE([debug],
+	[AS_HELP_STRING([--enable-debug], [enable DEBUG mode (default=no)])],
+	[enable_debug=$enableval],
+	[enable_debug=no])
 
-AS_IF([test "x$enable_debug" = "xyes"], [CFLAGS="-g2 -O0 -DDEBUG -Wall -pg"], 
-	  [test "x$enable_debug" = "xno"], [CFLAGS="-O3 -Wall"], [])
+AS_IF([test "x$user_CFLAGS" != "x"],
+	[CFLAGS="$user_CFLAGS $PTHREAD_CFLAGS"],
+	[AS_IF([test "x$enable_debug" = "xyes"],
+		[CFLAGS="-g2 -O0 -DDEBUG -Wall -pg $PTHREAD_CFLAGS"],
+		[CFLAGS="-O3 -Wall $PTHREAD_CFLAGS"])])
 
 AC_CONFIG_FILES([Makefile
 src/Makefile

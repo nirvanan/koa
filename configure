@@ -1413,7 +1413,7 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
-  --enable-debug          enable DEBUG mode(default=no)
+  --enable-debug          enable DEBUG mode (default=no)
 
 Some influential environment variables:
   CC          C compiler command
@@ -3501,6 +3501,7 @@ fi
 
 
 # Checks for programs.
+user_CFLAGS=$CFLAGS
 
 
 
@@ -4789,49 +4790,6 @@ fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_isnan" >&5
 printf "%s\n" "$ac_cv_lib_m_isnan" >&6; }
 if test "x$ac_cv_lib_m_isnan" = xyes
-then :
-  printf "%s\n" "#define HAVE_LIBM 1" >>confdefs.h
-
-  LIBS="-lm $LIBS"
-
-fi
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for isfinite in -lm" >&5
-printf %s "checking for isfinite in -lm... " >&6; }
-if test ${ac_cv_lib_m_isfinite+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char isfinite ();
-int
-main (void)
-{
-return isfinite ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_m_isfinite=yes
-else $as_nop
-  ac_cv_lib_m_isfinite=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_isfinite" >&5
-printf "%s\n" "$ac_cv_lib_m_isfinite" >&6; }
-if test "x$ac_cv_lib_m_isfinite" = xyes
 then :
   printf "%s\n" "#define HAVE_LIBM 1" >>confdefs.h
 
@@ -6579,23 +6537,29 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+LIBS="$PTHREAD_LIBS $LIBS"
+CC="$PTHREAD_CC"
 
 # Enable debug or not.
 # Check whether --enable-debug was given.
 if test ${enable_debug+y}
 then :
-  enableval=$enable_debug;
+  enableval=$enable_debug; enable_debug=$enableval
 else $as_nop
   enable_debug=no
 fi
 
 
-if test "x$enable_debug" = "xyes"
+if test "x$user_CFLAGS" != "x"
 then :
-  CFLAGS="-g2 -O0 -DDEBUG -Wall -pg"
-elif test "x$enable_debug" = "xno"
+  CFLAGS="$user_CFLAGS $PTHREAD_CFLAGS"
+else $as_nop
+  if test "x$enable_debug" = "xyes"
 then :
-  CFLAGS="-O3 -Wall"
+  CFLAGS="-g2 -O0 -DDEBUG -Wall -pg $PTHREAD_CFLAGS"
+else $as_nop
+  CFLAGS="-O3 -Wall $PTHREAD_CFLAGS"
+fi
 fi
 
 ac_config_files="$ac_config_files Makefile src/Makefile"

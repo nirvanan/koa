@@ -1,8 +1,6 @@
 
 bin_PROGRAMS = koa
-AM_LIBS = @PTHREAD_LIBS@ @LIBS@
-AM_CFLAGS = @CFLAGS@ @PTHREAD_CFLAGS@
-AM_CC = @PTHREAD_CC@
+
 koa_SOURCES = boolobject.c \
 boolobject.h \
 builtin.c \
